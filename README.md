@@ -1,36 +1,64 @@
-Cloudy Doors BPM
-=====
+# Doors 2026
 
-**Cloudy Doors BPM** es un entorno de desarrollo para aplicaciones de tipo documental. 
-En líneas generales, se trata de un repositorio de documentos organizados en una 
-estructura jerárquica de carpetas. Doors significa DOcument Oriented Relational 
-Storage (Repositorio Relacional Orientado a Documentos), ya que corre sobre un 
-motor de base de datos relacional.
+Motor de aplicaciones documentales de próxima generación.
 
-Cloudy Doors fue creado a partir de varios años de experiencia en el desarrollo de 
-aplicaciones sobre Lotus Notes + Domino y MS Outlook + Exchange, de los cuales se 
-tomaron muchos conceptos referidos al desarrollo de aplicaciones colaborativas.
+## ¿Qué es Doors?
 
-Cloudy Doors fue pensado para dar soporte a las denominadas aplicaciones basadas 
-en documentos, en las cuales la información se encuentra almacenada en formatos 
-no estructurados, como párrafos de texto con formato y archivos adjuntos. 
-Las aplicaciones basadas en documentos son también conocidas como aplicaciones 
-basadas en la comunicación (communication-centric), como contraparte de las 
-aplicaciones basadas en datos (data-centric), que manejan unidades pequeñas de 
-información (generalmente números o códigos alfanuméricos) en un gran número de 
-transacciones, y con un fuerte control de integridad.
+Doors es un framework para desarrollo de aplicaciones documentales (document-oriented applications). Provee una estructura jerárquica de carpetas que almacenan documentos, con permisos granulares, workflow programable, y búsqueda full-text. Comparable a Notion o Coda, pero con motor enterprise y workflow programable. SDKs open-source.
 
+**Evolución:**
+- Doors 7: Producción (.NET + VBScript + COM)
+- Doors 8: Primera generación JS/Node (2018-2023)
+- **Doors 2026:** Esta versión
 
-## Copyright y licencia
+## Características Principales (2026)
 
-Copyright 2013 CloudyVision SRL
+### Autenticación Keycloak
+Integración con Keycloak para SSO, OAuth2, OpenID Connect. Reemplazo de autenticación nativa/LDAP legacy.
 
-Licenciado bajo la licencia Apache Version 2.0. Solo puede utilizar este trabajo en cumplimiento con la misma.
-Puede obtener una copia de la licencia en el archivo LICENSE, o en el siguiente enlace:
+### Nuevo Explorer (Web App)
+Explorer rediseñado como web app moderna. SPA con carga rápida, routing client-side, UX mejorada.
 
-  [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+### Framework SPA
+Framework JavaScript para construir SPAs sobre Doors. Routing, estado, componentes reutilizables.
 
-A menos que sea requerido por la ley aplicable o se acuerde por escrito, el software
-distribuido bajo la licencia se distribuye "TAL CUAL",
-SIN GARANTÍAS NI CONDICIONES DE NINGÚN TIPO, ya sea expresas o implícitas.
-Puede consultar los permisos y limitaciones específicos en la licencia.
+### APIs con Rate Limit
+Rate limiting en todas las APIs (RESTful, GraphQL). Protección contra abuso, throttling configurable por usuario/grupo.
+
+### Nuevo COM+ Client
+Cliente COM+ modernizado para integración con aplicaciones legacy (Excel macros, VBScript, ASP clásico).
+
+### MySQL Support
+Soporte nativo MySQL además de SQL Server. Migración simplificada para clientes MySQL.
+
+### Elastic Search
+Integración Elastic Search para búsqueda full-text de alta performance. Indexación de documentos, attachments, campos HTML.
+
+### GraphQL API
+API GraphQL además de RESTful. Queries flexibles, reducción de over-fetching, schema introspection.
+
+### Claude Integration
+Integración con Claude AI para:
+- Generación de código (eventos, controles)
+- Asistencia en desarrollo
+- Análisis de datos documentales
+- Automatización de workflows
+
+### node-sql-parser
+Parser SQL en Node para validación y análisis de queries. Seguridad mejorada, optimización automática.
+
+### AWS Infrastructure
+Migración completa a AWS:
+- ECS para Events.v8
+- RDS para databases
+- S3 para attachments externos
+- CloudFront para CDN
+
+## Stack Heredado (Doors 8)
+
+- doorsapi2: API ES6 RESTful
+- generic6: Motor formularios HTML+JS
+- Events.v8: Servicio Node dockerizado
+- CDN: Código desde Github
+- App Capacitor: Cliente iOS/Android
+- Relaciones (JOINS): Performance 10x
