@@ -1,15 +1,15 @@
-# Doors 2026
+# Fluye
 
-Motor de aplicaciones documentales de próxima generación.
+Motor BPM de próxima generación para aplicaciones documentales.
 
-## ¿Qué es Doors?
+## ¿Qué es Fluye?
 
-Doors es un framework para desarrollo de aplicaciones documentales (document-oriented applications). Provee una estructura jerárquica de carpetas que almacenan documentos, con permisos granulares, workflow programable, y búsqueda full-text. Comparable a Notion o Coda, pero con motor enterprise y workflow programable. SDKs open-source.
+Fluye es un framework para desarrollo de aplicaciones documentales y gestión de procesos (BPM). Provee una estructura jerárquica de carpetas que almacenan documentos, con permisos granulares, workflow programable, y búsqueda full-text. Comparable a Notion o Coda, pero con motor enterprise y workflow programable. SDKs open-source.
 
 **Evolución:**
 - Doors 7: Producción (.NET + VBScript + COM)
 - Doors 8: Primera generación JS/Node (2018-2023)
-- **Doors 2026:** Esta versión
+- **Fluye (2026):** Esta versión - renombrado y modernizado
 
 ## Características Principales (2026)
 
@@ -54,7 +54,7 @@ Migración completa a AWS:
 - S3 para attachments externos
 - CloudFront para CDN
 
-## Stack Heredado (Doors 8)
+## Stack Heredado (de Doors 8)
 
 - doorsapi2: API ES6 RESTful
 - generic6: Motor formularios HTML+JS
