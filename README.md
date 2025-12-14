@@ -17,20 +17,28 @@ Los procesos ágiles se adaptan mejor a los cambios del negocio:
 
 ### Casos de Uso Reales
 
-**CRM Vidacel (Salud):**
-- Gestión de clientes y oportunidades
-- WhatsApp/Facebook integrado
-- Workflow de ventas programable
-
-**ERP Ormay (Industria):**
-- Cotizaciones y órdenes de compra
-- Seguimiento de producción
-- Integraciones con sistemas legacy
-
-**Oportunidades Edisur (Real Estate):**
+**Edisur (Real Estate):**
 - Pipeline de ventas
 - HubSpot bidireccional
-- Automatización de seguimiento
+- Gestión de Personal
+- Catálogo de productos
+
+**Vidacel (Salud / Chile):**
+- Gestión de clientes y oportunidades
+- Gestión de Laboratorios
+- Gestión de la Calidad
+
+**Ormay (Industria):**
+- WhatsApp Cnn: Recepción de solicitudes de garantía
+- Seguimiento de OST
+- Nuevos clientes
+- Integración con ERP
+
+**AG Naum (Grupo Empresario):**
+- Oportunidades unificadas (real estate, autos, tecnología)
+- Concesionarias: ventas y posventa
+- CRM multi-unidad de negocio
+- Gestión consolidada del grupo
 
 ### Open-Source
 
@@ -72,13 +80,6 @@ Motor BPM (Business Process Management) que combina:
 - Nuevo campo? → Agregás y deployás
 - Nueva integración? → API RESTful o webhook
 
-### ROI Claro
-
-**Vidacel:** De planilla Excel a CRM en 2 semanas. 50+ usuarios activos.
-
-**Ormay:** ERP modular desplegado por fases. Primera fase en 3 semanas.
-
-**Edisur:** Integración HubSpot bidireccional en 1 semana. Sincronización automática de oportunidades.
 
 ## Para Developers
 
@@ -89,18 +90,16 @@ Motor BPM (Business Process Management) que combina:
 - PostgreSQL (target principal, 2026+)
 - SQL Server (legacy support)
 - Keycloak (SSO, OAuth2, OpenID Connect)
+- Cloudflare
+- AWS
+- Elastic
+- Claude
 
 **Frontend:**
 - SPA Framework (routing, state, components)
 - Bootstrap 5.3 (web)
-- Framework7 (mobile)
 - doorsapi2.js (client SDK)
 
-**Infrastructure:**
-- Docker + ECS (AWS Fargate)
-- RDS (PostgreSQL/SQL Server)
-- S3 + CloudFront (CDN)
-- Elastic Search (full-text search)
 
 ### APIs
 
@@ -119,57 +118,25 @@ await doc.save();
 await session.logoff();
 ```
 
-**GraphQL API (2026):**
-```graphql
-query {
-  folder(id: 1023) {
-    documents(limit: 10) {
-      id
-      created
-      fields {
-        NOMBRE
-        EMAIL
-      }
-    }
-  }
-}
-```
-
 ### Workflow Programable
 
 **Eventos síncronos (blocking):**
+- Open
 - BeforeSave, AfterSave
 - BeforeDelete, AfterDelete
-- Open, Terminate
-- BeforeFieldChange, AfterFieldChange
+- BeforeCopy, AfterCopy
+- BeforeMove, AfterMove
 
 **Eventos asíncronos (background):**
 - OnSave (trigger)
 - OnDelete (trigger)
 - Timer (cron-like)
 
-**Motor:** Events.v8 (Node.js dockerizado en ECS)
-
-### Deployment
-
-**Development:**
-```bash
-npm install fluye
-node your-script.mjs
-```
-
-**Production:**
-```bash
-docker build -t fluye-app .
-docker push ecr/fluye-app:v1
-# Deploy via ECS/Fargate
-```
 
 ### Integrations
 
 **Conectores nativos:**
 - WhatsApp (wappcnn)
-- Facebook Messenger (fbcnn)
 - HubSpot (hubspotcnn)
 - Webhooks genéricos
 
@@ -187,34 +154,8 @@ docker push ecr/fluye-app:v1
 - Doors 8 (2018-2023): Node.js + SQL Server/Oracle
 - **Fluye (2026+):** Full refactor + PostgreSQL + Keycloak + AWS
 
-## Roadmap 2026
-
-### Keycloak SSO
-Autenticación enterprise con SSO, OAuth2, OpenID Connect. Reemplazo de autenticación nativa/LDAP.
-
-### Nuevo Explorer
-SPA moderna con carga rápida, routing client-side, UX mejorada.
-
-### PostgreSQL Nativo
-Soporte completo PostgreSQL. Target principal para nuevos clientes (SQL Server mantiene soporte legacy).
-
-### GraphQL API
-Queries flexibles, reducción de over-fetching, schema introspection. Complementa RESTful existente.
-
-### Elastic Search
-Búsqueda full-text de alta performance. Indexación de documentos, attachments, campos HTML.
-
-### Rate Limiting
-Protección contra abuso en todas las APIs. Throttling configurable por usuario/grupo.
-
-### Claude AI Integration
-- Generación de código (eventos, controles)
-- Asistencia en desarrollo
-- Análisis de datos documentales
-- Automatización de workflows
 
 ### AWS Native
-- ECS Fargate (Events.v8)
 - RDS (databases)
 - S3 (attachments)
 - CloudFront (CDN)
@@ -224,15 +165,6 @@ Protección contra abuso en todas las APIs. Throttling configurable por usuario/
 - SQL Server migration path
 - Backward compatibility Doors 8
 
-## Componentes Core (heredados de Doors 8)
-
-- **doorsapi2:** RESTful API (ES6 modules)
-- **generic6:** Motor de formularios dinámicos (HTML+JS)
-- **Events.v8:** Servicio de eventos asíncronos (Node.js dockerizado)
-- **CDN:** Código servido desde GitHub
-- **App Capacitor:** Cliente móvil (iOS/Android)
-- **Relaciones (JOINS):** Performance mejorada 10x vs versiones anteriores
-
 ## Licencia
 
 **SDKs Open-Source:** LGPL v3 (GNU Lesser General Public License)
@@ -241,17 +173,6 @@ Los SDKs públicos (doorsapi2, generic6, etc.) están bajo LGPL v3, permitiendo 
 
 **Motor propietario:** El core engine de Fluye es propietario, pero los SDKs para desarrollar aplicaciones son libres.
 
-## Documentación
-
-📖 **Arquitectura completa:** Ver [`CLAUDE.md`](CLAUDE.md)
-
-📖 **Database schema:** Ver [`DB.md`](DB.md)
-
-📖 **AWS Infrastructure:** Ver [`AWS.md`](AWS.md)
-
-📖 **SPA Framework:** Ver [`SPA.md`](SPA.md)
-
-📖 **Keycloak SSO:** Ver [`KEYCLOAK.md`](KEYCLOAK.md)
 
 ## Contacto
 
@@ -259,7 +180,7 @@ Los SDKs públicos (doorsapi2, generic6, etc.) están bajo LGPL v3, permitiendo 
 
 **Email:** jorge@fluye.ar
 
-**GitHub:** Repositorios públicos próximamente
+**GitHub:** https://github.com/pagano/fluye
 
 ---
 
