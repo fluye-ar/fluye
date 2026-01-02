@@ -1,8 +1,0 @@
-Línea 16: la clase MSComctlLib.StatusBar del control StatusBar1 no era una clase de control cargada.
-Línea 51: la clase MSComctlLib.ListView del control lstViews no era una clase de control cargada.
-Línea 71: la clase MSComctlLib.ListView del control lstDocuments no era una clase de control cargada.
-Línea 91: la clase MSComctlLib.TabStrip del control TabStrip2 no era una clase de control cargada.
-Línea 114: la clase MSComctlLib.ListView del control lstAsyncEvents no era una clase de control cargada.
-Línea 134: la clase MSComctlLib.ListView del control lstSyncEvents no era una clase de control cargada.
-Línea 154: la clase MSComctlLib.TabStrip del control TabStrip1 no era una clase de control cargada.
-Línea 178: la clase MSComctlLib.TreeView del control TreeView1 no era una clase de control cargada.
