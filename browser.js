@@ -1,7 +1,7 @@
 /*
 Biblioteca javascript core para el cliente Fluye
 
-Fresh: https://cdn.fluye.ar/ghf/fluye/client/fluye.js?_fresh=1
+Fresh: https://cdn.fluye.ar/ghf/fluye/browser.js?_fresh=1
 */
 
 window.fluye = {
