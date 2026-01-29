@@ -6,7 +6,7 @@ Fresh: https://cdn.fluye.ar/ghf/fluye/client/fluye.js?_fresh=1
 
 window.fluye = {
     /**
-    Carga doorsapi3, crea dSession y lo conecta a la sesion web
+    Carga el client, crea la session y la conecta a la sesion web
     */
     init: async function() {
         if (!fluye.client) fluye.client = await import('https://cdn.fluye.ar/ghf/fluye/fluye-client.mjs');
