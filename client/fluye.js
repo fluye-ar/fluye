@@ -4,19 +4,21 @@ Biblioteca javascript core para el cliente Fluye
 Fresh: https://cdn.fluye.ar/ghf/fluye/client/fluye.js?_fresh=1
 */
 
-/**
-Carga doorsapi3, crea dSession y lo conecta a la sesion web
-*/
-async function importDoorsapi3() {
-	if (!window.doorsapi3) window.doorsapi3 = await import('https://cdn.fluye.ar/ghf/fluye/doorsapi3.mjs');
-	if (!window.dSession) {
-		window.dSession = new doorsapi3.Session();
+window.fluye = {
+    /**
+    Carga doorsapi3, crea dSession y lo conecta a la sesion web
+    */
+    init: async function() {
+        if (!fluye.client) fluye.client = await import('https://cdn.fluye.ar/ghf/fluye/fluye-client.mjs');
+        if (!fluye.session) {
+            fluye.session = new fluye.client.Session();
 
-		if (!await dSession.webSession() || !await dSession.isLogged) {
-            let path = location.pathname.replace(/^\/[^\/]+/, ''); // Saca el /c
-            location.href = '/w/auth/login?request=' + encodeURIComponent(path + location.search);
-            return;
+            if (!await fluye.session.webSession() || !await fluye.session.isLogged) {
+                let path = location.pathname.replace(/^\/[^\/]+/, ''); // Saca el /c
+                location.href = '/w/auth/login?request=' + encodeURIComponent(path + location.search);
+                return;
+            }
         }
-	}
-	await dSession.runSyncEventsOnClient(false);
+        await fluye.session.runSyncEventsOnClient(false);
+    }
 }

@@ -494,7 +494,7 @@ export class Session {
                 }
 
             } catch(err) {
-                console.error(err, { consoleTag1: 'doorsapi2.Session._docRelFields' });
+                console.error(err, { consoleTag1: 'fluye-client.Session._docRelFields' });
             }
         }
     }
@@ -2566,7 +2566,7 @@ export class Document {
                 if ((await me.session.doorsVersion) >= '008') {
                     let url = 'documents/' + me.id + '/attachments/new';
                     let res = await me.session.restClient.fetch(url, 'GET', '');
-                    if (!res) console.error('No attachment info returned', url, res, { consoleTag1: 'doorsapi2.Document.attachmentsAdd' });
+                    if (!res) console.error('No attachment info returned', url, res, { consoleTag1: 'fluye-client.Document.attachmentsAdd' });
                     attJson.AttId = res.AttId;
                     attJson.Created = res.Created;
                 }
