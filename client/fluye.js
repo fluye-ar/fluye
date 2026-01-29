@@ -9,9 +9,9 @@ window.fluye = {
     Carga el client, crea la session y la conecta a la sesion web
     */
     init: async function() {
-        if (!fluye.client) fluye.client = await import('https://cdn.fluye.ar/ghf/fluye/fluye-client.mjs');
+        if (!fluye.mods.client) fluye.mods.client = await import('https://cdn.fluye.ar/ghf/fluye/fluye-client.mjs');
         if (!fluye.session) {
-            fluye.session = new fluye.client.Session();
+            fluye.session = new fluye.mods.client.Session();
 
             if (!await fluye.session.webSession() || !await fluye.session.isLogged) {
                 let path = location.pathname.replace(/^\/[^\/]+/, ''); // Saca el /c
@@ -21,7 +21,7 @@ window.fluye = {
         }
         await fluye.session.runSyncEventsOnClient(false);
     },
-    
+
     // Para cargar modulos
-    mod: {},
+    mods: {},
 }
