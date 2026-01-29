@@ -9,9 +9,9 @@ window.fluye = {
     Carga el client y crea la session
     */
     init: async function() {
-        if (!fluye.mods.client) fluye.mods.client = await import('https://cdn.fluye.ar/ghf/fluye/fluye-client.mjs');
+        if (!fluye.client) fluye.client = await import('https://cdn.fluye.ar/ghf/fluye/client.mjs');
         if (!fluye.session) {
-            fluye.session = new fluye.mods.client.Session();
+            fluye.session = new fluye.client.Session();
 
         }
     },
