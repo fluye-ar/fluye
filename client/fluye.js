@@ -20,5 +20,8 @@ window.fluye = {
             }
         }
         await fluye.session.runSyncEventsOnClient(false);
-    }
+    },
+    
+    // Para cargar modulos
+    mod: {},
 }
