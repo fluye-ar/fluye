@@ -21,7 +21,7 @@ async constructors: https://dev.to/somedood/the-proper-way-to-write-async-constr
 */
 
 var _mainlib, _moment, _numeral, _CryptoJS, _serializeError,
-    _fastXmlParser, _URL, _htmlEntities, _contentDisposition, _incjs;
+    _fastXmlParser, _URL, _htmlEntities, _contentDisposition;
 
 let serverTimeZone = 'America/Argentina/Cordoba';
 
@@ -37,7 +37,7 @@ const fileAtS3 = 'This file is at S3';
 
 //await loadUtils();
 var utilsPromise = loadUtils();
-var utilsNotLoadedErr = `Utils not loaded, call 'await dSession.utils.load()' before.`
+var utilsNotLoadedErr = `Utils not loaded, call 'await fluye.session.utils.load()' before.`
 
 /*
 todo: Safari soporta await at module top level recien en la v15
@@ -52,7 +52,7 @@ await utilsPromise;
 */
 
 async function loadUtils() {
-
+   
     // String.reverse
     if (typeof String.prototype.reverse !== 'function') {
         String.prototype.reverse = function () {
@@ -103,6 +103,17 @@ async function loadUtils() {
     }
 
 
+    // Si estoy en browser cargo browser.js
+    if (!inNode() && typeof window !== 'undefined' && !window.fluye) {
+        await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.fluye.ar/ghf/fluye/browser.js';
+            script.onload = resolve;
+            document.head.appendChild(script);
+        });
+    }   
+
+    
     // mainlib (solo v8)
 
     try {
@@ -122,40 +133,6 @@ async function loadUtils() {
     }
 
 
-    // include
-
-    try {
-        let incUrl = 'https://cdn.cloudycrm.net/ghcv/cdn/include.js';
-        if (!inNode()) {
-            if (window.include === undefined) {
-                let res = await fetch(incUrl);
-                let code = await res.text();
-                eval(`
-                    ${ code }
-                    window.include = include;
-                    window.scriptSrc = scriptSrc;
-                    window.gitCdn = gitCdn;
-                    window.ghCodeUrl = ghCodeUrl;
-                `);
-            }
-        } else {
-            _incjs = {};
-            let res = await fetch(incUrl);
-            let code = await res.text();
-            eval(`
-                ${ code }
-                _incjs.include = include;
-                _incjs.scriptSrc = scriptSrc;
-                _incjs.gitCdn = gitCdn;
-                _incjs.ghCodeUrl = ghCodeUrl;
-            `);
-        }
-
-    } catch(err) {
-        console.error('Error loading include', err);
-    }
-
-
     // moment - https://momentjs.com/docs/
 
     try {
@@ -163,8 +140,10 @@ async function loadUtils() {
             res = await import('moment-timezone');
             _moment = res.default;
         } else {
-            await include('lib-moment');
-            await include('lib-moment-timezone');
+            await fluye.load([
+                { id: 'moment', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment-with-locales.min.js' },
+                { id: 'moment-timezone', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.46/moment-timezone-with-data.min.js', depends: ['moment'] }
+            ]);
             _moment = moment;
         }
         _moment.tz.setDefault(serverTimeZone);
@@ -183,8 +162,10 @@ async function loadUtils() {
                 await import('numeral/locales/es.js');
                 _numeral = res.default;
             } else {
-                await include('lib-numeral');
-                await include('lib-numeral-locales');
+                await fluye.load([
+                    { id: 'numeral', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js' },
+                    { id: 'numeral-locales', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/locales.min.js', depends: ['numeral'] }
+                ]);
                 _numeral = numeral;
             }
         } else {
@@ -196,7 +177,7 @@ async function loadUtils() {
     }
 
 
-    // CryptoJS - https://code.google.com/archive/p/crypto-js/
+    // CryptoJS - https://cryptojs.gitbook.io/docs
 
     try {
         if (typeof(CryptoJS) == 'undefined') {
@@ -204,7 +185,7 @@ async function loadUtils() {
                 res = await import('crypto-js');
                 _CryptoJS = res.default;
             } else {
-                await include('lib-cryptojs-aes');
+                await fluye.load({ id: 'cryptojs', src: 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js' });
                 _CryptoJS = CryptoJS;
             }
         } else {
@@ -327,7 +308,7 @@ export function inNode() {
 /**
 Map Case Insensitive
 */
-export class DoorsMap extends Map {
+export class CIMap extends Map {
     _parseKey(key) {
         var k;
         if (typeof key === 'string') {
@@ -785,7 +766,7 @@ export class Session {
 
     /**
     Retorna la lista de formularios, o un formulario si especifico el id.
-    @returns {Promise<DoorsMap>|Promise<Form>}
+    @returns {Promise<CIMap>|Promise<Form>}
     */
     /*
     forms(id) {
@@ -1231,7 +1212,7 @@ export class Account {
     /** Metodo interno, no usar */
     _accountsMap(accounts) {
         var me = this;
-        var map = new DoorsMap();
+        var map = new CIMap();
         accounts.forEach(el => {
             var acc = new Account(el, me.session);
             map.set(acc.name, acc);
@@ -1259,7 +1240,7 @@ export class Account {
     @example
     childAccounts() // Devuelve un map de cuentas hijas.
     childAccounts(account) // Devuelve una cuenta hija. Puedo pasar name o id. Si no esta devuelve undefined.
-    @returns {(Promise<Account>|Promise<DoorsMap>)}
+    @returns {(Promise<Account>|Promise<CIMap>)}
     */
     childAccounts(account) {
         if (account === undefined) {
@@ -1285,7 +1266,7 @@ export class Account {
     @example
     childAccountsRecursive() // Devuelve un map de cuentas hijas recursivo.
     childAccountsRecursive(account) // Devuelve una cuenta hija. Puedo pasar name o id. Si no esta devuelve undefined.
-    @returns {(Promise<Account>|Promise<DoorsMap>)}
+    @returns {(Promise<Account>|Promise<CIMap>)}
     */
     childAccountsRecursive(account) {
         if (account === undefined) {
@@ -1397,7 +1378,7 @@ export class Account {
     @example
     parentAccounts() // Devuelve un map de cuentas padre.
     parentAccounts(account) // Devuelve una cuenta padre. Puedo pasar name o id. Si no esta devuelve undefined.
-    @returns {(Promise<Account>|Promise<DoorsMap>)}
+    @returns {(Promise<Account>|Promise<CIMap>)}
     */
     parentAccounts(account) {
         if (account === undefined) {
@@ -1423,7 +1404,7 @@ export class Account {
     @example
     parentAccountsRecursive() // Devuelve un map de cuentas padre recursivo.
     parentAccountsRecursive(account) // Devuelve una cuenta padre. Puedo pasar name o id. Si no esta devuelve undefined.
-    @returns {(Promise<Account>|Promise<DoorsMap>)}
+    @returns {(Promise<Account>|Promise<CIMap>)}
     */
     parentAccountsRecursive(account) {
         if (account === undefined) {
@@ -2320,7 +2301,7 @@ export class Document {
 
     /**
     Devuelve la coleccion de adjuntos, o uno en particular si se especifica attachment (name).
-    @returns {(Promise<DoorsMap>|Promise<Attachment>)}
+    @returns {(Promise<CIMap>|Promise<Attachment>)}
     */
     _attachments(attachment) {
         var me = this;
@@ -2328,7 +2309,7 @@ export class Document {
         if (attachment == undefined) {
             // Devuelve la coleccion
             if (!me.#attachmentsMap) {
-                let map = new DoorsMap();
+                let map = new CIMap();
                 let atts = me.#json.Attachments;
                 atts.sort((a, b) => {
                     if (a.AttId > b.AttId) return -1;
@@ -2530,7 +2511,7 @@ export class Document {
 
     /**
     Devuelve la coleccion de adjuntos, o uno en particular si se especifica attachment (name).
-    @returns {(Promise<DoorsMap>|Promise<Attachment>)}
+    @returns {(Promise<CIMap>|Promise<Attachment>)}
     */
     attachments(attachment) {
         let me = this;
@@ -2694,7 +2675,7 @@ export class Document {
     fields() // Devuelve la coleccion.
     fields(name) // Devuelve el field (undefined si no lo encuentra).
     fields(name, value) // Setea el valor del field.
-    @returns {(DoorsMap|Field)}
+    @returns {(CIMap|Field)}
     */
     fields(name, value) {
         var me = this;
@@ -2713,7 +2694,7 @@ export class Document {
         } else {
             // Devuelve la coleccion
             if (!me.#fieldsMap) {
-                var map = new DoorsMap();
+                var map = new CIMap();
                 me.#json.HeadFields.forEach(el => {
                     map.set(el.Name, new Field(el, me));
                 });
@@ -3707,7 +3688,7 @@ export class Folder {
             if (!me.#fieldsMap) {
                 let url = 'folders/' + me.id + '/fields';
                 let res = await me.session.v8Client.fetch(url, { method: 'GET' });
-                var map = new DoorsMap();
+                var map = new CIMap();
                 res.forEach(el => {
                     map.set(el.Name, new Field(el, me));
                 });
@@ -3744,7 +3725,7 @@ export class Folder {
                     let url = 'folders/' + me.id + '/childrens';
                     me.session.restClient.fetch(url, 'GET', '', '').then(
                         res => {
-                            me.#foldersMap = new DoorsMap();
+                            me.#foldersMap = new CIMap();
                             for (let el of res) {
                                 me.#foldersMap.set(el.Name, new Folder(el, me.session, me));
                             }
@@ -4215,7 +4196,7 @@ export class Folder {
     @example
     views() // Devuelve la coleccion.
     views(name) // Devuelve la vista name.
-    @returns {(Promise<DoorsMap>|Promise<View>)}
+    @returns {(Promise<CIMap>|Promise<View>)}
     */
     views(name) {
         var me = this;
@@ -4254,7 +4235,7 @@ export class Folder {
                                 };
                             });
 
-                            me.#viewsMap = new DoorsMap();
+                            me.#viewsMap = new CIMap();
                             for (var el of res) {
                                 me.#viewsMap.set(el.Name, new View(el, me.session, me));
                             }
@@ -4437,7 +4418,7 @@ export class Form {
         } else {
             // Devuelve la coleccion
             if (!me.#fieldsMap) {
-                var map = new DoorsMap();
+                var map = new CIMap();
                 me.#json.Fields.forEach(el => {
                     map.set(el.Name, new Field(el, me));
                 });
@@ -4768,7 +4749,7 @@ export class Node {
                 let srv = await me.server;
                 if (srv) code.server = srv;
 
-                let url = me.inNode ? _incjs.ghCodeUrl(code) : ghCodeUrl(code);
+                let url = me.session.utils.ghCodeUrl(code);
 
                 if (options.url) {
                     url += '?msg=' + encodeURIComponent(utils.jsonStringify(data));
@@ -4949,7 +4930,7 @@ export class Node {
 }
 
 
-export class Properties extends DoorsMap {
+export class Properties extends CIMap {
     #parent;
     #user;
     #restUrl;
@@ -5428,7 +5409,7 @@ export class Utilities {
     
     constructor(session) {
         this.#session = session;
-        this.#cache = new DoorsMap();
+        this.#cache = new CIMap();
     }
 
     /**
@@ -5852,6 +5833,60 @@ export class Utilities {
         return uuid;
     }
 
+    /**
+    Devuelve la url de un codigo Github
+
+    @example
+    ghCodeUrl({
+        owner // def fluye-ar
+        repo // nombre del repo
+        path // Ruta al archivo, no poner el slash inicial
+        ref // Branch / tag
+        fresh // Actualiza el cache
+        exec // Boolean, indica si es para ejecutar (ghx)
+        server // Opcional, def https://cdn.fluye.ar, https://node.cloudycrm.net para exec
+    }
+    */
+    ghCodeUrl(options) {
+        let opt = Object.assign({
+            owner: 'fluye-ar',
+        }, options);
+
+        /*
+        Puedo especificar el ref y fresh de los scripts en el localStorage, en un item asi:
+            scripts = [{ "repo": "myRepo", "path": "myScript.js", "ref": "myBranchOrTag", "fresh": "true" }, { "repo": ... }]
+        */
+        if (window && window.localStorage && opt.repo && opt.path) {
+            try {
+                var lsScripts = JSON.parse(window.localStorage.getItem('scripts'));
+                if (Array.isArray(lsScripts)) {
+                    var scr = lsScripts.find(el => (el.owner || '') == (opt.owner || '') && (el.repo || '').toLowerCase() == (opt.repo || '').toLowerCase() && el.path == opt.path);
+                    if (scr) {
+                        opt.ref = scr.ref;
+                        opt.fresh = scr.fresh;
+                        console.log('ghCodeUrl localStorage hit', scr)
+                    }
+                };
+            } catch (e) {
+                // Nothing to do
+            };
+        }
+
+        let url;
+        if (opt.exec) {
+            url = opt.server ? opt.server : 'https://node.cloudycrm.net/ghx';
+        } else {
+            url = opt.server ? opt.server : 'https://cdn.fluye.ar/gh';
+        }
+        url += `/${ opt.owner }/${ opt.repo }`;
+        url += opt.ref ? `@${ opt.ref }` : '';
+        while(opt.path.substring(0, 1) == '/') opt.path = opt.path.slice(1);
+        url += '/' + opt.path;
+        if (opt.fresh == true || opt.fresh == 1) url += '?_fresh=1';
+
+        return url;
+    }
+
     /** Alias de htmlEncode */
     htmlEnc(text, options) {
         return this.htmlEncode(text, options);
@@ -5903,11 +5938,11 @@ export class Utilities {
                     ret = await _mainlib.gitImport(module);
                 } else {
                     // Node no v8, requiere --experimental-network-imports
-                    ret = await import(_incjs.gitCdn(Object.assign({ url: true }, module)));
+                    ret = await import(me.ghCodeUrl(module));
                 }
             } else {
                 // Client
-                ret = await import(window.gitCdn(Object.assign({ url: true }, module)));
+                ret = await import(me.ghCodeUrl(module));
             }
         } else {
             ret = await import(module);
@@ -6047,10 +6082,18 @@ export class Utilities {
     }
 
     /**
-    @returns {DoorsMap}
+    @returns {CIMap}
+    */
+    newCIMap() {
+        return new CIMap();
+    }
+
+    /**
+    BW compat
+    @returns {CIMap}
     */
     newDoorsMap() {
-        return new DoorsMap();
+        return new CIMap();
     }
 
     newErr(err) {
