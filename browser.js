@@ -42,12 +42,9 @@ window.fluye = {
         const loadOne = (asset) => {
             return new Promise((resolve) => {
                 if (loaded[asset.id] || document.getElementById('asset_' + asset.id)) {
-                    console.log('load: ' + asset.id + ' already loaded, skipping');
                     resolve();
                     return;
                 }
-
-                console.log('load: ' + asset.id + ' loading - ' + asset.src);
 
                 const ext = asset.src.split('?')[0].split('.').pop().toLowerCase();
                 let el;
@@ -66,11 +63,11 @@ window.fluye = {
                 el.onload = () => {
                     loaded[asset.id] = true;
                     asset.loaded = true;
-                    console.log('load: ' + asset.id + ' loaded');
+                    console.log(asset.id + ' loaded - ' + asset.src);
                     resolve();
                 };
                 el.onerror = () => {
-                    console.error('load: ' + asset.id + ' failed - ' + asset.src);
+                    console.error(asset.id + ' failed - ' + asset.src);
                     resolve();
                 };
 
@@ -86,7 +83,6 @@ window.fluye = {
             );
 
             if (!ready.length) {
-                console.log('load: waiting for dependencies...', pending.map(a => a.id));
                 await new Promise(r => setTimeout(r, 50));
                 continue;
             }
@@ -95,7 +91,6 @@ window.fluye = {
             ready.forEach(a => pending.splice(pending.indexOf(a), 1));
         }
 
-        console.log('load: all assets loaded (' + assets.length + ')');
         return assets.length;
     },
 
