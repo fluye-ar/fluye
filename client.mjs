@@ -4700,7 +4700,7 @@ export class Node {
     o
     exec({
         code: {
-            owner, // Opcional, def CloudyVisionArg
+            owner, // Opcional, def fluye-ar
             repo, // Opcional, def cdn
             ref, // Opcional, branch o tag. def el main del repo.
             path, // Requerido
@@ -4722,7 +4722,7 @@ export class Node {
             // Vino el codigo
             return me.exec({
                 code: {
-                    repo: 'Global',
+                    repo: 'fluye-lib',
                     path: 'server/evalapi.js',
                 },
                 payload: options,
@@ -4812,7 +4812,7 @@ export class Node {
     @example
     modCall({
         module: {
-            owner // Opcional, def CloudyVisionArg
+            owner // Opcional, def fluye-ar
             repo // Opcional, def cdn
             path // Requerido
             fresh // Opcional, def false
@@ -4826,7 +4826,7 @@ export class Node {
     async modCall(options) {
         //todo: soporte para apiKey y url
         let xOpt = {
-            code: { repo: 'Global', path: 'server/modproxy.js' },
+            code: { repo: 'fluye-lib', path: 'server/modproxy.js' },
             payload: options,
         };
         if (options.doc) {
