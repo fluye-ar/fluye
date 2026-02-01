@@ -1103,6 +1103,16 @@ export class Session {
         return this.#utils;
     }
 
+    /**
+    Identifica el SDK. Usar para distinguir fluye de doorsapi2.
+    @returns {{ sdk: string, version: string }}
+    @example
+    if (session.version?.sdk === 'fluye') { ... }
+    */
+    get version() {
+        return { sdk: 'fluye', version: '1.0' };
+    }
+
     get v8Client() {
         return this.#v8Client;
     }
