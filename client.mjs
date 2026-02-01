@@ -5874,9 +5874,9 @@ export class Utilities {
 
         let url;
         if (opt.exec) {
-            url = opt.server ? opt.server : 'https://node.cloudycrm.net/ghx';
+            url = (opt.server ? opt.server : 'https://node.cloudycrm.net') + '/ghx';
         } else {
-            url = opt.server ? opt.server : 'https://cdn.fluye.ar/gh';
+            url = (opt.server ? opt.server : 'https://cdn.fluye.ar') + '/gh';
         }
         url += `/${ opt.owner }/${ opt.repo }`;
         url += opt.ref ? `@${ opt.ref }` : '';
