@@ -17,6 +17,171 @@ window.fluye = {
     },
 
     /**
+    Utilidades para bootstrap
+    */
+    bs: {
+        _preloader: null,
+
+        /**
+        Carga los archivos de un input file como adjuntos al documento
+        options = {
+            input, // Elemento input file con los archivos a cargar
+            doc, // Documento donde se cargan los adjuntos
+            tag, // Opcional, tag a asignar a los adjuntos
+            storage, // Opcional, s3 (def) / db
+            callback(att), // Opcional, funcion que se llama por cada adjunto cargado
+        }
+        */
+        inputFileAttachments: async function (options) {
+            let opt = Object.assign({
+                storage: 's3',
+            }, options);
+
+            for (file of opt.input.files) {
+                let att = opt.doc.attachmentsAdd(file.name);
+
+                let blb = await new Promise(resolve => {
+                    let reader = new FileReader();
+                    reader.onloadend = async function (e) {
+                        resolve(new Blob([this.result], { type: file.type }));
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
+
+                if (opt.storage == 's3' && att.fileStream2) {
+                    let $prog = $(`
+                        <div class="mb-2">Subiendo ${ file.name } (${ fileSize(blb.size) })</div>
+                        <div class="progress">
+                            <div class="progress-bar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    `);
+                    let t = fluye.bs.toast($prog, { autohide: false });
+                    await att.fileStream2(blb, progress => {
+                        $prog.find('.progress-bar')
+                            .css('width', progress + '%')
+                            .attr('aria-valuenow', progress)
+                            .text(progress + "%");
+                    });
+                    t.hide();
+
+                } else if (opt.storage == 'db') {
+                    att.fileStream = blb;
+
+                } else {
+                    throw new Error('Invalid storage option');
+                }
+
+                let tag = opt.tag;
+                if (tag || tag == 0) {
+                    att.description = tag;
+                    att.group = tag;
+                }
+
+                if (opt.callback) opt.callback(att);
+            }
+        },
+
+        /**
+        Carga las bibliotecas de Bootstrap 5
+        */
+        load: async function () {
+            await fluye.load(['bootstrap', 'bootstrap-css', 'bootstrap-icons']);
+        },
+
+        /**
+        Spinner que tapa toda la pagina (jQuery element, requiere Bootstrap 5 y jQuery)
+        @example
+        fluye.bs.preloader.show();
+        fluye.bs.preloader.hide();
+        */
+        get preloader() {
+            if (!this._preloader && typeof jQuery != 'undefined') {
+                this._preloader = $('<div/>', {
+                    style: 'position:fixed; top:0; left:0; z-index:9999; display:none; width:100%; height:100%;',
+                }).appendTo($('body'));
+                this._preloader.css('background-color', $('body').css('background-color') || '#fff');
+                this._preloader.css('opacity', '0.5');
+                this._preloader.append('<div style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);"><div class="spinner-border"></div></div>');
+            }
+            return this._preloader;
+        },
+
+        /**
+        Devuelve la version de Bootstrap cargada
+        @returns {number[]} Array con [major, minor, patch], ej: [5, 3, 3]
+        @example
+        fluye.bs.version       // [5, 3, 3]
+        fluye.bs.version[0]    // 5
+        */
+        get version() {
+            return bootstrapVersion();
+        },
+
+        /**
+        Muestra un toast de Bootstrap 5 (requiere jQuery)
+        @param {string|jQuery} text - Texto o elemento jQuery a mostrar en el body
+        @param {object} [options] - Opciones
+        @param {boolean} [options.autohide=true] - Ocultar automaticamente
+        @param {number} [options.delay=3000] - Delay en ms antes de ocultar
+        @param {string} [options.title='Cloudy CRM'] - Titulo del toast
+        @param {string} [options.subtitle=''] - Subtitulo
+        @param {string} [options.icon] - URL del icono
+        @returns {bootstrap.Toast} Instancia del toast
+        @example
+        fluye.bs.toast('Guardado exitosamente');
+        fluye.bs.toast('Procesando...', { autohide: false });
+        let t = fluye.bs.toast($progress, { autohide: false });
+        t.hide();
+        */
+        toast: function (text, options) {
+            var bsver = this.version;
+
+            if (bsver[0] < 5) {
+                console.warn('Bootstrap 5 es requerido para toast');
+                alert(text);
+                return;
+            };
+
+            var opt = {
+                autohide: true,
+                delay: 3000,
+                title: 'Fluye',
+                subtitle: '',
+                icon: 'https://cdn.fluye.ar/ghf/fluye/brand/iso-logo.png',
+            }
+            Object.assign(opt, options);
+
+            var $cont = $('.toast-container');
+            if (!$cont.length) {
+                $cont = $('<div class="toast-container p-3" style="position:fixed; top:15px; right:0; z-index:2000;"></div>').appendTo('body');
+            }
+
+            var $toast = $(`
+                <div class="toast">
+                    <div class="toast-header">
+                        <img src="${ opt.icon }" class="rounded me-2">
+                        <strong class="me-auto">${ opt.title }</strong>
+                        <small class="text-muted">${ opt.subtitle }</small>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body"></div>
+                </div>
+            `).appendTo($cont);
+
+            $toast.find('.toast-body').append(text);
+
+            var t = new bootstrap.Toast($toast, opt);
+
+            $toast.on('hidden.bs.toast', function () {
+                $(this).remove();
+            });
+
+            t.show();
+            return t;
+        }
+    },
+
+    /**
     Se conecta a la sesion web, hace un redirect al login si no esta logueado
     */
     connect: async function() {
@@ -30,12 +195,42 @@ window.fluye = {
     },
 
     /**
+    Descarga un buffer como archivo
+    @example
+    downloadFile(buffer, 'logo.jpg');
+    */
+    downloadFile: function (buffer, fileName) {
+        var url = URL.createObjectURL(buffer);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();    
+        a.remove();
+        URL.revokeObjectURL(url);
+    },
+
+    /**
     Carga scripts o css dinamicamente
-    @param {object|array} assets - { id, src } o [ { id, src, depends: [id1, id2] } ]
-    @returns {Promise}
+    @param {string|object|array} assets - 'id', { id, src } o [ { id, src, depends } ]
+    @returns {Promise<number>}
     */
     load: async function(assets) {
+        const sources = {
+            'jquery': 'https://code.jquery.com/jquery-3.7.1.min.js',
+            'bootstrap': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+            'bootstrap-css': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
+            'bootstrap-icons': 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
+        };
+
         if (!Array.isArray(assets)) assets = [assets];
+
+        // Normaliza: string -> { id, src }
+        assets = assets.map(a => {
+            if (typeof a === 'string') return { id: a, src: sources[a] };
+            if (!a.src && sources[a.id]) a.src = sources[a.id];
+            return a;
+        });
 
         const loaded = {};
 
@@ -96,4 +291,43 @@ window.fluye = {
 
     // Para cargar modulos
     mods: {},
+
+    /**
+    Crea un formulario, hace submit de los datos y lo borra
+    Se puede usar para abrir una nueva ventana haciendo POST
+    @example
+    submitData({
+        url: 'http://my.url/path',
+        data: {
+            param1: 'value1',
+            param2: 'value2',
+        },
+        method: 'GET', // Opcional, default POST
+        target: '_self', // Opcional, default _blank
+    });
+    */
+    submitData: function (options) {
+        var opt = {
+            method: 'POST',
+            target: '_blank',
+        }
+        Object.assign(opt, options);
+
+        var form = document.createElement('form');
+        form.target = opt.target;
+        form.method = opt.method;
+        form.action = opt.url;
+        form.style.display = 'none';
+
+        for (var key in opt.data) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = opt.data[key];
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    },
 }
