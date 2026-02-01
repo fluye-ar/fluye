@@ -4,11 +4,13 @@ Biblioteca javascript core para el cliente Fluye
 Fresh: https://cdn.fluye.ar/ghf/fluye/browser.js?_fresh=1
 */
 
+
 window.fluye = {
     /**
     Carga el client y crea la session
     */
     init: async function() {
+        debugger
         if (!fluye.client) fluye.client = await import('https://cdn.fluye.ar/ghf/fluye/client.mjs');
         if (!fluye.session) {
             fluye.session = new fluye.client.Session();
@@ -360,4 +362,7 @@ window.fluye = {
         form.submit();
         document.body.removeChild(form);
     },
+
+    urlParams: new URLSearchParams(window.location.search),
+
 }
