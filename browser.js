@@ -107,14 +107,33 @@ window.fluye = {
         },
 
         /**
-        Devuelve la version de Bootstrap cargada
-        @returns {number[]} Array con [major, minor, patch], ej: [5, 3, 3]
+        Selecciona el tab correspondiente a un nav clickeado.
+        Soporta Bootstrap 5.3 y Framework7 7.0.
+        Los navs y tabs deben estar dentro de un contenedor con clase doors-control-container.
+        @param {Event} ev - Evento click
         @example
-        fluye.bs.version       // [5, 3, 3]
-        fluye.bs.version[0]    // 5
+        $tabs.find('.nav-link').on('click', fluye.bs.tabClick); // Bootstrap
+        $tabs.find('.tab-link').on('click', fluye.bs.tabClick); // Framework7
         */
-        get version() {
-            return bootstrapVersion();
+        tabClick: function (ev) {
+            let $this = $(ev.currentTarget);
+
+            if (typeof app7 == 'object') {
+                let ix = $this.index();
+                let $root = $this.closest('.doors-control-container');
+                $root.find('.tab-link-active').removeClass('tab-link-active');
+                $root.find('.tab-active').removeClass('tab-active');
+                $root.find('.tab-link').eq(ix).addClass('tab-link-active');
+                app7.toolbar.setHighlight($root.find('.toolbar')[0]);
+                $root.find('.tab').eq(ix).addClass('tab-active');
+            } else {
+                let ix = $this.parent().index();
+                let $root = $this.closest('.doors-control-container');
+                $root.find('.active').removeClass('active');
+                $root.find('.show').removeClass('show');
+                $root.find('.nav-link').eq(ix).addClass('active');
+                $root.find('.tab-pane').eq(ix).addClass('show active');
+            }
         },
 
         /**
@@ -178,6 +197,17 @@ window.fluye = {
 
             t.show();
             return t;
+        },
+
+        /**
+        Devuelve la version de Bootstrap cargada
+        @returns {number[]} Array con [major, minor, patch], ej: [5, 3, 3]
+        @example
+        fluye.bs.version       // [5, 3, 3]
+        fluye.bs.version[0]    // 5
+        */
+        get version() {
+            return bootstrapVersion();
         }
     },
 
