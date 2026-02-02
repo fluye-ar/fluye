@@ -18,6 +18,10 @@ Session
 swagger: http://w3.cloudycrm.net/apidocs
 types para intelliSense: https://github.com/DefinitelyTyped/DefinitelyTyped
 async constructors: https://dev.to/somedood/the-proper-way-to-write-async-constructors-in-javascript-1o8c
+
+Fresh:
+https://cdn.fluye.ar/ghf/fluye/client.mjs?_fresh=1
+https://cdn.cloudycrm.net/gh/fluye-ar/fluye/client.mjs?_fresh=1
 */
 
 var _mainlib, _moment, _numeral, _CryptoJS, _serializeError,
