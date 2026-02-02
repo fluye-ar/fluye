@@ -5866,7 +5866,7 @@ export class Utilities {
         Puedo especificar el ref y fresh de los scripts en el localStorage, en un item asi:
             scripts = [{ "repo": "myRepo", "path": "myScript.js", "ref": "myBranchOrTag", "fresh": "true" }, { "repo": ... }]
         */
-        if (window && window.localStorage && opt.repo && opt.path) {
+        if (typeof(window) == 'object' && window.localStorage && opt.repo && opt.path) {
             try {
                 var lsScripts = JSON.parse(window.localStorage.getItem('scripts'));
                 if (Array.isArray(lsScripts)) {

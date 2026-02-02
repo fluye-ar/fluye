@@ -82,6 +82,7 @@ Punto de entrada principal. Maneja autenticación y acceso a objetos.
 | `directory` / `dir` | Directory | Acceso a cuentas/usuarios |
 | `db` | Database | Acceso a base de datos |
 | `utils` | Utilities | Funciones auxiliares |
+| `version` | { sdk, version } | Identifica SDK: `{ sdk: 'fluye', version: '1.0' }` |
 
 ### Métodos
 
