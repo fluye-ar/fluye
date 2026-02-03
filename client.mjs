@@ -499,6 +499,8 @@ export class Session {
         let me = this;
 
         await utilsPromise;
+        debugger
+        console.log(me.#apiKey);
         _numeral.locale('es'); // es / en
         _numeral.defaultFormat('0,0.[00]');
         _moment.locale('es');
