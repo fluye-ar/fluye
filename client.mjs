@@ -485,6 +485,7 @@ export class Session {
     }
 
     _reset() {
+        debugger;
         this.#apiKey = undefined;
         this.#authToken = undefined;
         this.#currentUser = undefined;
