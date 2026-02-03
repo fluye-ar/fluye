@@ -13,7 +13,7 @@ window.fluye = {
         if (!fluye.client) fluye.client = await import('https://cdn.fluye.ar/ghf/fluye/client.mjs' + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
         if (!fluye.session) {
             fluye.session = new fluye.client.Session();
-            window.fSession = fluye.session; // Para compatibilidad
+            window.fSession = fluye.session;
         }
     },
 
@@ -216,6 +216,7 @@ window.fluye = {
     Se conecta a la sesion web, hace un redirect al login si no esta logueado
     */
     connect: async function() {
+        //todo: falta soporte app
         if (!fluye.session) await fluye.init();
         if (!await fluye.session.webSession() || !await fluye.session.isLogged) {
             let path = location.pathname.replace(/^\/[^\/]+/, ''); // Saca el /c
@@ -240,6 +241,8 @@ window.fluye = {
         a.remove();
         URL.revokeObjectURL(url);
     },
+
+    inApp: typeof window.app7 == 'object',
 
     /**
     Carga scripts o css dinamicamente

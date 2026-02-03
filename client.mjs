@@ -521,6 +521,7 @@ export class Session {
         return this.#apiKey;
     }
     set apiKey(value) {
+        debugger
         this._reset();
         this.#apiKey = value;
         this._userChange();
