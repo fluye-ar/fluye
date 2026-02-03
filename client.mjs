@@ -485,7 +485,6 @@ export class Session {
     }
 
     _reset() {
-        debugger;
         this.#apiKey = undefined;
         this.#authToken = undefined;
         this.#currentUser = undefined;
@@ -499,10 +498,7 @@ export class Session {
     async _userChange() {
         let me = this;
 
-        console.log(me.#apiKey);
         await utilsPromise;
-        debugger
-        console.log(me.#apiKey);
         _numeral.locale('es'); // es / en
         _numeral.defaultFormat('0,0.[00]');
         _moment.locale('es');
@@ -525,7 +521,6 @@ export class Session {
         return this.#apiKey;
     }
     set apiKey(value) {
-        debugger
         this._reset();
         this.#apiKey = value;
         this._userChange();
