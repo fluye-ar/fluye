@@ -498,6 +498,7 @@ export class Session {
     async _userChange() {
         let me = this;
 
+        console.log(me.#apiKey);
         await utilsPromise;
         debugger
         console.log(me.#apiKey);
