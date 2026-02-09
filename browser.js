@@ -5,19 +5,19 @@ Fresh: https://cdn.fluye.ar/ghf/fluye/browser.js?_fresh=1
 */
 
 
-// Actualiza meta tags e icons al cargar browser.js
+// Actualiza meta tags e icons de form.htm al cargar browser.js
 (function() {
     const fluyeIcon = 'https://cdn.fluye.ar/ghf/fluye/brand/iso-logo.png';
 
     const descMeta = document.querySelector('meta[name="description"]');
-    if (descMeta) descMeta.setAttribute('content', 'Fluye');
+    if (descMeta && descMeta.content === 'Cloudy CRM') descMeta.content = 'Fluye';
 
     const ogImage = document.querySelector('meta[property="og:image"]');
-    if (ogImage) ogImage.setAttribute('content', fluyeIcon);
+    if (ogImage && ogImage.content.includes('cdn.cloudycrm.net')) ogImage.content = fluyeIcon;
 
-    // Actualiza todos los favicons/icons
+    // Actualiza favicons solo si son de cloudycrm
     document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
-        link.href = fluyeIcon;
+        if (link.href.includes('cdn.cloudycrm.net')) link.href = fluyeIcon;
     });
 })();
 
