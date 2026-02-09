@@ -276,21 +276,36 @@ window.fluye = {
     @returns {Promise<number>}
     */
     load: async function(assets) {
+        // Sources: string (URL) o { src, tag: 'link'|'script' }
         const sources = {
             'jquery': 'https://code.jquery.com/jquery-3.7.1.min.js',
             'bootstrap': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
             'bootstrap-css': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
             'bootstrap-icons': 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
             'tailwind': 'https://cdn.tailwindcss.com',
-            'inter-font': 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+            'inter-font': { src: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', tag: 'link' },
         };
 
         if (!Array.isArray(assets)) assets = [assets];
 
-        // Normaliza: string -> { id, src }
+        // Normaliza: string -> { id, src, tag }
         assets = assets.map(a => {
-            if (typeof a === 'string') return { id: a, src: sources[a] };
-            if (!a.src && sources[a.id]) a.src = sources[a.id];
+            if (typeof a === 'string') {
+                const source = sources[a];
+                if (typeof source === 'object') {
+                    return { id: a, src: source.src, tag: source.tag };
+                }
+                return { id: a, src: source };
+            }
+            if (!a.src && sources[a.id]) {
+                const source = sources[a.id];
+                if (typeof source === 'object') {
+                    a.src = source.src;
+                    a.tag = source.tag;
+                } else {
+                    a.src = source;
+                }
+            }
             return a;
         });
 
@@ -303,10 +318,15 @@ window.fluye = {
                     return;
                 }
 
-                const ext = asset.src.split('?')[0].split('.').pop().toLowerCase();
-                let el;
+                // Determinar tag: explícito, o por extensión
+                let tag = asset.tag;
+                if (!tag) {
+                    const ext = asset.src.split('?')[0].split('.').pop().toLowerCase();
+                    tag = (ext === 'css') ? 'link' : 'script';
+                }
 
-                if (ext === 'css') {
+                let el;
+                if (tag === 'link') {
                     el = document.createElement('link');
                     el.rel = 'stylesheet';
                     el.href = asset.src;
