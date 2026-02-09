@@ -2,6 +2,21 @@
 
 SDK JavaScript para interactuar con Fluye/DoorsBPM. Funciona en Node.js y browser.
 
+**Evolución de DoorsAPI2.** Misma API, diferente nombre de sesión:
+
+| DoorsAPI2 | Fluye |
+|-----------|-------|
+| `dSession` | `fSession` |
+| `dSession.webSession()` | `fluye.connect()` |
+
+```javascript
+// DoorsAPI2
+const folder = await dSession.folder(4183);
+
+// Fluye
+const folder = await fSession.folder(4183);
+```
+
 ## Quick Start
 
 ### Node.js

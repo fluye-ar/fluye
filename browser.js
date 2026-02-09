@@ -245,6 +245,32 @@ window.fluye = {
     inApp: typeof window.app7 == 'object',
 
     /**
+    Configura Tailwind con el tema Fluye (llamar después de load('tailwind'))
+    */
+    tailwindConfig: function() {
+        if (typeof tailwind !== 'undefined' && tailwind.config) {
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            fluye: {
+                                dark: '#1e4c76',
+                                mid: '#2d5a87',
+                                light: '#547797',
+                                bg: '#dbe7f6',
+                                accent: '#708eac',
+                            }
+                        },
+                        fontFamily: {
+                            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        }
+                    }
+                }
+            };
+        }
+    },
+
+    /**
     Carga scripts o css dinamicamente
     @param {string|object|array} assets - 'id', { id, src } o [ { id, src, depends } ]
     @returns {Promise<number>}
@@ -255,6 +281,8 @@ window.fluye = {
             'bootstrap': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
             'bootstrap-css': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
             'bootstrap-icons': 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
+            'tailwind': 'https://cdn.tailwindcss.com',
+            'inter-font': 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
         };
 
         if (!Array.isArray(assets)) assets = [assets];
