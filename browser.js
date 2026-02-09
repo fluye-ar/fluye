@@ -371,7 +371,26 @@ window.fluye = {
         return assets.length;
     },
 
-    // Para cargar modulos
+    /**
+    Cache de módulos con lazy loading
+    @param {string} key - Identificador del módulo
+    @param {Function} loader - Función async que carga el módulo
+    @param {Object} [context] - Si viene, llama a setContext del módulo
+    @returns {Promise<any>} El módulo cargado
+    @example
+    const aiChat = await fluye.mod('ai/chat', () => fSession.import({ ... }), ctx);
+    */
+    mod: async function(key, loader, context) {
+        if (!this.mods[key]) {
+            this.mods[key] = await loader();
+        }
+        if (context && this.mods[key].setContext) {
+            await this.mods[key].setContext(context);
+        }
+        return this.mods[key];
+    },
+
+    // Cache de modulos
     mods: {},
 
     /**
