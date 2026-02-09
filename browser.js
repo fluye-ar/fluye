@@ -5,6 +5,22 @@ Fresh: https://cdn.fluye.ar/ghf/fluye/browser.js?_fresh=1
 */
 
 
+// Actualiza meta tags e icons al cargar browser.js
+(function() {
+    const fluyeIcon = 'https://cdn.fluye.ar/ghf/fluye/brand/iso-logo.png';
+
+    const descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta) descMeta.setAttribute('content', 'Fluye');
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) ogImage.setAttribute('content', fluyeIcon);
+
+    // Actualiza todos los favicons/icons
+    document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => {
+        link.href = fluyeIcon;
+    });
+})();
+
 window.fluye = {
     /**
     Carga el client y crea la session
