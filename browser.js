@@ -363,20 +363,17 @@ window.fluye = {
             return new Promise((resolve) => {
                 const existingEl = document.getElementById('asset_' + asset.id);
                 if (existingEl) {
-                    console.log('[load] ' + asset.id + ' already exists, waiting...');
                     // Ya existe, esperar a que se cargue (max 3 segundos)
                     let waiting = 0;
                     const checkLoaded = () => {
                         waiting += 50;
                         if (existingEl.dataset.loaded === 'true') {
-                            console.log('[load] ' + asset.id + ' was already loaded');
                             asset.loaded = true;
                             resolve();
                         } else if (existingEl.dataset.loaded === 'error') {
-                            console.log('[load] ' + asset.id + ' had error');
                             resolve();
                         } else if (waiting > 3000) {
-                            console.log('[load] ' + asset.id + ' timeout (existing)');
+                            console.log(asset.id + ' timeout');
                             asset.loaded = true;
                             existingEl.dataset.loaded = 'true';
                             resolve();
