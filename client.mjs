@@ -5834,6 +5834,16 @@ export class Utilities {
         return _fastXmlParser;
     }
 
+    // Devuelve una property de un objeto (Case Insensitive)
+    findProp(obj, prop) {
+        var keys = Object.keys(obj);
+        for (var i = 0; i < keys.length; i++) {
+            if (keys[i].toLowerCase() == prop.toLowerCase()) {
+                return obj[keys[i]];
+            }
+        }
+    }
+
     getGuid() {
         var uuid = '', i, random;
         for (i = 0; i < 32; i++) {
