@@ -224,7 +224,20 @@ window.fluye = {
         fluye.bs.version[0]    // 5
         */
         get version() {
-            return bootstrapVersion();
+            let ver, ret;
+            try {
+                if (typeof bootstrap == 'object') {
+                    ver = bootstrap.Button.VERSION;
+                } else {
+                    ver = $.fn.button.Constructor.VERSION;
+                }
+                ret = ver.split('.').map(el => parseInt(el));
+                return ret;
+
+            } catch (er) {
+                console.warn('Bootstrap not found');
+                return [];
+            };
         }
     },
 
