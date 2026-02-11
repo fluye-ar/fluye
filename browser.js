@@ -171,7 +171,7 @@ window.fluye = {
         */
         toast: function (text, options) {
             debugger
-            var bsver = this.version;
+            var bsver = fluye.bs.version;
 
             if (bsver[0] < 5) {
                 console.warn('Bootstrap 5 es requerido para toast');
