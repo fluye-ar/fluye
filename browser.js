@@ -170,7 +170,6 @@ window.fluye = {
         t.hide();
         */
         toast: function (text, options) {
-            debugger
             var bsver = fluye.bs.version;
 
             if (bsver[0] < 5) {
@@ -196,7 +195,7 @@ window.fluye = {
             var $toast = $(`
                 <div class="toast">
                     <div class="toast-header">
-                        <img src="${ opt.icon }" class="rounded me-2">
+                        <img src="${ opt.icon }" class="rounded me-2" style="width: 20px;">
                         <strong class="me-auto">${ opt.title }</strong>
                         <small class="text-muted">${ opt.subtitle }</small>
                         <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
