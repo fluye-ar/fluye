@@ -5834,6 +5834,25 @@ export class Utilities {
         return _fastXmlParser;
     }
 
+    /*
+    Convierte un nro de bytes en un texto con la unidad conveniente
+    */
+    fileSize(size) {
+        var cutoff, i, selectedSize, selectedUnit;
+        var units = ['Tb', 'Gb', 'Mb', 'Kb', 'b'];
+
+        for (i = 0; i < units.length; i++) {
+            cutoff = Math.pow(1024, 4 - i);
+            if (size + 1 >= cutoff) {
+                selectedSize = size / cutoff;
+                selectedUnit = units[i];
+                break;
+            }
+        }
+        selectedSize = Math.round(10 * selectedSize) / 10;
+        return selectedSize + ' ' + selectedUnit;
+    };
+
     // Devuelve una property de un objeto (Case Insensitive)
     findProp(obj, prop) {
         var keys = Object.keys(obj);

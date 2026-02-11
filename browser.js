@@ -313,7 +313,6 @@ window.fluye = {
     @returns {Promise<number>}
     */
     load: async function(assets) {
-        console.log('[fluye.load] START', assets);
         // Sources: string (URL) o { src, tag: 'link'|'script' }
         const sources = {
             'jquery': 'https://code.jquery.com/jquery-3.7.1.min.js',
@@ -325,7 +324,6 @@ window.fluye = {
         };
 
         if (!Array.isArray(assets)) assets = [assets];
-        console.log('[fluye.load] Normalized to array', assets);
 
         // Normaliza: string -> { id, src, tag }
         assets = assets.map(a => {
@@ -395,11 +393,9 @@ window.fluye = {
 
         // Carga respetando dependencias
         const pending = [...assets];
-        console.log('[fluye.load] Starting dependency loop, pending:', pending.length);
         let iterations = 0;
         while (pending.length) {
             iterations++;
-            console.log(`[fluye.load] Iteration ${iterations}, pending:`, pending.length, 'loaded:', Object.keys(loaded));
             const ready = pending.filter(a => {
                 if (!a.depends) return true;
                 return a.depends.every(dep => {
@@ -408,12 +404,10 @@ window.fluye = {
                     return el && el.dataset.loaded === 'true';
                 });
             });
-            console.log('[fluye.load] Ready to load:', ready.length, ready.map(a => a.id));
 
             if (!ready.length) {
-                console.log('[fluye.load] No ready assets, waiting... Pending:', pending.map(a => ({ id: a.id, depends: a.depends })));
                 if (iterations > 100) {
-                    console.error('[fluye.load] TIMEOUT - stuck in dependency loop!');
+                    console.error('[fluye.load] TIMEOUT - stuck in dependency loop!', pending.map(a => ({ id: a.id, depends: a.depends })));
                     break;
                 }
                 await new Promise(r => setTimeout(r, 50));
@@ -424,7 +418,6 @@ window.fluye = {
             ready.forEach(a => pending.splice(pending.indexOf(a), 1));
         }
 
-        console.log('[fluye.load] DONE, loaded', assets.length, 'assets');
         return assets.length;
     },
 
