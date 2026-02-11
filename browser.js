@@ -296,7 +296,7 @@ window.fluye = {
                         window.serializeError = mod.default;
                     }
                     var err = serializeError.deserializeError(json);
-                    reject(err);
+                    throw err;
 
                 } catch(err) {
                     throw new Error(res.status + ' (' + res.statusText + ')');
