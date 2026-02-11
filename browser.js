@@ -170,6 +170,7 @@ window.fluye = {
         t.hide();
         */
         toast: function (text, options) {
+            debugger
             var bsver = this.version;
 
             if (bsver[0] < 5) {
