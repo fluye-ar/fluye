@@ -379,11 +379,13 @@ window.fluye = {
                 el.onload = () => {
                     loaded[asset.id] = true;
                     asset.loaded = true;
+                    el.dataset.loaded = 'true';  // Marca como cargado en el DOM
                     console.log(asset.id + ' loaded - ' + asset.src);
                     resolve();
                 };
                 el.onerror = () => {
                     console.error(asset.id + ' failed - ' + asset.src);
+                    el.dataset.loaded = 'error';  // Marca como error
                     resolve();
                 };
 
@@ -398,9 +400,14 @@ window.fluye = {
         while (pending.length) {
             iterations++;
             console.log(`[fluye.load] Iteration ${iterations}, pending:`, pending.length, 'loaded:', Object.keys(loaded));
-            const ready = pending.filter(a =>
-                !a.depends || a.depends.every(dep => loaded[dep])
-            );
+            const ready = pending.filter(a => {
+                if (!a.depends) return true;
+                return a.depends.every(dep => {
+                    if (loaded[dep]) return true;
+                    const el = document.getElementById('asset_' + dep);
+                    return el && el.dataset.loaded === 'true';
+                });
+            });
             console.log('[fluye.load] Ready to load:', ready.length, ready.map(a => a.id));
 
             if (!ready.length) {
