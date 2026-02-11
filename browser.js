@@ -363,12 +363,19 @@ window.fluye = {
             return new Promise((resolve) => {
                 const existingEl = document.getElementById('asset_' + asset.id);
                 if (existingEl) {
-                    // Ya existe, esperar a que se cargue
+                    // Ya existe, esperar a que se cargue (max 3 segundos)
+                    let waiting = 0;
                     const checkLoaded = () => {
+                        waiting += 50;
                         if (existingEl.dataset.loaded === 'true') {
                             asset.loaded = true;
                             resolve();
                         } else if (existingEl.dataset.loaded === 'error') {
+                            resolve();
+                        } else if (waiting > 3000) {
+                            console.log(asset.id + ' timeout');
+                            asset.loaded = true;
+                            existingEl.dataset.loaded = 'true';
                             resolve();
                         } else {
                             setTimeout(checkLoaded, 50);
@@ -397,17 +404,33 @@ window.fluye = {
                 }
 
                 el.id = 'asset_' + asset.id;
+
+                let resolved = false;
                 el.onload = () => {
+                    if (resolved) return;
+                    resolved = true;
                     asset.loaded = true;
                     el.dataset.loaded = 'true';
                     console.log(asset.id + ' loaded - ' + asset.src);
                     resolve();
                 };
                 el.onerror = () => {
+                    if (resolved) return;
+                    resolved = true;
                     console.error(asset.id + ' failed - ' + asset.src);
-                    el.dataset.loaded = 'error';  // Marca como error
+                    el.dataset.loaded = 'error';
                     resolve();
                 };
+
+                // Timeout 3s (para debugging cuando onload no se dispara)
+                setTimeout(() => {
+                    if (resolved) return;
+                    resolved = true;
+                    console.log(asset.id + ' timeout');
+                    asset.loaded = true;
+                    el.dataset.loaded = 'true';
+                    resolve();
+                }, 3000);
 
                 document.head.appendChild(el);
             });
