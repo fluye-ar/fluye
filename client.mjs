@@ -5949,6 +5949,7 @@ export class Utilities {
             if (me.session.node.inNode) {
                 if (_mainlib) {
                     // v8
+                    if (!module.owner) module.owner = 'fluye-ar';
                     ret = await _mainlib.gitImport(module);
                 } else {
                     // Node no v8, requiere --experimental-network-imports
