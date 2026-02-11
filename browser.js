@@ -363,17 +363,20 @@ window.fluye = {
             return new Promise((resolve) => {
                 const existingEl = document.getElementById('asset_' + asset.id);
                 if (existingEl) {
+                    console.log('[load] ' + asset.id + ' already exists, waiting...');
                     // Ya existe, esperar a que se cargue (max 3 segundos)
                     let waiting = 0;
                     const checkLoaded = () => {
                         waiting += 50;
                         if (existingEl.dataset.loaded === 'true') {
+                            console.log('[load] ' + asset.id + ' was already loaded');
                             asset.loaded = true;
                             resolve();
                         } else if (existingEl.dataset.loaded === 'error') {
+                            console.log('[load] ' + asset.id + ' had error');
                             resolve();
                         } else if (waiting > 3000) {
-                            console.log(asset.id + ' timeout');
+                            console.log('[load] ' + asset.id + ' timeout (existing)');
                             asset.loaded = true;
                             existingEl.dataset.loaded = 'true';
                             resolve();
@@ -439,6 +442,8 @@ window.fluye = {
         // Carga respetando dependencias
         const pending = [...assets];
         let iterations = 0;
+        console.log('[fluye.load] Starting -', assets.map(a => a.id).join(', '));
+
         while (pending.length) {
             iterations++;
             const ready = pending.filter(a => {
@@ -449,6 +454,10 @@ window.fluye = {
                 });
             });
 
+            if (iterations % 10 === 1) {
+                console.log('[fluye.load] Iter ' + iterations + ' - pending:', pending.map(a => a.id).join(', '), '- ready:', ready.map(a => a.id).join(', '));
+            }
+
             if (!ready.length) {
                 if (iterations > 100) {
                     console.error('[fluye.load] TIMEOUT - stuck in dependency loop!', pending.map(a => ({ id: a.id, depends: a.depends })));
@@ -458,10 +467,12 @@ window.fluye = {
                 continue;
             }
 
+            console.log('[fluye.load] Loading -', ready.map(a => a.id).join(', '));
             await Promise.all(ready.map(loadOne));
             ready.forEach(a => pending.splice(pending.indexOf(a), 1));
         }
 
+        console.log('[fluye.load] Done');
         return assets.length;
     },
 
