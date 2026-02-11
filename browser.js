@@ -360,12 +360,22 @@ window.fluye = {
             return a;
         });
 
-        const loaded = {};
-
         const loadOne = (asset) => {
             return new Promise((resolve) => {
-                if (loaded[asset.id] || document.getElementById('asset_' + asset.id)) {
-                    resolve();
+                const existingEl = document.getElementById('asset_' + asset.id);
+                if (existingEl) {
+                    // Ya existe, esperar a que se cargue
+                    const checkLoaded = () => {
+                        if (existingEl.dataset.loaded === 'true') {
+                            asset.loaded = true;
+                            resolve();
+                        } else if (existingEl.dataset.loaded === 'error') {
+                            resolve();
+                        } else {
+                            setTimeout(checkLoaded, 50);
+                        }
+                    };
+                    checkLoaded();
                     return;
                 }
 
@@ -389,9 +399,8 @@ window.fluye = {
 
                 el.id = 'asset_' + asset.id;
                 el.onload = () => {
-                    loaded[asset.id] = true;
                     asset.loaded = true;
-                    el.dataset.loaded = 'true';  // Marca como cargado en el DOM
+                    el.dataset.loaded = 'true';
                     console.log(asset.id + ' loaded - ' + asset.src);
                     resolve();
                 };
@@ -413,7 +422,6 @@ window.fluye = {
             const ready = pending.filter(a => {
                 if (!a.depends) return true;
                 return a.depends.every(dep => {
-                    if (loaded[dep]) return true;
                     const el = document.getElementById('asset_' + dep);
                     return el && el.dataset.loaded === 'true';
                 });
