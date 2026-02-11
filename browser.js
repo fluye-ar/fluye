@@ -270,7 +270,7 @@ window.fluye = {
         url // Devuelve la url en vez del buffer. Def false
         server // Opcional, def https://cdn.fluye.ar
     }
-    @returns {string|Promise<SimpleBuffer2>}
+    @returns {string|Promise<SimpleBuffer>}
     */
     gitCdn: async function (options) {
         if (!fluye.session) await fluye.init();
