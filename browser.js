@@ -282,7 +282,7 @@ window.fluye = {
             return url;
             
         } else {
-            let res = fetch(url);
+            let res = await fetch(url);
             if (res.ok) {
                 return utils.newSimpleBuffer(await res.arrayBuffer());
 
