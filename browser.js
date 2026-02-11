@@ -258,33 +258,54 @@ window.fluye = {
         URL.revokeObjectURL(url);
     },
 
-    inApp: typeof window.app7 == 'object',
-
     /**
-    Configura Tailwind con el tema Fluye (llamar después de load('tailwind'))
+    Devuelve un buffer con un elemento de GitHub o su url
+    @example
+    gitCdn({
+        owner // def fluye-ar
+        repo // 
+        path // Ruta al archivo, no poner el slash inicial
+        ref // Branch / tag
+        fresh // Actualiza el cache
+        url // Devuelve la url en vez del buffer. Def false
+        server // Opcional, def https://cdn.fluye.ar
+    }
+    @returns {string|Promise<SimpleBuffer2>}
     */
-    tailwindConfig: function() {
-        if (typeof tailwind !== 'undefined' && tailwind.config) {
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        colors: {
-                            fluye: {
-                                dark: '#1e4c76',
-                                mid: '#2d5a87',
-                                light: '#547797',
-                                bg: '#dbe7f6',
-                                accent: '#708eac',
-                            }
-                        },
-                        fontFamily: {
-                            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-                        }
+    gitCdn: async function (options) {
+        if (!fluye.session) await fluye.init();
+
+        let utils = fluye.session.utils;
+        let url = utils.ghCodeUrl(options);
+
+        if (options.url) {
+            return url;
+            
+        } else {
+            let res = fetch(url);
+            if (res.ok) {
+                return utils.newSimpleBuffer(await res.arrayBuffer());
+
+            } else {
+                try {
+                    var txt = await res.text();
+                    var json = JSON.parse(txt);
+                    // importa serialize si no esta
+                    if (!window.serializeError) {
+                        let mod = await import('https://cdn.jsdelivr.net/npm/serialize-error-cjs@0.1.3/+esm');
+                        window.serializeError = mod.default;
                     }
+                    var err = serializeError.deserializeError(json);
+                    reject(err);
+
+                } catch(err) {
+                    throw new Error(res.status + ' (' + res.statusText + ')');
                 }
-            };
+            }
         }
     },
+
+    inApp: typeof window.app7 == 'object',
 
     /**
     Carga scripts o css dinamicamente
@@ -448,6 +469,44 @@ window.fluye = {
         document.body.removeChild(form);
     },
 
-    urlParams: new URLSearchParams(window.location.search),
+    /**
+    Utilidades para Tailwind
+    */
+    tw: {
+        /**
+        Configura Tailwind con el tema Fluye (llamar después de tw.load())
+        */
+        config: function() {
+            if (typeof tailwind !== 'undefined' && tailwind.config) {
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {
+                                fluye: {
+                                    dark: '#1e4c76',
+                                    mid: '#2d5a87',
+                                    light: '#547797',
+                                    bg: '#dbe7f6',
+                                    accent: '#708eac',
+                                }
+                            },
+                            fontFamily: {
+                                sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                            }
+                        }
+                    }
+                };
+            }
+        },
 
+        /**
+        Carga Tailwind
+        */
+        load: async function () {
+            await fluye.load('tailwind');
+        },
+
+    },
+
+    urlParams: new URLSearchParams(window.location.search),
 }
