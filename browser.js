@@ -67,7 +67,7 @@ window.fluye = {
 
                 if (opt.storage == 's3' && att.fileStream2) {
                     let $prog = $(`
-                        <div class="mb-2">Subiendo ${ file.name } (${ fileSize(blb.size) })</div>
+                        <div class="mb-2">Subiendo ${ file.name } (${ opt.doc.session.utils.fileSize(blb.size) })</div>
                         <div class="progress">
                             <div class="progress-bar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
