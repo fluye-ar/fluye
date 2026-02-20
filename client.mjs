@@ -146,7 +146,7 @@ async function loadUtils() {
         } else {
             await fluye.load([
                 { id: 'lib-moment', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment-with-locales.min.js' },
-                { id: 'lib-moment-timezone', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.46/moment-timezone-with-data.min.js', depends: ['moment'] }
+                { id: 'lib-moment-timezone', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.46/moment-timezone-with-data.min.js', depends: ['lib-moment'] }
             ]);
             _moment = moment;
         }
