@@ -938,8 +938,8 @@ export class Session {
         return new Promise(async (resolve, reject) => {
             try {
                 if (!me.#s3) {
-                    me.#s3 = await me.import({ repo: 'Global', path: 's3.mjs' });
-                    await me.#s3.setContext({ dSession: me });
+                    me.#s3 = await me.import({ repo: 'fluye-lib', path: 's3.mjs' });
+                    await me.#s3.setContext({ fSession: me });
                 }
                 resolve(me.#s3);
 
