@@ -361,7 +361,7 @@ window.fluye = {
 
         const loadOne = (asset) => {
             return new Promise((resolve) => {
-                const existingEl = document.getElementById('asset_' + asset.id);
+                const existingEl = document.getElementById('asset_' + asset.id) || document.getElementById('script_' + asset.id);
                 if (existingEl) {
                     // Ya existe, esperar a que se cargue (max 3 segundos)
                     let waiting = 0;
@@ -445,7 +445,7 @@ window.fluye = {
             const ready = pending.filter(a => {
                 if (!a.depends) return true;
                 return a.depends.every(dep => {
-                    const el = document.getElementById('asset_' + dep);
+                    const el = document.getElementById('asset_' + dep) || document.getElementById('script_' + dep);
                     return el && el.dataset.loaded === 'true';
                 });
             });
