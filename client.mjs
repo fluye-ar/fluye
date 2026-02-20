@@ -6119,6 +6119,45 @@ export class Utilities {
         return ('0'.repeat(length) + string).slice(-length);
     }
 
+    /**
+    Devuelve el MIME type de un archivo según su extensión.
+    @param {string} filename
+    @returns {string}
+    */
+    mimeType(filename) {
+        const ext = (filename || '').split('.').pop()?.toLowerCase();
+        if (!ext || ext === filename?.toLowerCase()) return 'application/octet-stream';
+
+        const types = {
+            'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+            'gif': 'image/gif', 'webp': 'image/webp', 'svg': 'image/svg+xml',
+            'bmp': 'image/bmp', 'ico': 'image/x-icon',
+
+            'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg',
+            'm4a': 'audio/mp4', 'flac': 'audio/flac', 'webm': 'audio/webm',
+
+            'mp4': 'video/mp4', 'avi': 'video/x-msvideo',
+            'mov': 'video/quicktime', 'wmv': 'video/x-ms-wmv',
+
+            'pdf': 'application/pdf', 'csv': 'text/csv',
+            'txt': 'text/plain', 'html': 'text/html', 'css': 'text/css',
+            'js': 'text/javascript', 'json': 'application/json',
+            'xml': 'application/xml',
+
+            'zip': 'application/zip', 'rar': 'application/vnd.rar',
+            '7z': 'application/x-7z-compressed',
+
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt': 'application/vnd.ms-powerpoint',
+            'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        };
+
+        return types[ext] || 'application/octet-stream';
+    }
+
     /** https://momentjs.com/docs/ */
     get moment() {
         if (!_moment) throw new Error(utilsNotLoadedErr);
