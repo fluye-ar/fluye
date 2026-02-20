@@ -361,15 +361,18 @@ window.fluye = {
             return a;
         });
 
+        const findEl = (id) => document.getElementById('asset_' + id) || document.getElementById('script_' + id);
+        const isLoaded = (el) => el && (el.dataset.loaded === 'true' || el._loaded);
+
         const loadOne = (asset) => {
             return new Promise((resolve) => {
-                const existingEl = document.getElementById('asset_' + asset.id) || document.getElementById('script_' + asset.id);
+                const existingEl = findEl(asset.id);
                 if (existingEl) {
                     // Ya existe, esperar a que se cargue (max 3 segundos)
                     let waiting = 0;
                     const checkLoaded = () => {
                         waiting += 50;
-                        if (existingEl.dataset.loaded === 'true') {
+                        if (isLoaded(existingEl)) {
                             asset.loaded = true;
                             resolve();
                         } else if (existingEl.dataset.loaded === 'error') {
@@ -446,10 +449,7 @@ window.fluye = {
             iterations++;
             const ready = pending.filter(a => {
                 if (!a.depends) return true;
-                return a.depends.every(dep => {
-                    const el = document.getElementById('asset_' + dep) || document.getElementById('script_' + dep);
-                    return el && el.dataset.loaded === 'true';
-                });
+                return a.depends.every(dep => isLoaded(findEl(dep)));
             });
 
             if (!ready.length) {
