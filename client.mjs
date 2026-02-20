@@ -145,8 +145,8 @@ async function loadUtils() {
             _moment = res.default;
         } else {
             await fluye.load([
-                { id: 'moment', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment-with-locales.min.js' },
-                { id: 'moment-timezone', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.46/moment-timezone-with-data.min.js', depends: ['moment'] }
+                { id: 'lib-moment', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment-with-locales.min.js' },
+                { id: 'lib-moment-timezone', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.46/moment-timezone-with-data.min.js', depends: ['moment'] }
             ]);
             _moment = moment;
         }
@@ -167,8 +167,8 @@ async function loadUtils() {
                 _numeral = res.default;
             } else {
                 await fluye.load([
-                    { id: 'numeral', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js' },
-                    { id: 'numeral-locales', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/locales.min.js', depends: ['numeral'] }
+                    { id: 'lib-numeral', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js' },
+                    { id: 'lib-numeral-locales', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/locales.min.js', depends: ['lib-numeral'] }
                 ]);
                 _numeral = numeral;
             }
@@ -189,7 +189,7 @@ async function loadUtils() {
                 res = await import('crypto-js');
                 _CryptoJS = res.default;
             } else {
-                await fluye.load({ id: 'cryptojs', src: 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js' });
+                await fluye.load({ id: 'lib-cryptojs-aes', src: 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js' });
                 _CryptoJS = CryptoJS;
             }
         } else {
