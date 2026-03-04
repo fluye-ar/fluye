@@ -118,12 +118,12 @@ async function loadUtils() {
     }   
 
     
-    // mainlib (solo v8)
+    // mainlib (fluye: globalThis.fluye, v8: ../mainlib.mjs)
 
     try {
         if (inNode()) {
-            if (typeof(ctx) == 'object' && ctx.mainlib) {
-                _mainlib = ctx.mainlib;
+            if (typeof(fluye) == 'object') {
+                _mainlib = { gitCdn: fluye.gitFetch, gitImport: fluye.gitImport };
             } else {
                 try {
                     let mod = await import('../mainlib.mjs');
