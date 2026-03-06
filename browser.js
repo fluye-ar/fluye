@@ -410,11 +410,25 @@ window.fluye = {
 
                 el.id = 'script_' + asset.id;
 
+                // Compatibilidad con include.js: espera .loaded(callback) y ._loaded
+                el.loaded = function (callback) {
+                    var self = this;
+                    var waiting = 0;
+                    var interv = setInterval(function () {
+                        waiting += 10;
+                        if (self._loaded || waiting > 5000) {
+                            clearInterval(interv);
+                            if (callback) callback(self);
+                        }
+                    }, 10);
+                };
+
                 let resolved = false;
                 el.onload = () => {
                     if (resolved) return;
                     resolved = true;
                     asset.loaded = true;
+                    el._loaded = true;
                     el.dataset.loaded = 'true';
                     console.log(asset.id + ' loaded - ' + asset.src);
                     resolve();
