@@ -361,7 +361,7 @@ window.fluye = {
             return a;
         });
 
-        const findEl = (id) => document.getElementById('asset_' + id) || document.getElementById('script_' + id);
+        const findEl = (id) => document.getElementById('script_' + id);
         const isLoaded = (el) => el && (el.dataset.loaded === 'true' || el._loaded);
 
         const loadOne = (asset) => {
@@ -408,7 +408,7 @@ window.fluye = {
                     el.src = asset.src;
                 }
 
-                el.id = 'asset_' + asset.id;
+                el.id = 'script_' + asset.id;
 
                 let resolved = false;
                 el.onload = () => {
