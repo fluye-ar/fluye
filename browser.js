@@ -351,7 +351,7 @@ window.fluye = {
             }
             // src como objeto → ghCodeUrl
             if (a.src && typeof a.src === 'object') {
-                a.src = utils.ghCodeUrl(a.src);
+                a.src = fluye.session.utils.ghCodeUrl(a.src);
             }
             if (!a.src && sources[a.id]) {
                 const source = sources[a.id];
