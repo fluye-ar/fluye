@@ -2449,9 +2449,11 @@ export class Document {
     Access: read / modifiy / delete / admin.
     @returns {Promise}
     */
-    aclGrant(account, access) {
+    async aclGrant(account, access) {
         var url = 'documents/' + this.id + '/acl/' + access + '/grant/' + account;
-        return this.session.restClient.fetch(url, 'POST', {}, '');
+        var result = await this.session.restClient.fetch(url, 'POST', {}, '');
+        if (result === false) throw new Error('aclGrant failed: ' + access + ' for account ' + account + ' on doc ' + this.id);
+        return result;
     }
 
     /**
