@@ -5,7 +5,7 @@
  * Se copia a cada repo como .github/scripts/cdn-index.mjs
  *
  * Env vars (del workflow):
- *   CF_API_TOKEN, CF_ACCOUNT_ID, D1_DATABASE_ID, REPO_NAME
+ *   CF_API_TOKEN, CF_ACCOUNT_ID, D1_DATABASE_ID, REPO_OWNER, REPO_NAME
  */
 
 import { execSync } from 'child_process';
@@ -15,9 +15,10 @@ import { createHash } from 'crypto';
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const D1_DATABASE_ID = process.env.D1_DATABASE_ID;
+const REPO_OWNER = process.env.REPO_OWNER;
 const REPO_NAME = process.env.REPO_NAME;
 
-if (!CF_API_TOKEN || !CF_ACCOUNT_ID || !D1_DATABASE_ID || !REPO_NAME) {
+if (!CF_API_TOKEN || !CF_ACCOUNT_ID || !D1_DATABASE_ID || !REPO_OWNER || !REPO_NAME) {
     console.error('Missing env vars');
     process.exit(1);
 }
@@ -81,7 +82,7 @@ async function main() {
     const toIndex = changed.filter(shouldIndex);
     const toDelete = deleted.filter(shouldIndex);
 
-    console.log(`Repo: ${REPO_NAME}`);
+    console.log(`Repo: ${REPO_OWNER}/${REPO_NAME}`);
     console.log(`Changed: ${changed.length}, indexable: ${toIndex.length}`);
     console.log(`Deleted: ${deleted.length}, indexable: ${toDelete.length}`);
 
@@ -101,8 +102,8 @@ async function main() {
             const sha = createHash('sha1').update(content).digest('hex');
 
             await d1Query(
-                'INSERT OR REPLACE INTO assets(repo, path, extension, size, sha, content) VALUES (?, ?, ?, ?, ?, ?)',
-                [REPO_NAME, path, ext, String(stat.size), sha, content]
+                'INSERT OR REPLACE INTO assets(owner, repo, path, extension, size, sha, content) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [REPO_OWNER, REPO_NAME, path, ext, String(stat.size), sha, content]
             );
             indexed++;
         } catch (err) {
