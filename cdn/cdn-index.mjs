@@ -117,8 +117,8 @@ async function main() {
         try {
             // FTS5: buscar rowid y borrar
             const result = await d1Query(
-                'SELECT rowid FROM assets WHERE repo = ? AND path = ?',
-                [REPO_NAME, path]
+                'SELECT rowid FROM assets WHERE owner = ? AND repo = ? AND path = ?',
+                [REPO_OWNER, REPO_NAME, path]
             );
             const rowids = result[0]?.results?.map(r => r.rowid) || [];
             for (const rowid of rowids) {
