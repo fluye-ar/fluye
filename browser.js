@@ -346,7 +346,9 @@ window.fluye = {
             if (typeof a === 'string') {
                 const source = sources[a];
                 if (typeof source === 'object') {
-                    return { id: a, src: source.src, tag: source.tag };
+                    let src = source.src;
+                    if (src && typeof src === 'object') src = fluye.session.utils.ghCodeUrl(src);
+                    return { id: a, src, tag: source.tag };
                 }
                 return { id: a, src: source };
             }
