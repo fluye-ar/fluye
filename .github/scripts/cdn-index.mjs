@@ -60,13 +60,23 @@ async function d1Query(sql, params = []) {
 }
 
 async function main() {
-    // Archivos cambiados (Added, Copied, Modified, Renamed)
-    const changed = execSync('git diff --name-only --diff-filter=ACMR HEAD~1 HEAD')
-        .toString().trim().split('\n').filter(Boolean);
+    // Detectar si es primer commit (sin padre)
+    let isFirst = false;
+    try { execSync('git rev-parse HEAD~1', { stdio: 'ignore' }); } catch { isFirst = true; }
 
-    // Archivos eliminados
-    const deleted = execSync('git diff --name-only --diff-filter=D HEAD~1 HEAD')
-        .toString().trim().split('\n').filter(Boolean);
+    let changed, deleted;
+
+    if (isFirst) {
+        // Primer commit: indexar todos los archivos
+        changed = execSync('git ls-tree -r HEAD --name-only')
+            .toString().trim().split('\n').filter(Boolean);
+        deleted = [];
+    } else {
+        changed = execSync('git diff --name-only --diff-filter=ACMR HEAD~1 HEAD')
+            .toString().trim().split('\n').filter(Boolean);
+        deleted = execSync('git diff --name-only --diff-filter=D HEAD~1 HEAD')
+            .toString().trim().split('\n').filter(Boolean);
+    }
 
     const toIndex = changed.filter(shouldIndex);
     const toDelete = deleted.filter(shouldIndex);
