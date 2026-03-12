@@ -16,6 +16,7 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           D1_DATABASE_ID: "23cdd601-dc07-4666-81a3-50f25e739eeb"
+          REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
         run: |
           curl -sf https://cdn.fluye.ar/ghf/fluye/cdn/cdn-index.mjs -o /tmp/cdn-index.mjs
