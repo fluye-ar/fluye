@@ -24,7 +24,7 @@ if (!CF_API_TOKEN || !CF_ACCOUNT_ID || !D1_DATABASE_ID || !REPO_OWNER || !REPO_N
 }
 
 const INDEXABLE_EXTS = new Set([
-    'mjs', 'js', 'md', 'css', 'html', 'sql', 'json', 'yml', 'yaml', 'toml',
+    'mjs', 'js', 'md', 'txt', 'css', 'html', 'sql', 'json', 'yml', 'yaml', 'toml',
 ]);
 
 const EXCLUDED_PATHS = ['node_modules/', '.git/', 'package-lock.json'];
