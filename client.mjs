@@ -4762,8 +4762,12 @@ export class Node {
 
                 let code = await me.codeOptions(structuredClone(options.code));
                 code.exec = true;
-                let srv = await me.server;
-                if (srv) code.server = srv;
+                if (options.vercel) {
+                    code.vercel = true;
+                } else {
+                    let srv = await me.server;
+                    if (srv) code.server = srv;
+                }
 
                 let url = me.session.utils.ghCodeUrl(code);
 
@@ -5919,9 +5923,13 @@ export class Utilities {
 
         let url;
         if (opt.exec) {
-            url = (opt.server ? opt.server : 'https://node.cloudycrm.net') + '/ghx';
+            if (opt.vercel) {
+                url = (opt.server || 'https://fluye.ar') + '/api/ghx';
+            } else {
+                url = (opt.server || 'https://node.cloudycrm.net') + '/ghx';
+            }
         } else {
-            url = (opt.server ? opt.server : 'https://cdn.fluye.ar') + '/gh';
+            url = (opt.server || 'https://cdn.fluye.ar') + '/gh';
         }
         url += `/${ opt.owner }/${ opt.repo }`;
         url += opt.ref ? `@${ opt.ref }` : '';
