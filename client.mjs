@@ -24,7 +24,7 @@ https://cdn.fluye.ar/ghf/fluye/client.mjs?_fresh=1
 https://cdn.cloudycrm.net/gh/fluye-ar/fluye/client.mjs?_fresh=1
 */
 
-var _mainlib, _moment, _numeral, _CryptoJS, _serializeError,
+var platform, _mainlib, _moment, _numeral, _CryptoJS, _serializeError,
     _fastXmlParser, _URL, _htmlEntities, _contentDisposition;
 
 let serverTimeZone = 'America/Argentina/Cordoba';
@@ -56,6 +56,7 @@ await utilsPromise;
 */
 
 async function loadUtils() {
+    // Polyfills
    
     // String.reverse
     if (typeof String.prototype.reverse !== 'function') {
@@ -106,9 +107,20 @@ async function loadUtils() {
         }
     }
 
+    // Plataforms
 
-    // Si estoy en browser cargo browser.js
-    if (!inNode() && typeof window !== 'undefined' && !window.fluye) {
+    if (typeof window !== 'undefined') {
+        platform = 'browser';
+    } else if (globalThis.fluye) {
+        platform = globalThis.fluye.engine;
+    } else if (globalThis._engine) {
+        platform = globalThis._engine;
+    } else if (typeof process !== 'undefined' && process.versions?.node) {
+        platform = 'node';
+    }
+
+    // Fluye
+    if (platform === 'browser' && !window.fluye) {
         await new Promise((resolve) => {
             const script = document.createElement('script');
             script.src = 'https://cdn.fluye.ar/ghf/fluye/browser.js';
@@ -118,22 +130,15 @@ async function loadUtils() {
     }   
 
     
-    // mainlib (fluye: globalThis.fluye, v8: ../mainlib.mjs)
+    // mainlib (solo v8)
 
-    try {
-        if (inNode()) {
-            if (typeof(fluye) == 'object') {
-                _mainlib = { gitCdn: fluye.gitFetch, gitImport: fluye.gitImport };
-            } else {
-                try {
-                    let mod = await import('../mainlib.mjs');
-                    _mainlib = mod.default ? mod.default : mod;
-                } catch(er) {}
-            }
+    if (platform == 'Ev8') {
+        try {
+            let mod = await import('../mainlib.mjs');
+            _mainlib = mod.default ? mod.default : mod;
+        } catch(er) {
+            console.error('Error loading mainlib', err)
         }
-
-    } catch(err) {
-        console.error('Error loading mainlib', err);
     }
 
 
@@ -5985,17 +5990,12 @@ export class Utilities {
 
         let ret;
         if (typeof(module) == 'object') {
-            if (me.session.node.inNode) {
-                if (_mainlib) {
-                    // v8
-                    if (!module.owner) module.owner = 'fluye-ar';
-                    ret = await _mainlib.gitImport(module);
-                } else {
-                    // Node no v8, requiere --experimental-network-imports
-                    ret = await import(me.ghCodeUrl(module));
-                }
+            if (platform == 'Ev8') {
+                if (!module.owner) module.owner = 'fluye-ar';
+                ret = await _mainlib.gitImport(module);
+            } else if (platform == 'Vercel') {
+                ret = await globalThis.fluye.gitImport(module);
             } else {
-                // Client
                 ret = await import(me.ghCodeUrl(module));
             }
         } else {
