@@ -107,19 +107,22 @@ async function loadUtils() {
         }
     }
 
+
     // Plataforms
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.document) {
         platform = 'browser';
     } else if (globalThis.fluye) {
-        platform = globalThis.fluye.engine;
+        platform = globalThis.fluye.engine; // Vercel
     } else if (globalThis._engine) {
-        platform = globalThis._engine;
+        platform = globalThis._engine; // Ev8
     } else if (typeof process !== 'undefined' && process.versions?.node) {
         platform = 'node';
     }
 
+
     // Fluye
+
     if (platform === 'browser' && !window.fluye) {
         await new Promise((resolve) => {
             const script = document.createElement('script');
@@ -4741,13 +4744,15 @@ export class Node {
 
         if (typeof(options.code) == 'string') {
             // Vino el codigo
-            return me.exec({
+            let execOpts = {
                 code: {
                     repo: 'fluye-lib',
                     path: 'server/evalapi.js',
                 },
                 payload: options,
-            });
+            };
+            if (options.vercel) execOpts.vercel = true;
+            return me.exec(execOpts);
 
         } else {
             return new Promise(async (resolve, reject) => {
