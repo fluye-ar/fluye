@@ -56,7 +56,7 @@ await utilsPromise;
 */
 
 async function loadNumeralLocale(locale) {
-    let code = await (await fetch(`https://esm.sh/numeral@2.0.6/locales/${locale}.js`)).text();
+    let code = await (await fetch(`https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/locales/${locale}.min.js`)).text();
     let fn = new Function(code);
     fn.call({ numeral: _numeral });
 }
