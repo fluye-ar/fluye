@@ -427,6 +427,118 @@ export class SimpleBuffer extends Uint8Array {
 }
 
 
+/**
+Clase Fluye — Entry point para conectar a la plataforma Fluye.
+Maneja auth (Cognito JWT o API key) y selección de instancia.
+Devuelve un Session listo para usar.
+
+Uso:
+    // Con API key (scripts Node.js)
+    let fluye = new Fluye({ apiKey: 'flk_abc123' });
+    let fSession = await fluye.connect('ormay');
+    let folder = await fSession.folder(1234);
+
+    // Múltiples instancias
+    let ormay = await fluye.connect('ormay');
+    let vidacel = await fluye.connect('vidacel');
+
+    // Con Cognito JWT (app React, browser)
+    let fluye = new Fluye({ token: cognitoJwt });
+    let fSession = await fluye.connect('ormay');
+
+*/
+export class Fluye {
+    #url;
+    #apiKey;
+    #token;
+    #instances;
+
+    constructor(options = {}) {
+        this.#url = options.url || 'https://fluye.ar/api/v9';
+        this.#apiKey = options.apiKey;
+        this.#token = options.token;
+        this.#instances = new FluyeInstances(this);
+    }
+
+    // Conecta a una instancia. Retorna un Session autenticado.
+    async connect(instance) {
+        let me = this;
+        let res = await me.fetch('/session/connect', {
+            method: 'POST',
+            body: JSON.stringify({ instance }),
+        });
+        let data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Connect failed');
+
+        return new Session(data.serverUrl, data.authToken);
+    }
+
+    get instances() { return this.#instances; }
+
+    set token(value) { this.#token = value; }
+    set apiKey(value) { this.#apiKey = value; }
+
+    async fetch(path, options = {}) {
+        let headers = { 'Content-Type': 'application/json' };
+        if (this.#token) headers['Authorization'] = 'Bearer ' + this.#token;
+        if (this.#apiKey) headers['X-Api-Key'] = this.#apiKey;
+        return fetch(this.#url + path, { ...options, headers: { ...headers, ...options.headers } });
+    }
+}
+
+/**
+Instancias registradas del usuario.
+
+Uso:
+    let list = await fluye.instances.list();
+    await fluye.instances.add({ url, login, pwd, instance });
+    await fluye.instances.remove('ormay');
+*/
+class FluyeInstances {
+    #fluye;
+    #cache;
+
+    constructor(fluye) {
+        this.#fluye = fluye;
+    }
+
+    async list() {
+        let me = this;
+        if (!me.#cache) {
+            let res = await me.#fluye.fetch('/instances');
+            let data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'List instances failed');
+            me.#cache = data;
+        }
+        return me.#cache;
+    }
+
+    async add({ url, login, pwd, instance }) {
+        let me = this;
+        let res = await me.#fluye.fetch('/instances', {
+            method: 'POST',
+            body: JSON.stringify({ url, login, pwd, instance }),
+        });
+        let data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Add instance failed');
+        me.#cache = null;
+        return data;
+    }
+
+    async remove(instance) {
+        let me = this;
+        let res = await me.#fluye.fetch('/instances', {
+            method: 'DELETE',
+            body: JSON.stringify({ instance }),
+        });
+        let data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Remove instance failed');
+        me.#cache = null;
+        return data;
+    }
+}
+
+
 export class Session {
     #restClient;
     #v8Client;

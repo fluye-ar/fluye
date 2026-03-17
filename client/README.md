@@ -31,22 +31,19 @@ Cada módulo exporta una clase que recibe `session` en el constructor.
 
 | Archivo | Clase | Propiedad en Session | Qué hace |
 |---------|-------|---------------------|----------|
-| `instance.mjs` | — | enriquece `instance` | Mergea `.fluye` (PG) en el objeto instance (.NET) |
+| `instance.mjs` | — | enriquece `instance` | Mergea `.fluye` en el objeto instance (.NET) |
 | `ai.mjs` | `AI` | `fSession.ai` | Proxy Claude API + token tracking |
-| `sql.mjs` | — | — | Queries PG centralizadas (migran a APIs) |
 
-## sql.mjs — Queries centralizadas
+## Endpoints
 
-**Todas** las queries a `fluye_master` (PostgreSQL) van en este archivo. Cada función mapea a un endpoint futuro del server Fluye.
+Los módulos consumen los endpoints del server Fluye (`fluye-core/app/api/`):
 
-Cuando un endpoint esté implementado en `fluye-core/app/api/`, se reemplaza la query PG por un `fetch()` al endpoint. Así se sabe exactamente qué falta migrar.
-
-| Función | Endpoint futuro | Estado |
-|---------|----------------|--------|
-| `instanceConfig(name)` | `GET /api/instances/:instance` | SQL directo |
-| `aiTokensLog(data)` | `POST /api/ai/tokens/log` | SQL directo |
-| `aiTokensCheck(instance, feature)` | `GET /api/ai/tokens/check` | SQL directo |
-| `aiCall(options)` | `POST /api/ai/call` | proxy Anthropic |
+| Endpoint | Módulo | Descripción |
+|----------|--------|-------------|
+| `GET /api/instances/:instance` | `instance.mjs` | Config de instancia (repo, features, budget) |
+| `POST /api/ai/call` | `ai.mjs` | Proxy a Claude API |
+| `POST /api/ai/tokens/log` | `ai.mjs` | Registrar consumo de tokens |
+| `GET /api/ai/tokens/check` | `ai.mjs` | Verificar presupuesto disponible |
 
 ## instance.mjs — Enriquecimiento de instance
 
@@ -59,7 +56,7 @@ Cuando un endpoint esté implementado en `fluye-core/app/api/`, se reemplaza la 
 }
 ```
 
-`instance.mjs` agrega `.fluye` con la config de la plataforma desde PG `fluye_master.instances`:
+`instance.mjs` agrega `.fluye` con la config de la plataforma desde el endpoint:
 
 ```javascript
 let inst = await fSession.instance;
@@ -72,14 +69,14 @@ Se carga eager: cada vez que se resuelve `fSession.instance`, se enriquece autom
 
 ```
 AI
-├── .call(options)              → proxy a Claude API
+├── .call(options)              → POST /api/ai/call
 │   options: { model, system, messages, tools, max_tokens, useCache, feature }
 │   retorna: { text, content, stop_reason, usage, model }
 │
 └── .tokens                     → sub-objeto Tokens (sync, Pattern A)
-    ├── .log(data)              → registrar consumo
+    ├── .log(data)              → POST /api/ai/tokens/log
     │   data: { instance, feature, model, tokens_in, tokens_out, cost_usd, ... }
-    ├── .check(instance, feat)  → verificar presupuesto
+    ├── .check(instance, feat)  → GET /api/ai/tokens/check
     │   retorna: { allowed, remaining_usd, message }
     └── (futuro: .usage, .report, etc.)
 ```
