@@ -55,6 +55,12 @@ Mientras tanto, si en algun metodo da error xq no esta el modulo esperar la prom
 await utilsPromise;
 */
 
+async function loadNumeralLocale(locale) {
+    let code = await (await fetch(`https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/locales/${locale}.min.js`)).text();
+    let fn = new Function(code);
+    fn.call({ numeral: _numeral });
+}
+
 async function loadUtils() {
     // Polyfills
    
@@ -174,12 +180,10 @@ async function loadUtils() {
                 await import('numeral/locales/es.js');
                 _numeral = res.default;
             } else {
-                await fluye.load([
-                    { id: 'lib-numeral', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js' },
-                    { id: 'lib-numeral-locales', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/locales.min.js', depends: ['lib-numeral'] }
-                ]);
-                _numeral = numeral;
+                res = await import('https://esm.sh/numeral@2.0.6');
             }
+            _numeral = res.default;
+            try { _numeral.localeData('es'); } catch { await loadNumeralLocale('es'); }
         } else {
             _numeral = numeral;
         }
