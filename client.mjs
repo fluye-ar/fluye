@@ -168,14 +168,11 @@ async function loadUtils() {
             if (inNode()) {
                 res = await import('numeral');
                 await import('numeral/locales/es.js');
-                _numeral = res.default;
             } else {
-                await fluye.load([
-                    { id: 'lib-numeral', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js' },
-                    { id: 'lib-numeral-locales', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/locales.min.js', depends: ['lib-numeral'] }
-                ]);
-                _numeral = numeral;
+                res = await import('https://esm.sh/numeral@2.0.6');
+                await import('https://esm.sh/numeral@2.0.6/locales/es.js');
             }
+            _numeral = res.default;
         } else {
             _numeral = numeral;
         }
