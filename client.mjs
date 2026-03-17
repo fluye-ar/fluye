@@ -127,16 +127,6 @@ async function loadUtils() {
     }
 
 
-    // Fluye
-
-    if (platform === 'browser' && !window.fluye) {
-        await new Promise((resolve) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.fluye.ar/ghf/fluye/browser.js';
-            script.onload = resolve;
-            document.head.appendChild(script);
-        });
-    }   
 
     
     // mainlib (solo v8)
