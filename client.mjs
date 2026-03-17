@@ -168,7 +168,7 @@ async function loadUtils() {
                 res = await import('https://esm.sh/numeral@2.0.6');
             }
             _numeral = res.default;
-            if (!_numeral.localeData('es')) await loadNumeralLocale('es');
+            try { _numeral.localeData('es'); } catch { await loadNumeralLocale('es'); }
         } else {
             _numeral = numeral;
         }
