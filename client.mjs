@@ -144,14 +144,10 @@ async function loadUtils() {
     try {
         if (inNode()) {
             res = await import('moment-timezone');
-            _moment = res.default;
         } else {
-            await fluye.load([
-                { id: 'lib-moment', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment-with-locales.min.js' },
-                { id: 'lib-moment-timezone', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.46/moment-timezone-with-data.min.js', depends: ['lib-moment'] }
-            ]);
-            _moment = moment;
+            res = await import('https://esm.sh/moment-timezone@0.5.46');
         }
+        _moment = res.default;
         _moment.tz.setDefault(serverTimeZone);
 
     } catch(err) {
@@ -187,11 +183,10 @@ async function loadUtils() {
         if (typeof(CryptoJS) == 'undefined') {
             if (inNode()) {
                 res = await import('crypto-js');
-                _CryptoJS = res.default;
             } else {
-                await fluye.load({ id: 'lib-cryptojs-aes', src: 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js' });
-                _CryptoJS = CryptoJS;
+                res = await import('https://esm.sh/crypto-js@4.2.0');
             }
+            _CryptoJS = res.default;
         } else {
             _CryptoJS = CryptoJS;
         }
