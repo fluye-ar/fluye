@@ -121,6 +121,16 @@ async function loadUtils() {
     }
 
 
+    // Fluye
+
+    if (platform === 'browser' && !window.fluye) {
+        await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.fluye.ar/ghf/fluye/browser.js';
+            script.onload = resolve;
+            document.head.appendChild(script);
+        });
+    }   
 
     
     // mainlib (solo v8)
@@ -140,10 +150,14 @@ async function loadUtils() {
     try {
         if (inNode()) {
             res = await import('moment-timezone');
+            _moment = res.default;
         } else {
-            res = await import('https://esm.sh/moment-timezone@0.5.46');
+            await fluye.load([
+                { id: 'lib-moment', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment-with-locales.min.js' },
+                { id: 'lib-moment-timezone', src: 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.46/moment-timezone-with-data.min.js', depends: ['lib-moment'] }
+            ]);
+            _moment = moment;
         }
-        _moment = res.default;
         _moment.tz.setDefault(serverTimeZone);
 
     } catch(err) {
@@ -158,11 +172,14 @@ async function loadUtils() {
             if (inNode()) {
                 res = await import('numeral');
                 await import('numeral/locales/es.js');
+                _numeral = res.default;
             } else {
-                res = await import('https://esm.sh/numeral@2.0.6');
-                await import('https://esm.sh/numeral@2.0.6/locales/es.js');
+                await fluye.load([
+                    { id: 'lib-numeral', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js' },
+                    { id: 'lib-numeral-locales', src: 'https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/locales.min.js', depends: ['lib-numeral'] }
+                ]);
+                _numeral = numeral;
             }
-            _numeral = res.default;
         } else {
             _numeral = numeral;
         }
@@ -178,10 +195,11 @@ async function loadUtils() {
         if (typeof(CryptoJS) == 'undefined') {
             if (inNode()) {
                 res = await import('crypto-js');
+                _CryptoJS = res.default;
             } else {
-                res = await import('https://esm.sh/crypto-js@4.2.0');
+                await fluye.load({ id: 'lib-cryptojs-aes', src: 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js' });
+                _CryptoJS = CryptoJS;
             }
-            _CryptoJS = res.default;
         } else {
             _CryptoJS = CryptoJS;
         }
