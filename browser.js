@@ -29,7 +29,8 @@ window.fluye = {
     */
     init: async function() {
         if (!fluye.client) {
-            let url = localStorage.getItem('fluyeClientUrl') || 'https://cdn.fluye.ar/ghf/fluye/client.mjs';
+            let branch = localStorage.getItem('fluyeClientBranch');
+            let url = branch ? `https://cdn.fluye.ar/ghf/fluye@${branch}/client.mjs` : 'https://cdn.fluye.ar/ghf/fluye/client.mjs';
             fluye.client = await import(url + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
         }
         if (!fluye.session) {
