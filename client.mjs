@@ -188,11 +188,10 @@ async function loadUtils() {
         if (typeof(CryptoJS) == 'undefined') {
             if (inNode()) {
                 res = await import('crypto-js');
-                _CryptoJS = res.default;
             } else {
-                await fluye.load({ id: 'lib-cryptojs-aes', src: 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js' });
-                _CryptoJS = CryptoJS;
+                res = await import('https://esm.sh/crypto-js@4.2.0');
             }
+            _CryptoJS = res.default;
         } else {
             _CryptoJS = CryptoJS;
         }
