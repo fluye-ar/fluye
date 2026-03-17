@@ -28,7 +28,10 @@ window.fluye = {
     Carga el client y crea la session
     */
     init: async function() {
-        if (!fluye.client) fluye.client = await import('https://cdn.fluye.ar/ghf/fluye/client.mjs' + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
+        if (!fluye.client) {
+            let url = localStorage.getItem('fluyeClientUrl') || 'https://cdn.fluye.ar/ghf/fluye/client.mjs';
+            fluye.client = await import(url + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
+        }
         if (!fluye.session) {
             fluye.session = new fluye.client.Session();
             window.fSession = fluye.session;
