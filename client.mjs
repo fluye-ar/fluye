@@ -3527,86 +3527,103 @@ export class Folder {
     Access Control List propio y heredado.
     @returns {Promise<Object[]>}
     */
-    /*
     acl() {
-        //todo
+        var url = 'folders/' + this.id + '/acl';
+        return this.session.restClient.fetch(url, 'GET', '', '');
     }
-    */
 
     /**
     Otorga el permiso access a la cuenta account (id).
-    Access: fld_create / fld_read / fld_view / fld_admin / doc_create / doc_read / doc_modify / 
+    Access: fld_create / fld_read / fld_view / fld_admin / doc_create / doc_read / doc_modify /
     doc_delete / doc_admin / vie_create / vie_create_priv / vie_read / vie_modify / vie_admin.
     @returns {Promise}
     */
-    /*
-    aclGrant(account, access) {
-        // todo
-        var url = 'documents/' + this.id + '/acl/' + access + '/grant/' + account;
-        return this.session.restClient.fetch(url, 'POST', {}, '');
+    async aclGrant(account, access) {
+        var url = 'folders/' + this.id + '/acl/' + access + '/grant/' + account;
+        var result = await this.session.restClient.fetch(url, 'POST', {}, '');
+        if (result === false) throw new Error('aclGrant failed: ' + access + ' for account ' + account + ' on folder ' + this.id);
+        return result;
     }
-    */
 
     /**
     Access Control List heredado.
     @returns {Promise<Object[]>}
     */
-    /*
     aclInherited() {
-        //todo
+        var url = 'folders/' + this.id + '/aclinherited';
+        return this.session.restClient.fetch(url, 'GET', '', '');
     }
-    */
 
     /**
     Devuelve o establece si se heredan permisos.
-    @returns {Promise}
+    @returns {Promise<boolean>}
     */
-    /*
     aclInherits(value) {
-        //todo
+        if (value === undefined) {
+            return (this.#json.AclInherits ? true : false);
+        } else {
+            var me = this;
+            return new Promise((resolve, reject) => {
+                var url = 'folders/' + this.id + '/aclinherits/' + value;
+                this.session.restClient.fetch(url, 'POST', {}, '').then(
+                    res => {
+                        if (res) {
+                            me.#json.AclInherits = (value ? true : false);
+                        }
+                        resolve(res);
+                    },
+                    err => {
+                        reject(err);
+                    }
+                )
+            });
+        }
     }
-    */
 
     /**
     Access Control List propio.
     @returns {Promise<Object[]>}
     */
-    /*
     aclOwn() {
-        //todo
+        var url = 'folders/' + this.id + '/aclown/';
+        return this.session.restClient.fetch(url, 'GET', '', '');
     }
-    */
 
     /**
     Revoca el permiso access a la cuenta account (id).
-    Access: fld_create / fld_read / fld_view / fld_admin / doc_create / doc_read / doc_modify / 
+    Access: fld_create / fld_read / fld_view / fld_admin / doc_create / doc_read / doc_modify /
     doc_delete / doc_admin / vie_create / vie_create_priv / vie_read / vie_modify / vie_admin.
     @returns {Promise}
     */
-    /*
     aclRevoke(account, access) {
-        //todo
-        var url = 'documents/' + this.id + '/acl/' + access + '/revoke/' + account;
+        var url = 'folders/' + this.id + '/acl/' + access + '/revoke/' + account;
         return this.session.restClient.fetch(url, 'DELETE', {}, '');
     }
-    */
 
     /**
     Revoca todos los permisos de la cuenta account (id).
     Si account no se especifica revoca todos los permisos de todas las cuentas.
     @returns {Promise}
     */
-    /*
     aclRevokeAll(account) {
-        //todo
-        var url = 'documents/' + this.id + '/acl/revokeAll';
+        var url = 'folders/' + this.id + '/acl/revokeall';
         if (account) {
-            // Si viene account es un revokeAll para esa cuenta
-            url += '/' + account;
+            url += '/account/' + account;
         }
         return this.session.restClient.fetch(url, 'DELETE', {}, '');
     }
+
+    /**
+    Devuelve true si el currentUser tiene el acceso indicado en la carpeta.
+    @param {string} access - fld_view / fld_create / fld_read / fld_admin / doc_create / doc_read / doc_modify / doc_delete / doc_admin
+    @param {boolean} [explicit] - Si true, no considera herencia
+    @returns {Promise<boolean>}
     */
+    currentAccess(access, explicit) {
+        var inherits = explicit ? false : true;
+        var url = `acl/access?accId=&permission=${ access }&objId=${ this.id }&objType=${ Folder.objectType }&inherits=${ inherits }&objParentId=`;
+        return this.session.restClient.fetch(url, 'GET', '', '');
+    }
 
     /*
     ancestors() {
