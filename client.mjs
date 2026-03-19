@@ -447,12 +447,12 @@ export class Fluye {
         this.#instances = new FluyeInstances(this);
     }
 
-    // Conecta a una instancia. Retorna un Session autenticado.
-    async connect(instance) {
+    // Conecta a una instancia por id. Retorna un Session autenticado.
+    async connect(id) {
         let me = this;
         let res = await me.fetch('/session/connect', {
             method: 'POST',
-            body: JSON.stringify({ instance }),
+            body: JSON.stringify({ id }),
         });
         let data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Connect failed');
@@ -479,7 +479,7 @@ Instancias registradas del usuario.
 Uso:
     let list = await fluye.instances.list();
     await fluye.instances.add({ url, login, pwd, instance });
-    await fluye.instances.remove('ormay');
+    await fluye.instances.remove(id);
 */
 class FluyeInstances {
     #fluye;
@@ -512,11 +512,11 @@ class FluyeInstances {
         return data;
     }
 
-    async remove(instance) {
+    async remove(id) {
         let me = this;
         let res = await me.#fluye.fetch('/instances', {
             method: 'DELETE',
-            body: JSON.stringify({ instance }),
+            body: JSON.stringify({ id }),
         });
         let data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Remove instance failed');
