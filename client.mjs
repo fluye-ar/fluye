@@ -500,11 +500,11 @@ class FluyeInstances {
         return me.#cache;
     }
 
-    async add({ url, login, pwd, instance }) {
+    async add({ name, url, login, pwd, instance, protectPwd }) {
         let me = this;
         let res = await me.#fluye.fetch('/instances', {
             method: 'POST',
-            body: JSON.stringify({ url, login, pwd, instance }),
+            body: JSON.stringify({ name, url, login, pwd, instance, protectPwd }),
         });
         let data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Add instance failed');
