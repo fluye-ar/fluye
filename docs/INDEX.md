@@ -57,7 +57,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 |---------|-------------|
 | `DoorsBPM/README.md` | Overview de la plataforma |
 | `DoorsBPM/CLAUDE.md` | Arquitectura completa, tech stack |
-| `DoorsBPM/ACL.md` | Control de acceso y seguridad |
+| `fluye-core/legacy/doors/ACL.md` | Control de acceso y seguridad (ACL, permisos, SYS_READERS) |
 | `DoorsBPM/CONNECTIONS.md` | Gestión de conexiones |
 | `DoorsBPM/VIEWS.md` | Sistema de vistas |
 
@@ -74,7 +74,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 | Archivo | Descripción |
 |---------|-------------|
 | `DoorsBPM/LOGS.md` | **Sistema de logs** - erYYMMDD.log, dpYYMMDD.log, acYYMMDD.log |
-| `DoorsBPM/SYS_DOC_LOG.md` | **Audit log y recovery** - Data recovery scripts |
+| `fluye-core/legacy/doors/SYS_DOC_LOG.md` | **Audit log y recovery** - Data recovery scripts, LOG_CONF |
 | `DoorsBPM/SYS_DML_LOG.md` | DML audit log |
 
 ---
@@ -351,7 +351,7 @@ const kbIndex = await loadMd('fluye/docs/INDEX.md');
 
 - **Pregunta sobre eventos:** Ver `DoorsBPM/SYNCEVENTS.md` o `DoorsBPM/ASYNCEVENTS.md`
 - **Problema con logs:** Ver `DoorsBPM/LOGS.md`
-- **Recovery de datos:** Ver `DoorsBPM/SYS_DOC_LOG.md` + `Node/README_REVERSION_OPP_979374.md`
+- **Recovery de datos:** Ver `fluye-core/legacy/doors/SYS_DOC_LOG.md` + `Node/README_REVERSION_OPP_979374.md`
 - **Formularios:** Ver `CONTROLS.md` + `DoorsBPM/GENERIC3.md` o `fluye-lib/client/liveforms7/`
 - **IA y búsquedas:** Ver `fluye-lib/ai/README.md` + `fluye-lib/ai/searchwiz/`
 
