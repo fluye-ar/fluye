@@ -1,20 +1,83 @@
 # Fluye Client SDK
 
-SDK JavaScript para interactuar con Fluye/DoorsBPM. Funciona en Node.js y browser.
+SDK JavaScript para Fluye y Doors. Funciona en Node.js y browser.
 
-**Evolución de DoorsAPI2.** Misma API, diferente nombre de sesión:
+## Arquitectura
 
-| DoorsAPI2 | Fluye |
-|-----------|-------|
-| `dSession` | `fSession` |
-| `dSession.webSession()` | `fluye.connect()` |
+```
+client.mjs (Fluye — meta-sesión)
+│
+│  Fluye              Portal, auth Cognito, gestión de instancias
+│  FluyeUser          Datos del usuario (.data → users.data JSONB)
+│  FluyeSession       Datos de sesión (.data → sessions.data JSONB)
+│  FluyeInstances     CRUD de instancias registradas
+│  Data               Store genérico JSONB (reutilizable)
+│  CIMap, SimpleBuffer, inNode()   Utils compartidos
+│
+│  import { Session } from './doorsClient.mjs'
+│  fluye.connect(id) → retorna Session de Doors
+│
+└── doorsClient.mjs (Doors — sesión contra una instancia)
+    │
+    │  Session          Conexión a una instancia Doors/.NET
+    │  RestClient       HTTP client con AuthToken
+    │  V8Client         Client para Events.v8
+    │
+    │  Folder, Document, Field, Form, View
+    │  Account, User, Directory
+    │  Attachment, Database, Properties, Property
+    │  Application, Node, Push, Utilities
+```
+
+**`client.mjs`** es la meta-sesión de Fluye. Gestiona múltiples instancias Doors, usuarios, settings. Depende de `doorsClient.mjs`.
+
+**`doorsClient.mjs`** es el API de una instancia Doors individual. Funciona standalone — los scripts Node.js que se conectan directo a Doors usan solo este archivo.
+
+### Uso — Portal Fluye (browser)
 
 ```javascript
-// DoorsAPI2
-const folder = await dSession.folder(4183);
+import { Fluye } from './client.mjs';
 
-// Fluye
-const folder = await fSession.folder(4183);
+let fluye = new Fluye({ token: cognitoIdToken });
+
+// User data
+await fluye.user.data.set('defaultInstance', 'uuid-xxx');
+let theme = await fluye.user.data.get('theme');
+
+// Instancias
+let list = await fluye.instances.list();
+await fluye.instances.add({ url, login, pwd, instance });
+
+// Conectar a Doors → retorna Session
+let doorsSession = await fluye.connect(instanceId);
+let folder = await doorsSession.folder(1234);
+```
+
+### Uso — Script Node.js (directo a Doors)
+
+```javascript
+import { Session } from './doorsClient.mjs';
+
+const session = new Session();
+session.serverUrl = 'https://tu-servidor.cloudycrm.net/restful';
+await session.logon('usuario', 'password', 'instancia');
+
+const folder = await session.folder(1234);
+const docs = await folder.search({ fields: 'DOC_ID,NOMBRE', formula: "ESTADO = 'Activo'" });
+
+await session.logoff();
+```
+
+### Backward Compatibility
+
+`client.mjs` re-exporta `Session` de `doorsClient.mjs`. Los imports existentes siguen funcionando:
+
+```javascript
+// Sigue funcionando
+import { Session } from './client.mjs';
+
+// Nuevo (directo)
+import { Session } from './doorsClient.mjs';
 ```
 
 ## Quick Start
@@ -22,18 +85,16 @@ const folder = await fSession.folder(4183);
 ### Node.js
 
 ```javascript
-import { Session } from './client.mjs';
+import { Session } from './doorsClient.mjs';
 
 const session = new Session();
 session.serverUrl = 'https://tu-servidor.cloudycrm.net/restful';
 await session.logon('usuario', 'password', 'instancia');
 
-// Buscar documentos
-const folder = await session.folder(1234);  // Por FLD_ID
+const folder = await session.folder(1234);
 const docs = await folder.search({ fields: 'DOC_ID,NOMBRE,EMAIL', formula: "ESTADO = 'Activo'" });
-console.log(docs);  // Array de objetos con propiedades MAYÚSCULAS
+console.log(docs);
 
-// Crear documento
 const doc = await folder.documentsNew();
 doc.fields('NOMBRE').value = 'Juan Pérez';
 doc.fields('EMAIL').value = 'juan@email.com';
@@ -45,7 +106,7 @@ await session.logoff();
 ### Browser (con sesión existente)
 
 ```javascript
-import { Session } from './client.mjs';
+import { Session } from './doorsClient.mjs';
 
 const session = new Session();
 await session.webSession();  // Toma serverUrl y authToken del browser
@@ -414,6 +475,14 @@ for (const row of docs) {
     await doc.save();
 }
 ```
+
+---
+
+## Pendientes
+
+- **Dividir client.mjs**: separar Fluye (portal, user, session, data) de Doors (Session, Folder, Document, RestClient, etc.). Hoy todo en un archivo de 6000+ líneas.
+- **Auth en scripts**: poder crear un FluyeSession desde Node.js y loguearse con token o API key. Hoy `fluye.user` y `fluye.session` están disponibles sin verificar login.
+- **Clases nuevas**: `Data` (JSONB genérico), `FluyeUser`, `FluyeSession` — recién creadas, pendiente testing.
 
 ---
 
