@@ -58,6 +58,7 @@ export class FluyeSession {
     #utils;
     data;
     #doorsClient;
+    #doorsSessions = {};
 
     constructor(options = {}) {
         this.#url = options.url || 'https://fluye.ar/api/v9';
@@ -70,8 +71,19 @@ export class FluyeSession {
     }
 
     // Conecta a una instancia por id. Retorna un Session autenticado.
+    // Cachea por id — reutiliza si la sesión sigue activa.
     async openRegDoors(id) {
         let me = this;
+
+        // Reusar sesión existente si sigue activa
+        if (me.#doorsSessions[id]) {
+            try {
+                let logged = await me.#doorsSessions[id].isLogged;
+                if (logged) return me.#doorsSessions[id];
+            } catch {}
+            delete me.#doorsSessions[id];
+        }
+
         let res = await me.fetch('/session/connect', {
             method: 'POST',
             body: JSON.stringify({ id }),
@@ -80,7 +92,9 @@ export class FluyeSession {
         if (!res.ok) throw new Error(data.error || 'Connect failed');
 
         if (!me.#doorsClient) me.#doorsClient = await me.utils.import({ repo: 'fluye', path: 'doorsClient.mjs' });
-        return new me.#doorsClient.Session(data.serverUrl, data.authToken);
+        let session = new me.#doorsClient.Session(data.serverUrl, data.authToken);
+        me.#doorsSessions[id] = session;
+        return session;
     }
 
     get instances() { return this.#instances; }
