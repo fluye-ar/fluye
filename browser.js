@@ -260,12 +260,12 @@ window.fluye = {
         }
     },
 
-    connect: fluye.doorsConnect, // backward compat, sacar el 1/4
-    
+    connect: this.openDoors, // backward compat, sacar el 1/4
+
     /**
     Se conecta a la sesion web, hace un redirect al login si no esta logueado
     */
-    doorsConnect: async function() {
+    openDoors: async function() {
         //todo: falta soporte app
         if (!fluye.doorsSession) await fluye.init();
         if (!await fluye.doorsSession.webSession() || !await fluye.doorsSession.isLogged) {
