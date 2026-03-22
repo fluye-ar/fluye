@@ -79,11 +79,13 @@ export class FluyeSession {
         if (me.#doorsSessions[id]) {
             try {
                 let logged = await me.#doorsSessions[id].isLogged;
-                if (logged) return me.#doorsSessions[id];
+                if (logged) { console.log('[openRegDoors] reusing session', id); return me.#doorsSessions[id]; }
             } catch {}
+            console.log('[openRegDoors] cached session expired', id);
             delete me.#doorsSessions[id];
         }
 
+        console.log('[openRegDoors] new logon', id);
         let res = await me.fetch('/session/connect', {
             method: 'POST',
             body: JSON.stringify({ id }),
