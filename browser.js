@@ -28,17 +28,27 @@ window.fluye = {
     Carga el client y crea la session
     */
     init: async function() {
+        if (!fluye.client) {
+            let branch = localStorage.getItem('fluyeClientBranch');
+            let url = branch ? `https://cdn.fluye.ar/ghf/fluye@${branch}/client.mjs` : 'https://cdn.fluye.ar/ghf/fluye/client.mjs';
+            fluye.client = await import(url + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
+        }
+        if (!fluye.session) {
+            fluye.session = new fluye.client.FluyeSession();
+            window.fSession = fluye.session;
+        }
+
         if (!fluye.doorsClient) {
             let branch = localStorage.getItem('fluyeDoorsClientBranch');
             let url = branch ? `https://cdn.fluye.ar/ghf/fluye@${branch}/doorsClient.mjs` : 'https://cdn.fluye.ar/ghf/fluye/doorsClient.mjs';
             fluye.doorsClient = await import(url + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
-            fluye.client = fluye.doorsClient; // backward compat
+            fluye.client = fluye.doorsClient; // backward compat, sacar el 1/4
         }
         if (!fluye.doorsSession) {
             fluye.doorsSession = new fluye.doorsClient.Session();
-            fluye.session = fluye.doorsSession;      // backward compat
+            fluye.session = fluye.doorsSession;      // backward compat, sacar el 1/4
             window.fdSession = fluye.doorsSession;
-            window.fSession = fluye.doorsSession;    // backward compat
+            window.fSession = fluye.doorsSession;    // backward compat, sacar el 1/4
         }
     },
 
@@ -250,10 +260,12 @@ window.fluye = {
         }
     },
 
+    connect: fluye.doorsConnect, // backward compat, sacar el 1/4
+    
     /**
     Se conecta a la sesion web, hace un redirect al login si no esta logueado
     */
-    connect: async function() {
+    doorsConnect: async function() {
         //todo: falta soporte app
         if (!fluye.doorsSession) await fluye.init();
         if (!await fluye.doorsSession.webSession() || !await fluye.doorsSession.isLogged) {

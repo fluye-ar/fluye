@@ -32,7 +32,7 @@ Cada módulo exporta una clase que recibe `session` en el constructor.
 | Archivo | Clase | Propiedad en Session | Qué hace |
 |---------|-------|---------------------|----------|
 | `instance.mjs` | — | enriquece `instance` | Mergea `.fluye` en el objeto instance (.NET) |
-| `ai.mjs` | `AI` | `fSession.ai` | Proxy Claude API + token tracking |
+| `ai.mjs` | `AI` | `fdSession.ai` | Proxy Claude API + token tracking |
 
 ## Endpoints
 
@@ -47,7 +47,7 @@ Los módulos consumen los endpoints del server Fluye (`fluye-core/app/api/`):
 
 ## instance.mjs — Enriquecimiento de instance
 
-`fSession.instance` hoy devuelve un objeto de .NET:
+`fdSession.instance` hoy devuelve un objeto de .NET:
 
 ```json
 {
@@ -59,11 +59,11 @@ Los módulos consumen los endpoints del server Fluye (`fluye-core/app/api/`):
 `instance.mjs` agrega `.fluye` con la config de la plataforma desde el endpoint:
 
 ```javascript
-let inst = await fSession.instance;
+let inst = await fdSession.instance;
 inst.fluye // → { repo, features, ai_budget, config, active }
 ```
 
-Se carga eager: cada vez que se resuelve `fSession.instance`, se enriquece automáticamente.
+Se carga eager: cada vez que se resuelve `fdSession.instance`, se enriquece automáticamente.
 
 ## ai.mjs — Clase AI
 
@@ -85,12 +85,12 @@ AI
 
 ```javascript
 // Instance (automático)
-let inst = await fSession.instance;
+let inst = await fdSession.instance;
 console.log(inst.fluye.features);    // { wiz: true, ... }
 console.log(inst.fluye.ai_budget);   // { monthly_usd: 50 }
 
 // AI
-let ai = await fSession.ai;
+let ai = await fdSession.ai;
 let budget = await ai.tokens.check('ormay', 'wiz');
 if (budget.allowed) {
     let response = await ai.call({ system: '...', messages: [...], tools: [...] });

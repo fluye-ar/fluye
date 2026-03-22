@@ -39,7 +39,7 @@ Las properties se leen del `doc.Parent` (la carpeta). Busca campos en: HeaderFie
 
 ```javascript
 // Obtener singleton de EventSource (1 por browser tab)
-const sse = await fSession.node.serverEvents();
+const sse = await fdSession.node.serverEvents();
 
 // Suscribirse a eventos
 sse.addEventListener('doc:change', (ev) => {
@@ -48,7 +48,7 @@ sse.addEventListener('doc:change', (ev) => {
 });
 
 // Despachar evento desde código (POST)
-await fSession.node.serverEventsDispatch({
+await fdSession.node.serverEventsDispatch({
     type: 'myEventType',
     data: 'string or object',
 });
@@ -81,7 +81,7 @@ El EventSource se guarda en `window.drsServerEvents` — singleton por tab. Reco
 `wapptwilio.mjs` se suscribe a `doc:change`, filtra por `FLD_ID` de messages + `FROM/TO` del contacto, y al matchear obtiene el doc completo con `messagesFolder.search()`.
 
 ```javascript
-let sse = await fSession.node.serverEvents();
+let sse = await fdSession.node.serverEvents();
 sse.addEventListener('doc:change', async (ev) => {
     let data = JSON.parse(ev.data);
     if (data.FLD_ID != messagesFolder.fldId) return;

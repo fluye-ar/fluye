@@ -932,7 +932,7 @@ export class Session {
             try {
                 if (!me.#s3) {
                     me.#s3 = await me.import({ repo: 'fluye-lib', path: 's3.mjs' });
-                    await me.#s3.setContext({ fSession: me });
+                    await me.#s3.setContext({ fdSession: me });
                 }
                 resolve(me.#s3);
 
