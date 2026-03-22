@@ -29,7 +29,7 @@ window.fluye = {
     */
     init: async function() {
         if (!fluye.doorsClient) {
-            let branch = localStorage.getItem('fluyeClientBranch');
+            let branch = localStorage.getItem('fluyeDoorsClientBranch');
             let url = branch ? `https://cdn.fluye.ar/ghf/fluye@${branch}/doorsClient.mjs` : 'https://cdn.fluye.ar/ghf/fluye/doorsClient.mjs';
             fluye.doorsClient = await import(url + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
             fluye.client = fluye.doorsClient; // backward compat
