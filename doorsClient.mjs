@@ -41,7 +41,7 @@ const fileAtS3 = 'This file is at S3';
 
 //await loadUtils();
 var utilsPromise = loadUtils();
-var utilsNotLoadedErr = `Utils not loaded, call 'await fluye.session.utils.load()' before.`
+var utilsNotLoadedErr = `Utils not loaded, call 'await session.utils.load()' before.`
 
 /*
 todo: Safari soporta await at module top level recien en la v15

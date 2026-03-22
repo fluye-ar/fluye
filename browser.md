@@ -8,7 +8,7 @@ Utilidades JavaScript para aplicaciones web con Fluye. Complementa a `doorsClien
 <script src="https://cdn.fluye.ar/ghf/fluye/browser.js"></script>
 <script>
 (async () => {
-    await fluye.connect();  // Conecta a sesión (redirect a login si no está logueado)
+    await fluye.openDoors();  // Conecta a sesión (redirect a login si no está logueado)
 
     const user = await fluye.doorsSession.currentUser;
     console.log('Logged as:', user.name);
@@ -43,16 +43,16 @@ Inicializa el cliente y crea la sesión (sin autenticar).
 
 ```javascript
 await fluye.init();
-// fluye.session está disponible pero no autenticado
+// fluye.doorsSession está disponible pero no autenticado
 ```
 
-### `fluye.connect()`
+### `fluye.openDoors()`
 
 Conecta a la sesión web. Si no hay sesión activa, redirige al login.
 
 ```javascript
-await fluye.connect();
-// fluye.session está autenticado y listo para usar
+await fluye.openDoors();
+// fluye.doorsSession está autenticado y listo para usar
 ```
 
 ### `fluye.load(assets)`
@@ -224,10 +224,10 @@ fluye.bs.version[0]   // 5
     <script>
     (async () => {
         await fluye.bs.load();
-        await fluye.connect();
+        await fluye.openDoors();
 
         // Tu código aquí
-        const folder = await fluye.session.folder(1234);
+        const folder = await fluye.doorsSession.folder(1234);
         const docs = await folder.search({ fields: 'DOC_ID,NOMBRE' });
 
         let html = '<ul>';

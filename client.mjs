@@ -70,7 +70,7 @@ export class FluyeSession {
     }
 
     // Conecta a una instancia por id. Retorna un Session autenticado.
-    async openDoors(id) {
+    async openRegDoors(id) {
         let me = this;
         let res = await me.fetch('/session/connect', {
             method: 'POST',
