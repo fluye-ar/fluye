@@ -77,26 +77,30 @@ export class FluyeSession {
 
         // Reusar sesión existente si sigue activa
         if (me.#doorsSessions[id]) {
+            // Si es una Promise, otra llamada ya está en curso — esperar
+            if (me.#doorsSessions[id] instanceof Promise) return me.#doorsSessions[id];
             try {
                 let logged = await me.#doorsSessions[id].isLogged;
-                if (logged) { console.log('[openRegDoors] reusing session', id); return me.#doorsSessions[id]; }
+                if (logged) return me.#doorsSessions[id];
             } catch {}
-            console.log('[openRegDoors] cached session expired', id);
             delete me.#doorsSessions[id];
         }
 
-        console.log('[openRegDoors] new logon', id);
-        let res = await me.fetch('/session/connect', {
-            method: 'POST',
-            body: JSON.stringify({ id }),
-        });
-        let data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Connect failed');
+        // Guardar la Promise para que llamadas concurrentes la esperen
+        me.#doorsSessions[id] = (async () => {
+            let res = await me.fetch('/session/connect', {
+                method: 'POST',
+                body: JSON.stringify({ id }),
+            });
+            let data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Connect failed');
 
-        if (!me.#doorsClient) me.#doorsClient = await me.utils.import({ repo: 'fluye', path: 'doorsClient.mjs' });
-        let session = new me.#doorsClient.Session(data.serverUrl, data.authToken);
-        me.#doorsSessions[id] = session;
-        return session;
+            if (!me.#doorsClient) me.#doorsClient = await me.utils.import({ repo: 'fluye', path: 'doorsClient.mjs' });
+            let session = new me.#doorsClient.Session(data.serverUrl, data.authToken);
+            me.#doorsSessions[id] = session; // Reemplazar Promise con Session
+            return session;
+        })();
+        return me.#doorsSessions[id];
     }
 
     get instances() { return this.#instances; }
