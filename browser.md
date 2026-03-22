@@ -1,6 +1,6 @@
 # Fluye Browser SDK
 
-Utilidades JavaScript para aplicaciones web con Fluye. Complementa a `client.mjs`.
+Utilidades JavaScript para aplicaciones web con Fluye. Complementa a `doorsClient.mjs`.
 
 ## Quick Start
 
@@ -10,11 +10,10 @@ Utilidades JavaScript para aplicaciones web con Fluye. Complementa a `client.mjs
 (async () => {
     await fluye.connect();  // Conecta a sesión (redirect a login si no está logueado)
 
-    const user = await fluye.session.currentUser;
+    const user = await fluye.doorsSession.currentUser;
     console.log('Logged as:', user.name);
 
-    // Usar client.mjs normalmente
-    const folder = await fluye.session.folder(1234);
+    const folder = await fluye.doorsSession.folder(1234);
     const docs = await folder.search({ fields: 'DOC_ID,NOMBRE' });
 })();
 </script>
@@ -26,8 +25,10 @@ Utilidades JavaScript para aplicaciones web con Fluye. Complementa a `client.mjs
 
 | Propiedad | Tipo | Descripción |
 |-----------|------|-------------|
-| `fluye.session` | Session | Sesión de client.mjs (después de init/connect) |
-| `fluye.client` | Module | Módulo client.mjs importado |
+| `fluye.doorsSession` | Session | Sesión Doors (después de init/connect) |
+| `fluye.doorsClient` | Module | Módulo doorsClient.mjs importado |
+| `fluye.session` | Session | ⚠️ backward compat → `fluye.doorsSession` |
+| `fluye.client` | Module | ⚠️ backward compat → `fluye.doorsClient` |
 | `fluye.urlParams` | URLSearchParams | Parámetros de URL (`?param=value`) |
 | `fluye.bs` | Object | Utilidades Bootstrap 5 |
 | `fluye.mods` | Object | Contenedor para módulos custom |

@@ -1,15 +1,15 @@
-# client/ — Extensiones de fluye/client.mjs
+# client/ — Extensiones de fluye/doorsClient.mjs
 
 Módulos que extienden `Session` con funcionalidad nueva. Se cargan lazy via Pattern B (import dinámico desde CDN).
 
 ## Patrón
 
-`client.mjs` es un monolito (~6900 líneas) con todas las clases core. Las extensiones nuevas van acá como módulos separados que se cargan bajo demanda.
+`doorsClient.mjs` es un monolito (~6900 líneas) con todas las clases core. Las extensiones nuevas van acá como módulos separados que se cargan bajo demanda.
 
 **Pattern B (lazy-load)** — mismo patrón que `billing` y `s3`:
 
 ```javascript
-// En Session (client.mjs)
+// En Session (doorsClient.mjs)
 #ai;
 get ai() {
     let me = this;

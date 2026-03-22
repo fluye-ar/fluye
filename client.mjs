@@ -414,6 +414,30 @@ export class SimpleBuffer extends Uint8Array {
 }
 
 
+// Platform detection & mainlib
+
+let platform, _mainlib;
+
+if (typeof window !== 'undefined' && window.document) {
+    platform = 'browser';
+} else if (globalThis.fluye) {
+    platform = globalThis.fluye.engine; // Vercel
+} else if (globalThis._engine) {
+    platform = globalThis._engine; // Ev8
+} else if (typeof process !== 'undefined' && process.versions?.node) {
+    platform = 'node';
+}
+
+if (platform == 'Ev8') {
+    try {
+        let mod = await import('../mainlib.mjs');
+        _mainlib = mod.default ? mod.default : mod;
+    } catch(err) {
+        console.error('Error loading mainlib', err);
+    }
+}
+
+
 /**
 Clase Fluye — Entry point para conectar a la plataforma Fluye.
 Maneja auth (Cognito JWT o API key) y selección de instancia.

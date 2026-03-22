@@ -28,14 +28,17 @@ window.fluye = {
     Carga el client y crea la session
     */
     init: async function() {
-        if (!fluye.client) {
+        if (!fluye.doorsClient) {
             let branch = localStorage.getItem('fluyeClientBranch');
-            let url = branch ? `https://cdn.fluye.ar/ghf/fluye@${branch}/client.mjs` : 'https://cdn.fluye.ar/ghf/fluye/client.mjs';
-            fluye.client = await import(url + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
+            let url = branch ? `https://cdn.fluye.ar/ghf/fluye@${branch}/doorsClient.mjs` : 'https://cdn.fluye.ar/ghf/fluye/doorsClient.mjs';
+            fluye.doorsClient = await import(url + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
+            fluye.client = fluye.doorsClient; // backward compat
         }
-        if (!fluye.session) {
-            fluye.session = new fluye.client.Session();
-            window.fSession = fluye.session;
+        if (!fluye.doorsSession) {
+            fluye.doorsSession = new fluye.doorsClient.Session();
+            fluye.session = fluye.doorsSession;      // backward compat
+            window.fdSession = fluye.doorsSession;
+            window.fSession = fluye.doorsSession;    // backward compat
         }
     },
 
@@ -252,13 +255,13 @@ window.fluye = {
     */
     connect: async function() {
         //todo: falta soporte app
-        if (!fluye.session) await fluye.init();
-        if (!await fluye.session.webSession() || !await fluye.session.isLogged) {
+        if (!fluye.doorsSession) await fluye.init();
+        if (!await fluye.doorsSession.webSession() || !await fluye.doorsSession.isLogged) {
             let path = location.pathname.replace(/^\/[^\/]+/, ''); // Saca el /c
             location.href = '/w/auth/login?request=' + encodeURIComponent(path + location.search);
             return;
         }
-        await fluye.session.runSyncEventsOnClient(false);
+        await fluye.doorsSession.runSyncEventsOnClient(false);
     },
 
     /**
@@ -292,9 +295,9 @@ window.fluye = {
     @returns {string|Promise<SimpleBuffer>}
     */
     gitCdn: async function (options) {
-        if (!fluye.session) await fluye.init();
+        if (!fluye.doorsSession) await fluye.init();
 
-        let utils = fluye.session.utils;
+        let utils = fluye.doorsSession.utils;
         let url = utils.ghCodeUrl(options);
 
         if (options.url) {
@@ -351,14 +354,14 @@ window.fluye = {
                 const source = sources[a];
                 if (typeof source === 'object') {
                     let src = source.src;
-                    if (src && typeof src === 'object') src = fluye.session.utils.ghCodeUrl(src);
+                    if (src && typeof src === 'object') src = fluye.doorsSession.utils.ghCodeUrl(src);
                     return { id: a, src, tag: source.tag };
                 }
                 return { id: a, src: source };
             }
             // src como objeto → ghCodeUrl
             if (a.src && typeof a.src === 'object') {
-                a.src = fluye.session.utils.ghCodeUrl(a.src);
+                a.src = fluye.doorsSession.utils.ghCodeUrl(a.src);
             }
             if (!a.src && sources[a.id]) {
                 const source = sources[a.id];

@@ -72,7 +72,7 @@ El EventSource se guarda en `window.drsServerEvents` — singleton por tab. Reco
 |---------|----------|
 | `DoorsBPM/server/.../LogsService.cs` | Dispara POST en AfterSave, lee properties |
 | `Events.v8/server/server.js` | GET/POST endpoints, polling, dispatch |
-| `fluye/client.mjs` → `node.serverEvents()` | Client singleton EventSource |
+| `fluye/doorsClient.mjs` → `node.serverEvents()` | Client singleton EventSource |
 | `fluye-lib/channels/twilio/setup.vbs` | Instala `SSE-EXTRAFIELDS=FROM,TO` en messages |
 | `fluye-lib/channels/twilio/checkapp.mjs` v44 | Idem via migración automática |
 
