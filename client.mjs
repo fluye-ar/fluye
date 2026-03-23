@@ -72,35 +72,35 @@ export class FluyeSession {
 
     // Conecta a una instancia por id. Retorna un Session autenticado.
     // Cachea por id — reutiliza si la sesión sigue activa.
-    async openRegDoors(id) {
+    async openRegDoors(name) {
         let me = this;
 
         // Reusar sesión existente si sigue activa
-        if (me.#doorsSessions[id]) {
+        if (me.#doorsSessions[name]) {
             // Si es una Promise, otra llamada ya está en curso — esperar
-            if (me.#doorsSessions[id] instanceof Promise) return me.#doorsSessions[id];
+            if (me.#doorsSessions[name] instanceof Promise) return me.#doorsSessions[name];
             try {
-                let logged = await me.#doorsSessions[id].isLogged;
-                if (logged) return me.#doorsSessions[id];
+                let logged = await me.#doorsSessions[name].isLogged;
+                if (logged) return me.#doorsSessions[name];
             } catch {}
-            delete me.#doorsSessions[id];
+            delete me.#doorsSessions[name];
         }
 
         // Guardar la Promise para que llamadas concurrentes la esperen
-        me.#doorsSessions[id] = (async () => {
+        me.#doorsSessions[name] = (async () => {
             let res = await me.fetch('/session/openregdoors', {
                 method: 'POST',
-                body: JSON.stringify({ id }),
+                body: JSON.stringify({ name }),
             });
             let data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Connect failed');
 
             if (!me.#doorsClient) me.#doorsClient = await me.utils.import({ repo: 'fluye', path: 'doorsClient.mjs' });
             let session = new me.#doorsClient.Session(data.serverUrl, data.authToken);
-            me.#doorsSessions[id] = session; // Reemplazar Promise con Session
+            me.#doorsSessions[name] = session; // Reemplazar Promise con Session
             return session;
         })();
-        return me.#doorsSessions[id];
+        return me.#doorsSessions[name];
     }
 
     get instances() { return this.#instances; }
@@ -145,11 +145,11 @@ class Instances {
         return me.#cache;
     }
 
-    async add({ name, url, login, pwd, instance, protectPwd }) {
+    async add({ name, description, url, login, pwd, instance, protectPwd }) {
         let me = this;
         let res = await me.#fSession.fetch('/instances', {
             method: 'POST',
-            body: JSON.stringify({ name, url, login, pwd, instance, protectPwd }),
+            body: JSON.stringify({ name, description, url, login, pwd, instance, protectPwd }),
         });
         let data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Add instance failed');
@@ -157,11 +157,11 @@ class Instances {
         return data;
     }
 
-    async remove(id) {
+    async remove(name) {
         let me = this;
         let res = await me.#fSession.fetch('/instances', {
             method: 'DELETE',
-            body: JSON.stringify({ id }),
+            body: JSON.stringify({ name }),
         });
         let data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Remove instance failed');
