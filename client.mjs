@@ -88,7 +88,7 @@ export class FluyeSession {
 
         // Guardar la Promise para que llamadas concurrentes la esperen
         me.#doorsSessions[id] = (async () => {
-            let res = await me.fetch('/session/connect', {
+            let res = await me.fetch('/session/openregdoors', {
                 method: 'POST',
                 body: JSON.stringify({ id }),
             });
