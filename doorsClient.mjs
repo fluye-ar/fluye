@@ -4744,20 +4744,19 @@ export class Node {
         let me = this;
         let utils = me.session.utils;
 
-        if (typeof(options.code) == 'string') {
-            // Vino el codigo
-            let execOpts = {
-                code: {
-                    repo: 'fluye-lib',
-                    path: 'server/evalapi.js',
-                },
-                payload: options,
-            };
-            if (options.vercel) execOpts.vercel = true;
-            return me.exec(execOpts);
+        return new Promise(async (resolve, reject) => {
+            if (typeof(options.code) == 'string') {
+                // Vino el codigo
+                let execOpts = {
+                    code: {
+                        repo: 'fluye-lib',
+                        path: 'server/evalapi.js',
+                    },
+                    payload: options,
+                };
+                resolve(me.exec(execOpts));
 
-        } else {
-            return new Promise(async (resolve, reject) => {
+            } else {
                 let data = {
                     serverUrl: me.session.serverUrl,
                     //events: await me.codeOptions(options.code),
@@ -4774,7 +4773,7 @@ export class Node {
 
                 let code = await me.codeOptions(structuredClone(options.code));
                 code.exec = true;
-                if (options.vercel) {
+                if (await me.isFluye) {
                     code.vercel = true;
                 } else {
                     let srv = await me.server;
@@ -4830,12 +4829,23 @@ export class Node {
                         }
                     }
                 }
-            });
-        }
+            }
+        });
     }
 
     get inNode() {
         return inNode();
+    }
+
+    /**
+    Devuelve true si la instancia es Fluye (server contiene fluye.ar)
+    */
+    get isFluye() {
+        var me = this;
+        return new Promise(async (resolve) => {
+            var server = await me.server;
+            resolve(server && server.indexOf('fluye.ar') >= 0);
+        })
     }
 
     /**
@@ -5899,12 +5909,13 @@ export class Utilities {
 
     @example
     ghCodeUrl({
-        owner // def fluye-ar
-        repo // nombre del repo
-        path // Ruta al archivo, no poner el slash inicial
-        ref // Branch / tag
-        fresh // Actualiza el cache
-        exec // Boolean, indica si es para ejecutar (ghx)
+        owner, // def fluye-ar
+        repo, // nombre del repo
+        path, // Ruta al archivo, no poner el slash inicial
+        ref, // Branch / tag
+        fresh, // Actualiza el cache
+        exec, // Boolean, indica si es para ejecutar (ghx)
+        vercel, // Boolean. Si exec es true, este parametro indica si retorna el enpoint de Vercel o de v8
         server // Opcional, def https://cdn.fluye.ar, https://node.cloudycrm.net para exec
     }
     */

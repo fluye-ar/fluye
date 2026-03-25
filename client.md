@@ -480,7 +480,6 @@ for (const row of docs) {
 
 ## Pendientes
 
-- **Dividir client.mjs**: separar Fluye (portal, user, session, data) de Doors (Session, Folder, Document, RestClient, etc.). Hoy todo en un archivo de 6000+ líneas.
 - **Auth en scripts**: poder crear un FluyeSession desde Node.js y loguearse con token o API key. Hoy `fluye.user` y `fluye.session` están disponibles sin verificar login.
 - **Clases nuevas**: `Data` (JSONB genérico), `User`, `FluyeSession` — recién creadas, pendiente testing.
 

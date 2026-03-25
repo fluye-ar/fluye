@@ -100,6 +100,59 @@ if (budget.allowed) {
 
 📖 Server & endpoints: [`fluye-core/server/README.md`](../fluye-core/server/README.md)
 
+## Routing de Endpoints (Fluye vs Cloudy)
+
+El doorsClient rutea requests a distintos backends según la instancia.
+
+### Detección
+
+Si `node.server` (origin de `NODE_CONFIG.server`) contiene `fluye.ar` → instancia Fluye. Sino → Cloudy.
+
+### Inventario de endpoints Vercel
+
+Al inicializar sesión Fluye, el client pide la lista de endpoints implementados en Vercel:
+```
+GET https://fluye.ar/api/v9/endpoints → ["documents/*/relfields", "folders/*/fields", ...]
+```
+Se cachea durante la sesión.
+
+### RestClient (requests a .NET)
+
+```
+¿Es Fluye? → NO → .NET (como hoy)
+           → SÍ → ¿Endpoint en inventario Vercel?
+                   → SÍ → Vercel /api/v9/{endpoint}
+                   → NO → .NET (como hoy)
+```
+
+### V8Client (requests a Events.v8)
+
+```
+¿Es Fluye? → NO → Events.v8 (como hoy)
+           → SÍ → Vercel /api/v9/{endpoint}
+```
+
+### Headers
+
+| Destino | Headers |
+|---------|---------|
+| .NET / Events.v8 | `AuthToken` o `ApiKey` |
+| Vercel v9 | `AuthToken` o `ApiKey` + `ServerUrl` + `InstanceName` |
+
+### Formato de respuesta
+
+| Destino | Formato | Client extrae |
+|---------|---------|---------------|
+| .NET / Events.v8 | `{ ResponseResult, InternalObject }` | `InternalObject` |
+| Vercel v9 | `{ data, error, meta }` | `data` |
+
+### Migración gradual
+
+1. Implementar endpoint en Vercel `/api/v9/...`
+2. Agregarlo al inventario (`/api/v9/endpoints`)
+3. El client automáticamente empieza a usarlo
+4. Cuando todos los endpoints estén en Vercel → deprecar .NET
+
 ---
 
 **Ing Jorge Pagano - Cloudy CRM**
