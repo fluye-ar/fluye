@@ -1,488 +1,186 @@
 # Fluye Client SDK
 
-SDK JavaScript para Fluye y Doors. Funciona en Node.js y browser.
+SDK JavaScript para Fluye y Doors. Node.js y browser.
 
 ## Arquitectura
 
-```
-client.mjs (Fluye — meta-sesión)
-│
-│  Fluye              Portal, auth Cognito, gestión de instancias
-│  FluyeUser          Datos del usuario (.data → users.data JSONB)
-│  FluyeSession       Datos de sesión (.data → sessions.data JSONB)
-│  FluyeInstances     CRUD de instancias registradas
-│  Data               Store genérico JSONB (reutilizable)
-│  CIMap, SimpleBuffer, inNode()   Utils compartidos
-│
-│  import { Session } from './doorsClient.mjs'
-│  fluye.connect(id) → retorna Session de Doors
-│
-└── doorsClient.mjs (Doors — sesión contra una instancia)
-    │
-    │  Session          Conexión a una instancia Doors/.NET
-    │  RestClient       HTTP client con AuthToken
-    │  V8Client         Client para Events.v8
-    │
-    │  Folder, Document, Field, Form, View
-    │  Account, User, Directory
-    │  Attachment, Database, Properties, Property
-    │  Application, Node, Push, Utilities
-```
+| Archivo | Rol | Uso tipico |
+|---------|-----|------------|
+| `client.mjs` | Meta-sesion Fluye (portal, Cognito, instancias) | Browser portal |
+| `doorsClient.mjs` | Sesion contra una instancia Doors | Scripts Node.js |
 
-**`client.mjs`** es la meta-sesión de Fluye. Gestiona múltiples instancias Doors, usuarios, settings. Depende de `doorsClient.mjs`.
+`client.mjs` re-exporta `Session` de `doorsClient.mjs` (backward compatible).
 
-**`doorsClient.mjs`** es el API de una instancia Doors individual. Funciona standalone — los scripts Node.js que se conectan directo a Doors usan solo este archivo.
-
-### Uso — Portal Fluye (browser)
+## Inicializacion
 
 ```javascript
+// Node.js
+import { Session } from './doorsClient.mjs';
+const session = new Session();
+session.serverUrl = 'https://tu-servidor.cloudycrm.net/restful';
+await session.logon('usuario', 'password', 'instancia');
+// ... trabajo ...
+await session.logoff();
+
+// Browser (sesion existente)
+const session = new Session();
+await session.webSession();  // Toma serverUrl y authToken de cookies
+
+// Portal Fluye (browser)
 import { Fluye } from './client.mjs';
-
 let fluye = new Fluye({ token: cognitoIdToken });
-
-// User data
-await fluye.user.data.set('defaultInstance', 'uuid-xxx');
-let theme = await fluye.user.data.get('theme');
-
-// Instancias
-let list = await fluye.instances.list();
-await fluye.instances.add({ url, login, pwd, instance });
-
-// Conectar a Doors → retorna Session
 let doorsSession = await fluye.connect(instanceId);
-let folder = await doorsSession.folder(1234);
 ```
-
-### Uso — Script Node.js (directo a Doors)
-
-```javascript
-import { Session } from './doorsClient.mjs';
-
-const session = new Session();
-session.serverUrl = 'https://tu-servidor.cloudycrm.net/restful';
-await session.logon('usuario', 'password', 'instancia');
-
-const folder = await session.folder(1234);
-const docs = await folder.search({ fields: 'DOC_ID,NOMBRE', formula: "ESTADO = 'Activo'" });
-
-await session.logoff();
-```
-
-### Backward Compatibility
-
-`client.mjs` re-exporta `Session` de `doorsClient.mjs`. Los imports existentes siguen funcionando:
-
-```javascript
-// Sigue funcionando
-import { Session } from './client.mjs';
-
-// Nuevo (directo)
-import { Session } from './doorsClient.mjs';
-```
-
-## Quick Start
-
-### Node.js
-
-```javascript
-import { Session } from './doorsClient.mjs';
-
-const session = new Session();
-session.serverUrl = 'https://tu-servidor.cloudycrm.net/restful';
-await session.logon('usuario', 'password', 'instancia');
-
-const folder = await session.folder(1234);
-const docs = await folder.search({ fields: 'DOC_ID,NOMBRE,EMAIL', formula: "ESTADO = 'Activo'" });
-console.log(docs);
-
-const doc = await folder.documentsNew();
-doc.fields('NOMBRE').value = 'Juan Pérez';
-doc.fields('EMAIL').value = 'juan@email.com';
-await doc.save();
-
-await session.logoff();
-```
-
-### Browser (con sesión existente)
-
-```javascript
-import { Session } from './doorsClient.mjs';
-
-const session = new Session();
-await session.webSession();  // Toma serverUrl y authToken del browser
-
-const user = await session.currentUser;
-console.log('Logged as:', user.name);
-```
-
----
 
 ## Object Model
 
 ```
 Session
-├── folder(id|path) → Folder
-│   ├── search(options) → Object[]
-│   ├── doc(id) → Document
-│   ├── documentsNew() → Document
-│   ├── folders() → CIMap<Folder>
-│   └── form → Form
-│       └── fields(name) → Field
-├── doc(id) → Document
-│   ├── fields(name) → Field
-│   ├── attachments() → CIMap<Attachment>
-│   ├── save()
-│   └── delete()
-├── directory → Directory
-│   ├── accounts(id) → Account
-│   └── users(id) → User
-├── currentUser → User
-├── db → Database
-└── utils → Utilities
+ +-- folder(id|path) -> Folder
+ |    +-- search(options) -> Object[]
+ |    +-- doc(id|formula) -> Document
+ |    +-- documentsNew() -> Document
+ |    +-- folders() -> CIMap<Folder>
+ |    +-- form -> Form
+ +-- doc(id) -> Document
+ |    +-- fields(name) -> Field
+ |    +-- attachments() -> CIMap<Attachment>
+ |    +-- save() / delete()
+ +-- directory -> Directory
+ +-- db -> Database
+ +-- utils -> Utilities
 ```
-
----
 
 ## Session
 
-Punto de entrada principal. Maneja autenticación y acceso a objetos.
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción |
+| Propiedad | Tipo | Descripcion |
 |-----------|------|-------------|
-| `serverUrl` | string | URL del servidor REST (set antes de logon) |
-| `authToken` | string | Token de sesión (read-only después de logon) |
+| `serverUrl` | string | URL REST (set antes de logon) |
+| `authToken` | string | Token (read-only post logon) |
 | `currentUser` | Promise\<User\> | Usuario logueado |
-| `isLogged` | Promise\<boolean\> | Estado de sesión |
-| `directory` / `dir` | Directory | Acceso a cuentas/usuarios |
-| `db` | Database | Acceso a base de datos |
+| `isLogged` | Promise\<boolean\> | Estado de sesion |
+| `directory` / `dir` | Directory | Cuentas/usuarios |
+| `db` | Database | Acceso a BD |
 | `utils` | Utilities | Funciones auxiliares |
-| `version` | { sdk, version } | Identifica SDK: `{ sdk: 'fluye', version: '1.0' }` |
 
-### Métodos
-
-```javascript
-// Autenticación
-await session.logon(login, password, instance, liteMode?)
-await session.logoff()
-await session.webSession()  // Solo browser: toma sesión de cookies
-
-// Acceso a objetos
-await session.folder(1234)           // Por FLD_ID
-await session.folder('/Ventas/2024') // Por path
-await session.doc(56789)             // Por DOC_ID
-
-// Settings
-await session.settings('SETTING_NAME')           // Leer
-await session.settings('SETTING_NAME', 'value')  // Escribir
-await session.userSettings('USER_SETTING')       // Settings de usuario
-
-// Tags de sesión
-await session.tags()             // Todos los tags
-await session.tags('key')        // Valor de un tag
-await session.tags('key', 'val') // Setear tag
-```
-
----
+| Metodo | Descripcion |
+|--------|-------------|
+| `logon(login, pwd, instance, liteMode?)` | Autenticar |
+| `logoff()` | Cerrar sesion |
+| `webSession()` | Tomar sesion del browser |
+| `folder(id\|path)` | Obtener carpeta |
+| `doc(id)` | Obtener documento |
+| `settings(name, value?)` | Leer/escribir settings |
+| `userSettings(name, value?)` | Settings de usuario |
+| `tags(key?, value?)` | Leer/escribir tags de sesion |
 
 ## Folder
 
-Representa una carpeta del sistema.
+| Propiedad | Tipo |
+|-----------|------|
+| `id` | number (FLD_ID) |
+| `name` / `path` | string |
+| `formId` | number (FRM_ID) |
 
-### Propiedades
-
-| Propiedad | Tipo | Descripción |
-|-----------|------|-------------|
-| `id` | number | FLD_ID |
-| `name` | string | Nombre |
-| `path` | string | Path completo |
-| `formId` | number | FRM_ID del formulario asociado |
-| `description` | string | Descripción |
-| `session` | Session | Sesión padre |
-
-### Métodos principales
+**search(options)** -- Retorna **Array directo** (NO `{ rows }`). Propiedades en **MAYUSCULAS**.
 
 ```javascript
-// Búsqueda - ⚠️ Retorna Array directo (no { rows })
 const docs = await folder.search({
-    fields: 'DOC_ID,NOMBRE,FECHA',  // Campos a traer (* = todos)
-    formula: "ESTADO = 'Activo'",   // Filtro SQL
-    order: 'FECHA DESC',            // Ordenamiento
-    maxDocs: 1000,                  // Límite (0 = sin límite)
-    recursive: false,               // Buscar en subcarpetas
-    maxTextLen: 100,                // Largo máx de textos
+    fields: 'DOC_ID,NOMBRE,FECHA',   // * = todos
+    formula: "ESTADO = 'Activo'",    // filtro SQL
+    order: 'FECHA DESC',
+    maxDocs: 1000,                   // 0 = sin limite
+    recursive: false,
+    maxTextLen: 100,
 });
-// docs[0].NOMBRE ← propiedades en MAYÚSCULAS
-
-// Búsqueda agrupada
-const grupos = await folder.searchGroups({
-    groups: 'ESTADO,VENDEDOR',
-    totals: 'count(*) as TOTAL, sum(MONTO) as SUMA',
-    formula: "FECHA >= '2024-01-01'",
-});
-
-// Documentos
-const doc = await folder.doc(56789);           // Por DOC_ID
-const doc = await folder.doc("EMAIL = 'x'");   // Por fórmula (debe retornar 1)
-const newDoc = await folder.documentsNew();    // Crear nuevo
-await folder.documentsDelete([1, 2, 3]);       // Borrar varios
-await folder.documentsDelete("ESTADO = 'X'");  // Borrar por fórmula
-
-// Navegación
-const parent = await folder.parent;
-const subs = await folder.folders();           // Subcarpetas (CIMap)
-const sub = await folder.folders('Nombre');    // Subcarpeta específica
-
-// Formulario
-const form = await folder.form;
+// docs[0].NOMBRE
 ```
 
----
+| Metodo | Descripcion |
+|--------|-------------|
+| `searchGroups({ groups, totals, formula })` | Busqueda agrupada |
+| `doc(id)` / `doc("EMAIL = 'x'")` | Obtener por DOC_ID o formula (debe retornar 1) |
+| `documentsNew()` | Crear documento nuevo |
+| `documentsDelete(ids[]\|formula)` | Borrar documentos |
+| `folders(name?)` | Subcarpetas (CIMap) |
+| `parent` | Carpeta padre |
+| `form` | Formulario asociado |
 
 ## Document
 
-Representa un documento (registro).
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción |
+| Propiedad | Tipo | Descripcion |
 |-----------|------|-------------|
 | `id` | number | DOC_ID |
-| `isNew` | boolean | Si es nuevo (no guardado) |
-| `parentId` | number | FLD_ID de la carpeta |
-| `parent` | Promise\<Folder\> | Carpeta contenedora |
+| `isNew` | boolean | No guardado aun |
+| `parentId` | number | FLD_ID |
 | `ownerId` | number | ACC_ID del creador |
-| `owner` | Promise\<User\> | Usuario creador |
-| `created` | Date | Fecha de creación |
-| `modified` | Date | Fecha de modificación |
-| `session` | Session | Sesión padre |
+| `created` / `modified` | Date | Timestamps |
 
-### Métodos principales
-
-```javascript
-// Campos
-doc.fields('NOMBRE').value = 'Nuevo valor';
-const nombre = doc.fields('NOMBRE').value;
-const changed = doc.fields('NOMBRE').valueChanged;  // ¿Cambió desde que se cargó?
-const empty = doc.fields('NOMBRE').valueEmpty;      // ¿Es null/undefined/''?
-
-// Todos los campos
-const fieldsMap = doc.fields();  // CIMap<Field>
-for (const [name, field] of fieldsMap) {
-    console.log(name, field.value);
-}
-
-// Guardar y borrar
-await doc.save();
-await doc.delete();
-await doc.delete(true);  // purge (sin pasar por papelera)
-
-// Adjuntos
-const atts = await doc.attachments();           // CIMap<Attachment>
-const att = await doc.attachments('archivo.pdf');
-
-// Crear adjunto
-const att = doc.attachmentsAdd('nuevo.pdf');
-att.fileStream = buffer;  // ArrayBuffer, Blob, Buffer
-await doc.save();         // Se guarda con el documento
-
-// Permisos (ACL)
-const acl = await doc.acl();
-await doc.aclGrant(accId, 'read');    // read/modify/delete/admin
-await doc.aclRevoke(accId, 'modify');
-
-// Properties (metadatos)
-const prop = await doc.properties('PROP_NAME');
-await doc.properties('PROP_NAME', 'value');
-```
-
----
+| Metodo | Descripcion |
+|--------|-------------|
+| `fields(name?)` | Sin args: CIMap\<Field\>. Con nombre: Field especifico |
+| `save()` | Guardar cambios |
+| `delete(purge?)` | Borrar. `true` = sin papelera |
+| `attachments(name?)` | CIMap\<Attachment\> o uno especifico |
+| `attachmentsAdd(filename)` | Crear adjunto (setear `.fileStream`, luego `doc.save()`) |
+| `acl()` / `aclGrant(accId, perm)` / `aclRevoke(accId, perm)` | Permisos: read/modify/delete/admin |
+| `properties(name, value?)` | Leer/escribir metadatos |
 
 ## Field
 
-Representa un campo de un documento.
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción |
+| Propiedad | Tipo | Descripcion |
 |-----------|------|-------------|
 | `name` | string | Nombre del campo |
-| `value` | any | Valor actual |
-| `valueOld` | any | Valor original (al cargar) |
-| `valueChanged` | boolean | Si cambió respecto a valueOld |
-| `valueEmpty` | boolean | Si es null/undefined/'' |
+| `value` | any | Valor actual (get/set) |
+| `valueOld` | any | Valor al cargar |
+| `valueChanged` | boolean | Si cambio |
+| `valueEmpty` | boolean | null/undefined/'' |
 | `type` | number | 1=String, 2=DateTime, 3=Numeric |
-| `length` | number | Largo máximo (strings) |
-| `precision` | number | Precisión (numéricos) |
-| `scale` | number | Escala decimal (numéricos) |
-| `updatable` | boolean | Si se puede modificar |
-| `nullable` | boolean | Si acepta null |
-| `computed` | boolean | Si es campo calculado |
-| `description` | string | Descripción del campo |
+| `length` / `precision` / `scale` | number | Limites del campo |
+| `updatable` / `nullable` / `computed` | boolean | Metadatos |
 | `label` | string | Description o Name capitalizado |
 
-### Uso
-
-```javascript
-// Leer
-const val = doc.fields('NOMBRE').value;
-
-// Escribir (valida automáticamente)
-doc.fields('NOMBRE').value = 'Texto';     // String overflow si excede length
-doc.fields('MONTO').value = 1234.56;      // Numeric overflow si excede precision
-doc.fields('FECHA').value = new Date();   // Acepta Date, moment, string ISO
-doc.fields('FECHA').value = '2024-03-15';
-
-// Verificar cambios
-if (doc.fields('EMAIL').valueChanged) {
-    console.log('Email cambió de', doc.fields('EMAIL').valueOld, 'a', doc.fields('EMAIL').value);
-}
-```
-
----
+Validacion automatica al asignar `.value` (overflow si excede length/precision). Fechas: acepta Date, moment, string ISO.
 
 ## Attachment
 
-Representa un archivo adjunto.
+| Propiedad | Tipo |
+|-----------|------|
+| `id` / `name` / `extension` / `size` / `created` / `isNew` | Standard |
+| `fileStream` | ArrayBuffer (get) / ArrayBuffer\|Blob\|Buffer (set) |
 
-### Propiedades
-
-| Propiedad | Tipo | Descripción |
-|-----------|------|-------------|
-| `id` | number | ATT_ID |
-| `name` | string | Nombre del archivo |
-| `extension` | string | Extensión |
-| `size` | number | Tamaño en bytes |
-| `created` | Date | Fecha de creación |
-| `isNew` | boolean | Si es nuevo (no guardado) |
-| `parent` | Document | Documento contenedor |
-
-### Métodos
-
-```javascript
-// Leer contenido
-const buffer = await att.fileStream;  // ArrayBuffer
-
-// Crear adjunto nuevo
-const att = doc.attachmentsAdd('archivo.pdf');
-att.fileStream = arrayBuffer;  // o Blob, Buffer
-att.description = 'Descripción opcional';
-await doc.save();
-
-// Borrar
-await att.delete();
-```
-
----
-
-## Utilities
-
-Funciones auxiliares en `session.utils`.
-
-```javascript
-const utils = session.utils;
-
-// Conversiones de tipo
-utils.cDate('2024-03-15')        // → Date
-utils.cDate('15/03/2024', 'L')   // → Date (formato locale)
-utils.cNum('1.234,56')           // → 1234.56 (respeta locale)
-utils.cBool('true')              // → true
-utils.cBool(1)                   // → true
-
-// Cache local (por sesión)
-utils.cache('key', value, 60);   // Guardar por 60 segundos
-const val = utils.cache('key');  // Obtener (undefined si expiró)
-
-// Encoding
-utils.encUriC(text)              // encodeURIComponent
-
-// Loop asíncrono
-await utils.asyncLoop(10, async (loop) => {
-    console.log('Iteración', loop.iteration());
-    // await operacionAsincrona();
-    loop.next();  // o loop.break() para salir
-});
-
-// Librerías incluidas
-utils.moment        // moment-timezone
-utils.numeral       // numeral.js
-utils.CryptoJS      // crypto-js
-```
-
----
+Crear: `doc.attachmentsAdd('file.pdf')` -> setear `.fileStream` -> `doc.save()`. Borrar: `att.delete()`.
 
 ## Directory
 
-Acceso a cuentas y usuarios.
-
 ```javascript
 const dir = session.directory;
-
-// Buscar cuentas
 const accounts = await dir.accountsSearch("NAME LIKE 'Admin%'");
-
-// Obtener cuenta/usuario
-const acc = await dir.accounts(accId);
-const user = await dir.users(accId);  // Solo si es usuario
-
-// Propiedades de Account/User
-acc.id       // ACC_ID
-acc.name     // Nombre de la cuenta
-acc.email    // Email
-user.login   // Login del usuario
-user.isAdmin // Si es admin
+const acc = await dir.accounts(accId);   // acc.id, acc.name, acc.email
+const user = await dir.users(accId);     // user.login, user.isAdmin
 ```
+
+## Utilities (`session.utils`)
+
+| Metodo | Descripcion |
+|--------|-------------|
+| `cDate(str, format?)` | Parsear fecha. `'L'` = locale |
+| `cNum(str)` | Parsear numero (respeta locale) |
+| `cBool(val)` | Parsear boolean |
+| `cache(key, value?, ttl?)` | Cache local por sesion (ttl en segundos) |
+| `encUriC(text)` | encodeURIComponent |
+| `asyncLoop(n, fn)` | Loop asincronico con `loop.next()` / `loop.break()` |
+| `moment` / `numeral` / `CryptoJS` | Librerias incluidas |
+
+## Gotchas
+
+- `folder.search()` retorna **Array directo**, NO `{ rows }`. Propiedades en **MAYUSCULAS**.
+- `sqlserver.mjs execSql()` retorna `{ rows, metadata }` -- API diferente.
+- Siempre cerrar sesion con `session.logoff()`.
+- `doc.fields('X').value = val` valida overflow automaticamente.
+- `documentsNew()` crea en memoria; no existe en BD hasta `doc.save()`.
+- `folder.doc("formula")` falla si la formula retorna mas de 1 documento.
 
 ---
 
-## Tips y Patrones Comunes
-
-### Iterar campos modificados
-
-```javascript
-for (const [name, field] of doc.fields()) {
-    if (field.valueChanged && field.updatable) {
-        console.log(`${name}: ${field.valueOld} → ${field.value}`);
-    }
-}
-```
-
-### Copiar documento entre carpetas
-
-```javascript
-const srcDoc = await srcFolder.doc(docId);
-const dstDoc = await dstFolder.documentsNew();
-
-for (const [name, srcField] of srcDoc.fields()) {
-    if (srcField.custom && !srcField.valueEmpty) {
-        try {
-            dstDoc.fields(name).value = srcField.value;
-        } catch (e) { /* Campo no existe en destino */ }
-    }
-}
-await dstDoc.save();
-```
-
-### Buscar y procesar en batch
-
-```javascript
-const docs = await folder.search({ fields: 'DOC_ID', formula: "ESTADO = 'Pendiente'" });
-
-for (const row of docs) {
-    const doc = await folder.doc(row.DOC_ID);
-    doc.fields('ESTADO').value = 'Procesado';
-    await doc.save();
-}
-```
-
----
-
-## Pendientes
-
-- **Auth en scripts**: poder crear un FluyeSession desde Node.js y loguearse con token o API key. Hoy `fluye.user` y `fluye.session` están disponibles sin verificar login.
-- **Clases nuevas**: `Data` (JSONB genérico), `User`, `FluyeSession` — recién creadas, pendiente testing.
-
----
-
-**Ing Jorge Pagano - Fluye**
+**Ing Jorge Pagano - Cloudy CRM**

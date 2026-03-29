@@ -13,7 +13,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 ├── fluye-core/        # Motor BPM privado (próxima generación)
 ├── fluye-lib/         # SDKs públicos (LGPL v3)
 ├── fluye/             # Browser SDK
-├── DoorsBPM/          # Plataforma BPM legacy (.NET + ASP)
+├── doors/             # Plataforma BPM legacy (.NET + ASP)
 ├── Events.v8/         # Servidor de eventos (Node.js)
 ├── Global/            # Biblioteca modular legacy
 ├── Node/              # Ambiente para scripts DoorsAPI2
@@ -31,7 +31,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 | `/Desarrollo/CLAUDE.md` | **Root** - Credenciales, patrones universales, estructura de repos |
 | `fluye-core/CLAUDE.md` | Motor BPM privado, decisiones técnicas |
 | `fluye-lib/CLAUDE.md` | SDKs públicos, módulos cliente, quick starts |
-| `DoorsBPM/CLAUDE.md` | Arquitectura legacy, sync events, formularios |
+| `doors/README.md` | Arquitectura completa, tech stack, DB schema, documentation index |
 | `Events.v8/CLAUDE.md` | Servidor de eventos Node.js |
 | `Events.v8/server/restful/apiCom/CLAUDE.md` | API RESTful |
 | `Global/CLAUDE.md` | Biblioteca modular legacy |
@@ -40,12 +40,10 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 
 | Archivo | Descripción |
 |---------|-------------|
-| `/Desarrollo/CONTROLS.md` | **Sistema de controles** - Database-driven UI forms |
-| `DoorsBPM/GENERIC3.md` | Formularios ASP + Bootstrap 3 (legacy) |
-| `Global/client/generic6.md` | Formularios Bootstrap 5 / Framework7 |
-| `Global/client/controls6.md` | API de controles generic6 |
-| `fluye-lib/client/liveforms7/README.md` | Formularios dinámicos v7 (web/mobile) |
-| `fluye-lib/client/liveforms7/controls7.md` | API de controles v7 |
+| `/Desarrollo/doors/CONTROLS.md` | **Sistema de controles** - Database-driven UI forms |
+| `doors/GENERIC3.md` | Formularios ASP + Bootstrap 3 (legacy) |
+| `fluye-lib/client/liveforms7/README.md` | Formularios web/mobile (era generic6) |
+| `fluye-lib/client/liveforms7/controls7.md` | API de controles |
 
 ---
 
@@ -55,27 +53,46 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 
 | Archivo | Descripción |
 |---------|-------------|
-| `DoorsBPM/README.md` | Overview de la plataforma |
-| `DoorsBPM/CLAUDE.md` | Arquitectura completa, tech stack |
-| `fluye-core/legacy/doors/ACL.md` | Control de acceso y seguridad (ACL, permisos, SYS_READERS) |
-| `DoorsBPM/CONNECTIONS.md` | Gestión de conexiones |
-| `DoorsBPM/VIEWS.md` | Sistema de vistas |
+| `doors/README.md` | **Arquitectura completa**, tech stack, DB schema, documentation index |
+| `doors/ACL.md` | Control de acceso y seguridad (ACL, permisos, SYS_READERS) |
+| `doors/CONNECTIONS.md` | Gestión de conexiones |
+| `doors/VIEWS.md` | Sistema de vistas |
+| `doors/CODELIB.md` | Code library y sistema #include |
+| `doors/FORMS.md` | SYS_FORMS schema, GUIDs de sistema, runtimes, ACTIONS XML |
+
+### Componentes (READMEs por directorio)
+
+| Archivo | Descripción |
+|---------|-------------|
+| `doors/server/Doors.Server/README.md` | Servicio principal (9 WCF hosts, config, sesiones) |
+| `doors/server/Doors.Services/README.md` | Capa WCF (~130 endpoints REST, SOAP, COM) |
+| `doors/server/Doors.Api/README.md` | Data layer (multi-DB, providers, entities, 638 .cs) |
+| `doors/server/Doors.ServerScriptExecutor/README.md` | Motor VBScript para sync events |
+| `doors/web/net/README.md` | ASP.NET MVC (15 controllers, auth, Razor) |
+| `doors/web/asp/README.md` | Classic ASP (COM, formularios, vistas) |
+| `doors/com/README.md` | Componentes VB6/COM (12 componentes) |
+| `doors/com/Doors.ApiWrapper/README.md` | doorsapi.dll (38 clases, API reference) |
+| `doors/wrapper/README.md` | Wrappers .NET COM↔WCF bridge |
+| `doors/fileserver/README.md` | FileServer (attachments via WCF) |
+| `doors/agents/README.md` | Agents (Timer & Trigger async events) |
+| `doors/deployment/README.md` | Build, deploy, CI/CD, setup server |
+| `doors/tools/README.md` | Herramientas de operaciones (14 tools) |
 
 ### Eventos y Procesamiento
 
 | Archivo | Descripción |
 |---------|-------------|
-| `DoorsBPM/SYNCEVENTS.md` | **12 eventos sincrónicos** - BeforeSave, AfterSave, Open, etc |
-| `DoorsBPM/ASYNCEVENTS.md` | Eventos background - Timer, OnSave, OnDelete |
+| `doors/SYNCEVENTS.md` | **12 eventos sincrónicos** - BeforeSave, AfterSave, Open, etc |
+| `doors/ASYNCEVENTS.md` | Eventos background - Timer, OnSave, OnDelete |
 | `fluye/docs/SSE.md` | **Server-Sent Events** - Tiempo real .NET → Events.v8 → Browser |
 
 ### Logs y Troubleshooting
 
 | Archivo | Descripción |
 |---------|-------------|
-| `DoorsBPM/LOGS.md` | **Sistema de logs** - erYYMMDD.log, dpYYMMDD.log, acYYMMDD.log |
-| `fluye-core/legacy/doors/SYS_DOC_LOG.md` | **Audit log y recovery** - Data recovery scripts, LOG_CONF |
-| `DoorsBPM/SYS_DML_LOG.md` | DML audit log |
+| `doors/LOGS.md` | **Sistema de logs** - erYYMMDD.log, dpYYMMDD.log, acYYMMDD.log |
+| `doors/SYS_DOC_LOG.md` | **Audit log y recovery** - Data recovery scripts, LOG_CONF |
+| `doors/SYS_DML_LOG.md` | DML audit log |
 
 ---
 
@@ -243,8 +260,8 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 
 | Archivo | Descripción |
 |---------|-------------|
-| `Global/client/generic6.md` | Formularios Bootstrap 5 / Framework7 |
-| `Global/client/controls6.md` | API de controles |
+| `fluye-lib/client/liveforms7/README.md` | Formularios web/mobile (era generic6) |
+| `fluye-lib/client/liveforms7/controls7.md` | API de controles (era controls6) |
 | `Global/client/pivotable.md` | Grillas legacy |
 | `Global/client/insights/README.md` | Dashboards legacy |
 | `Global/client/insights/proto/Naum/README.md` | Prototipo Naum |
@@ -344,15 +361,15 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 const kbIndex = await loadMd('fluye/docs/INDEX.md');
 
 // Busca en el índice qué MD cargar según la pregunta del usuario
-// Ejemplo: usuario pregunta por "sync events" → carga DoorsBPM/SYNCEVENTS.md
+// Ejemplo: usuario pregunta por "sync events" → carga doors/SYNCEVENTS.md
 ```
 
 ### Para Usuarios
 
-- **Pregunta sobre eventos:** Ver `DoorsBPM/SYNCEVENTS.md` o `DoorsBPM/ASYNCEVENTS.md`
-- **Problema con logs:** Ver `DoorsBPM/LOGS.md`
-- **Recovery de datos:** Ver `fluye-core/legacy/doors/SYS_DOC_LOG.md` + `Node/README_REVERSION_OPP_979374.md`
-- **Formularios:** Ver `CONTROLS.md` + `DoorsBPM/GENERIC3.md` o `fluye-lib/client/liveforms7/`
+- **Pregunta sobre eventos:** Ver `doors/SYNCEVENTS.md` o `doors/ASYNCEVENTS.md`
+- **Problema con logs:** Ver `doors/LOGS.md`
+- **Recovery de datos:** Ver `doors/SYS_DOC_LOG.md` + `Node/README_REVERSION_OPP_979374.md`
+- **Formularios:** Ver `doors/CONTROLS.md` + `doors/GENERIC3.md` o `fluye-lib/client/liveforms7/`
 - **IA y búsquedas:** Ver `fluye-lib/ai/README.md` + `fluye-lib/ai/searchwiz/`
 
 ---

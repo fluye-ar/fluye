@@ -4738,6 +4738,7 @@ export class Node {
         doc, // Opcional, el id o json de un documento
         folder, // Opcional, el id o json de un folder
         returnFetch, // Opcional, def false. Devuelve el fetch en vez de la respuesta
+        server, // Opcional, sobreescribe el server definido en la config
     });
     */
     exec(options) {
@@ -4773,12 +4774,8 @@ export class Node {
 
                 let code = await me.codeOptions(structuredClone(options.code));
                 code.exec = true;
-                if (await me.isFluye) {
-                    code.vercel = true;
-                } else {
-                    let srv = await me.server;
-                    if (srv) code.server = srv;
-                }
+                let srv = options.server ? options.server : await me.server;
+                if (srv) code.server = srv;
 
                 let url = me.session.utils.ghCodeUrl(code);
 
@@ -4863,23 +4860,22 @@ export class Node {
         args, // Argumentos para el metodo. Si el metodo tiene multiples argumentos enviarlos como un array.
         doc, // Opcional, id o json del documento para el seteo de contexto en el server
         folder, // Opcional, id o json del folder para el seteo de contexto en el server
+        server, // Opcional, sobreescribe el server definido en la config
     });
     */
     async modCall(options) {
         //todo: soporte para apiKey y url
-        let xOpt = {
+        let execOpt = {
             code: { repo: 'fluye-lib', path: 'server/modproxy.js' },
             payload: options,
         };
-        if (options.doc) {
-            xOpt.doc = options.doc;
-            delete options.doc;
+        for (const key of ['doc', 'folder', 'server']) {
+            if (options[key]) {
+                execOpt[key] = options[key];
+                delete options[key];
+            }
         }
-        if (options.folder) {
-            xOpt.folder = options.folder;
-            delete options.folder;
-        }
-        return await this.exec(xOpt);
+        return await this.exec(execOpt);
     }
 
     get server() {
@@ -5915,7 +5911,6 @@ export class Utilities {
         ref, // Branch / tag
         fresh, // Actualiza el cache
         exec, // Boolean, indica si es para ejecutar (ghx)
-        vercel, // Boolean. Si exec es true, este parametro indica si retorna el enpoint de Vercel o de v8
         server // Opcional, def https://cdn.fluye.ar, https://node.cloudycrm.net para exec
     }
     */
@@ -5945,14 +5940,12 @@ export class Utilities {
         }
 
         let url;
-        if (opt.exec) {
-            if (opt.vercel) {
-                url = (opt.server || 'https://fluye.ar') + '/api/ghx';
-            } else {
-                url = (opt.server || 'https://node.cloudycrm.net') + '/ghx';
-            }
+
+        if (code.exec) {
+            url = (code.server || 'https://fluye.ar');
+            url += url.indexOf('fluye.ar') >= 0 ? '/api/ghx' : '/ghx';
         } else {
-            url = (opt.server || 'https://cdn.fluye.ar') + '/gh';
+            url = (code.server || 'https://cdn.fluye.ar') + '/gh';
         }
         url += `/${ opt.owner }/${ opt.repo }`;
         url += opt.ref ? `@${ opt.ref }` : '';
