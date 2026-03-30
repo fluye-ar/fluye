@@ -5941,11 +5941,11 @@ export class Utilities {
 
         let url;
 
-        if (code.exec) {
-            url = (code.server || 'https://fluye.ar');
+        if (opt.exec) {
+            url = (opt.server || 'https://fluye.ar');
             url += url.indexOf('fluye.ar') >= 0 ? '/api/ghx' : '/ghx';
         } else {
-            url = (code.server || 'https://cdn.fluye.ar') + '/gh';
+            url = (opt.server || 'https://cdn.fluye.ar') + '/gh';
         }
         url += `/${ opt.owner }/${ opt.repo }`;
         url += opt.ref ? `@${ opt.ref }` : '';
