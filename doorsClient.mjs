@@ -20,8 +20,8 @@ types para intelliSense: https://github.com/DefinitelyTyped/DefinitelyTyped
 async constructors: https://dev.to/somedood/the-proper-way-to-write-async-constructors-in-javascript-1o8c
 
 Fresh:
-https://cdn.fluye.ar/ghf/fluye/client.mjs?_fresh=1
-https://cdn.cloudycrm.net/gh/fluye-ar/fluye/client.mjs?_fresh=1
+https://cdn.fluye.ar/ghf/fluye/doorsClient.mjs?_fresh=1
+https://cdn.cloudycrm.net/gh/fluye-ar/fluye/doorsClient.mjs?_fresh=1
 */
 
 var platform, _mainlib, _moment, _numeral, _CryptoJS, _serializeError,
@@ -429,12 +429,14 @@ export class Session {
     #billing;
     #s3;
     #v8Disabled; // SYS_SETTING V8_DISABLED
-    
+    #promises;
+
     constructor(serverUrl, authToken) {
         this.#restClient = new RestClient(this);
         this.#v8Client = new V8Client(this);
         this.#serverUrl = serverUrl;
         this.#authToken = authToken;
+        this.#promises = [];
     }
     
     /**
@@ -486,6 +488,11 @@ export class Session {
         this.#doorsVersion = undefined;
         this.#billing = undefined;
         this.#v8Disabled = undefined;
+        this.#promises = [];
+    }
+
+    async awaitPromises() {
+        await Promise.all(this.#promises);
     }
 
     async _userChange() {
@@ -516,7 +523,7 @@ export class Session {
     set apiKey(value) {
         this._reset();
         this.#apiKey = value;
-        this._userChange();
+        this.#promises.push(this._userChange());
     }
 
     asyncEventsDisabled(value) {
@@ -537,7 +544,7 @@ export class Session {
     set authToken(value) {
         this._reset();
         this.#authToken = value;
-        this._userChange();
+        this.#promises.push(this._userChange());
     }
 
     get billing() {
@@ -6685,8 +6692,9 @@ class RestClient {
         this.#session = session;
     }
 
-    fetch(url, method, parameters, parameterName) {
+    async fetch(url, method, parameters, parameterName) {
         var me = this;
+        await me.session.awaitPromises();
         let data = null;
         //TODO Check if ends with /
         let completeUrl = me.session.serverUrl + '/' + url;
@@ -6859,6 +6867,7 @@ class V8Client {
     */
     async fetch(url, options) {
         let me = this;
+        await me.session.awaitPromises();
         await utilsPromise;
 
         let opt = Object.assign({

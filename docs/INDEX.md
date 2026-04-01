@@ -85,6 +85,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 | `doors/SYNCEVENTS.md` | **12 eventos sincrónicos** - BeforeSave, AfterSave, Open, etc |
 | `doors/ASYNCEVENTS.md` | Eventos background - Timer, OnSave, OnDelete |
 | `fluye/docs/SSE.md` | **Server-Sent Events** - Tiempo real .NET → Events.v8 → Browser |
+| `fluye/docs/RELATIONS.md` | **Relations (JOINs)** - LEFT JOIN en search via Events.v8, 10x mas rapido que campos calculados |
 
 ### Logs y Troubleshooting
 
@@ -302,6 +303,24 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 |---------|-------------|
 | `Node/README.md` | **Ambiente Node.js** - DoorsAPI2 scripts |
 | `Node/README_REVERSION_OPP_979374.md` | Data recovery case study |
+
+---
+
+## 📓 Notion - KB Desarrollo
+
+Acceso via MCP `notionApi` (configurado en `~/.claude.json`, scope: user).
+
+- **Database ID:** `98f0b841-879f-43c3-85eb-fd602931cbae`
+- **Artículos:** 169 (Doors, Node, SQL, controles, AWS, WhatsApp)
+- **Índice local:** [`fluye/docs/kb/README.md`](kb/README.md)
+
+```
+# Buscar por título
+mcp__notionApi__API-post-search → query: "término"
+
+# Leer contenido de un artículo
+mcp__notionApi__API-get-block-children → block_id: "<page_id>"
+```
 
 ---
 
