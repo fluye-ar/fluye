@@ -6694,7 +6694,7 @@ class RestClient {
 
     async fetch(url, method, parameters, parameterName) {
         var me = this;
-        await me.session.awaitPromises();
+        //await me.session.awaitPromises();
         let data = null;
         //TODO Check if ends with /
         let completeUrl = me.session.serverUrl + '/' + url;
@@ -6867,7 +6867,7 @@ class V8Client {
     */
     async fetch(url, options) {
         let me = this;
-        await me.session.awaitPromises();
+        //await me.session.awaitPromises();
         await utilsPromise;
 
         let opt = Object.assign({
