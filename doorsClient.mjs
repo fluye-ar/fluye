@@ -429,14 +429,13 @@ export class Session {
     #billing;
     #s3;
     #v8Disabled; // SYS_SETTING V8_DISABLED
-    #promises;
+    _needsAuth;
 
     constructor(serverUrl, authToken) {
         this.#restClient = new RestClient(this);
         this.#v8Client = new V8Client(this);
         this.#serverUrl = serverUrl;
         this.#authToken = authToken;
-        this.#promises = [];
     }
     
     /**
@@ -488,15 +487,12 @@ export class Session {
         this.#doorsVersion = undefined;
         this.#billing = undefined;
         this.#v8Disabled = undefined;
-        this.#promises = [];
-    }
-
-    async awaitPromises() {
-        await Promise.all(this.#promises);
+        this._needsAuth = false;
     }
 
     async _userChange() {
         let me = this;
+        me._needsAuth = true;
 
         await utilsPromise;
         _numeral.locale('es'); // es / en
@@ -523,7 +519,7 @@ export class Session {
     set apiKey(value) {
         this._reset();
         this.#apiKey = value;
-        this.#promises.push(this._userChange());
+        this._userChange();
     }
 
     asyncEventsDisabled(value) {
@@ -544,7 +540,7 @@ export class Session {
     set authToken(value) {
         this._reset();
         this.#authToken = value;
-        this.#promises.push(this._userChange());
+        this._userChange();
     }
 
     get billing() {
@@ -6694,7 +6690,10 @@ class RestClient {
 
     async fetch(url, method, parameters, parameterName) {
         var me = this;
-        //await me.session.awaitPromises();
+        if (me.session._needsAuth) {
+            me.session._needsAuth = false;
+            await me.session.isLogged;
+        }
         let data = null;
         //TODO Check if ends with /
         let completeUrl = me.session.serverUrl + '/' + url;
@@ -6867,7 +6866,6 @@ class V8Client {
     */
     async fetch(url, options) {
         let me = this;
-        //await me.session.awaitPromises();
         await utilsPromise;
 
         let opt = Object.assign({
