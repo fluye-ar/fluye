@@ -157,6 +157,18 @@ class Instances {
         return data;
     }
 
+    async update(data) {
+        let me = this;
+        let res = await me.#fSession.fetch('/instances', {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+        let result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Update instance failed');
+        me.#cache = null;
+        return result;
+    }
+
     async remove(name) {
         let me = this;
         let res = await me.#fSession.fetch('/instances', {
