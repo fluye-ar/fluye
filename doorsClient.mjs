@@ -6007,7 +6007,7 @@ export class Utilities {
             if (platform == 'Ev8') {
                 if (!module.owner) module.owner = 'fluye-ar';
                 ret = await _mainlib.gitImport(module);
-            } else if (platform == 'Vercel') {
+            } else if (platform == 'fluyeV8') {
                 ret = await globalThis.fluye.gitImport(module);
             } else {
                 ret = await import(me.ghCodeUrl(module));
