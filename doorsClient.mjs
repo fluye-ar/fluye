@@ -225,7 +225,7 @@ async function loadUtils() {
         if (typeof(_fastXmlParser) == 'undefined') {
             if (inNode()) {
                 var res = await import('fast-xml-parser');
-                _fastXmlParser = res.default;
+                _fastXmlParser = res.default || res;
             } else {
                 if (window.fastXmlParser) {
                     _fastXmlParser = window.fastXmlParser;
@@ -1976,13 +1976,17 @@ export class Database {
     @returns {Promise<number>}
     */
     async execute(sql) {
-        var res = await this.session.utils.execVbs(`
-            Dim aff
-            dSession.Db.Execute ${ this.session.utils.vbsEncodeString(sql) }, aff
-            Response.Write aff
-        `);
+        if (await this.session.doorsVersion >= '009') {
+            return this.openRecordset(sql);
+        } else {
+            var res = await this.session.utils.execVbs(`
+                Dim aff
+                dSession.Db.Execute ${ this.session.utils.vbsEncodeString(sql) }, aff
+                Response.Write aff
+            `);
 
-        return parseInt(await res.text());
+            return parseInt(await res.text());
+        }
     }
 
     /**
@@ -2002,16 +2006,21 @@ export class Database {
     @returns {Promise<Object[]>}
     */
     async openRecordset(sql) {
-        let me = this;
+        if (await this.session.doorsVersion >= '009') {
+            return this.session.restClient.fetch('db/query', 'POST', { sql }, '');
+        } else {
+            let me = this;
+            await utilsPromise;
 
-        var res = await this.session.utils.execVbs(`
-            Set rcs = dSession.Db.OpenRecordset(${ this.session.utils.vbsEncodeString(sql) })
-            rcs.Save Response, 1
-            rcs.Close
-        `);
+            var res = await this.session.utils.execVbs(`
+                Set rcs = dSession.Db.OpenRecordset(${ this.session.utils.vbsEncodeString(sql) })
+                rcs.Save Response, 1
+                rcs.Close
+            `);
 
-        var txt = await res.text();
-        return me.parseAdoRecordsetXml(txt);
+            var txt = await res.text();
+            return me.parseAdoRecordsetXml(txt);
+        }
     }
 
     parseAdoRecordsetXml(xml) {
