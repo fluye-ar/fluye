@@ -107,28 +107,28 @@ Desarrollo, Doors, Controles, Base de datos, Errores, Herramientas, Soporte, Con
 |----------|-----------|-------|
 | Obtención de valores anteriores/nuevos de SYS_DOC_LOG como tabla | Desarrollo | 2026-01-15 |
 | Función PerteneceGrupo para SQL | Base de datos | 2024-02-22 |
-| SQL Server - Ver tamaño de tablas | Desarrollo, Base de datos, Herramientas | 2024-04-29 |
+| SQL Server - Ver tamaño de tablas | Desarrollo, Base de datos, Herramientas | 2024-04-29 | ✅ `sql_ver_tamano_tablas.md` |
 | Administrar SQL Server en AWS RDS | Base de datos | 2024-04-29 |
 | Restaurar backup de DB en entorno de Desarrollo | Base de datos | 2024-04-29 |
 | SplitAndGet - SQL Server | Base de datos | 2023-12-29 |
 | SQL - Listar usuarios y grupos | Base de datos | 2023-12-29 |
 | Obtener último inicio de sesión | Base de datos | 2023-12-29 |
-| Ordenar ascendente con los NULL al último | Base de datos | 2023-12-29 |
+| Ordenar ascendente con los NULL al último | Base de datos | 2023-12-29 | ✅ `sql_ordenar_null_ultimo.md` |
 | Consulta documentos borrados en la papelera | Base de datos | 2023-12-29 |
 | Diferencia entre dos fechas en formato HH:MM | Base de datos | 2023-12-29 |
-| Campo SEMANA | Base de datos | 2023-12-29 |
-| Listar definicion de campos calculados | Base de datos | 2023-12-29 |
+| Campo SEMANA | Base de datos | 2023-12-29 | ✅ `sql_campo_semana.md` |
+| Listar definicion de campos calculados | Base de datos | 2023-12-29 | ✅ `sql_listar_campos_calculados.md` |
 | Invalid object name 'dbo.sysproperties' | Base de datos | 2023-12-29 |
-| Búsquedas Accent Insensitive en SQL Server | Base de datos | 2023-12-29 |
+| Búsquedas Accent Insensitive en SQL Server | Base de datos | 2023-12-29 | ✅ `sql_accent_insensitive.md` |
 | Listar las funciones en SQL Server | Base de datos | 2023-12-29 |
-| SP para crear índices de texto en SQL Server | Base de datos | 2023-12-29 |
-| Manejo de índices de texto mediante T-SQL | Base de datos | 2023-12-29 |
-| Indexación de archivos adjuntos en SQL Server | Base de datos | 2023-08-24 |
-| Depuración de tablas de log | Base de datos | 2023-08-24 |
-| Borrar tablas SYS_FIELDS huérfanas | Base de datos | 2023-08-24 |
+| SP para crear índices de texto en SQL Server | Base de datos | 2023-12-29 | ✅ `sql_sp_indices_texto.md` |
+| Manejo de índices de texto mediante T-SQL | Base de datos | 2023-12-29 | ✅ `sql_indices_texto_tsql.md` |
+| Indexación de archivos adjuntos en SQL Server | Base de datos | 2023-08-24 | ✅ `sql_indexacion_adjuntos.md` |
+| Depuración de tablas de log | Base de datos | 2023-08-24 | ✅ `sql_depuracion_tablas_log.md` |
+| Borrar tablas SYS_FIELDS huérfanas | Base de datos | 2023-08-24 | ✅ `sql_borrar_sysfields_huerfanas.md` |
 | Obtener un atributo de un XML en el mismo SELECT | Base de datos | 2023-08-24 |
 | Trazar excepciones de SQL Server con Profiler | Base de datos | 2023-08-24 |
-| Issue con campos calculados en SQL Server | Errores | 2023-08-22 |
+| Issue con campos calculados en SQL Server | Errores | 2023-08-22 | ✅ `sql_issue_campos_calculados.md` |
 | Prueba de conexión de Gestar a base de datos externas | Desarrollo | 2024-02-22 |
 
 ### Whatsapp & Conectores

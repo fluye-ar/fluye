@@ -44,6 +44,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 | `doors/GENERIC3.md` | Formularios ASP + Bootstrap 3 (legacy) |
 | `fluye-lib/client/liveforms7/README.md` | Formularios web/mobile (era generic6) |
 | `fluye-lib/client/liveforms7/controls7.md` | API de controles |
+| `fluye-lib/client/liveforms7/DESIGN.md` | Layout, controles y diseño de formularios |
 
 ---
 
@@ -263,6 +264,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 |---------|-------------|
 | `fluye-lib/client/liveforms7/README.md` | Formularios web/mobile (era generic6) |
 | `fluye-lib/client/liveforms7/controls7.md` | API de controles (era controls6) |
+| `fluye-lib/client/liveforms7/DESIGN.md` | Layout, controles y diseño de formularios |
 | `Global/client/pivotable.md` | Grillas legacy |
 | `Global/client/insights/README.md` | Dashboards legacy |
 | `Global/client/insights/proto/Naum/README.md` | Prototipo Naum |
