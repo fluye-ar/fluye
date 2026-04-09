@@ -6758,13 +6758,16 @@ class RestClient {
                     if (response.ok) {
                         resolve(parsedJson.InternalObject);
                     } else {
+                        let err;
                         if (parsedJson) {
-                            let err = new Error(me.session.utils.errMsg(parsedJson));
+                            err = new Error(me.session.utils.errMsg(parsedJson));
                             err.doorsException = parsedJson;
-                            reject(err);
                         } else {
-                            reject(new Error(response.status + ' (' + response.statusText + ')'))
+                            err = new Error(response.status + ' (' + response.statusText + ')');
                         }
+                        err.requestUrl = completeUrl;
+                        err.requestMethod = method;
+                        reject(err);
                     }
                 });
             }).catch((error) => {
@@ -6909,12 +6912,15 @@ class V8Client {
                 let resTxt = await res.text();
                 let resJson;
                 try { resJson = JSON.parse(resTxt) } catch (e) {};
+                let err;
                 if (resJson) {
-                    let err = me.session.utils.deserializeError(resJson);
-                    throw err;
+                    err = me.session.utils.deserializeError(resJson);
                 } else {
-                    throw new Error(resTxt);
+                    err = new Error(resTxt);
                 }
+                err.requestUrl = fullUrl;
+                err.requestMethod = method;
+                throw err;
             }
 
         } catch(er) {
