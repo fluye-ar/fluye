@@ -586,20 +586,16 @@ export class Session {
     */
     get currentUser() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#currentUser) {
+        if (!me.#currentUser) {
+            return (async () => {
                 var url = 'session/loggedUser';
-                me.restClient.fetch(url, 'GET', '', '').then(
-                    res => {
-                        me.#currentUser = new User(res, me);
-                        resolve(me.#currentUser);
-                    },
-                    reject
-                )
-            } else {
-                resolve(me.#currentUser);
-            }
-        });
+                let res = await me.restClient.fetch(url, 'GET', '', '');
+                me.#currentUser = new User(res, me);
+                return me.#currentUser;
+            })();
+        } else {
+            return Promise.resolve(me.#currentUser);
+        }
     }
 
     /**
@@ -648,44 +644,33 @@ export class Session {
     Obtiene un documento por su doc_id.
     @returns {Promise<Document>}
     */
-    documentsGetFromId(docId) {
+    async documentsGetFromId(docId) {
         var me = this;
-        return new Promise(async (resolve, reject) => {
-            let url = 'documents/' + docId;
-            me.restClient.fetch(url, 'GET', '', '').then(
-                async res => {
-                    await me._docRelFields(res);
-                    if ((await me.doorsVersion) < '008') await me._attachments(res);
-                    let doc = new Document(res, me);
-                    await doc._dispatchEvent('Document_Open');
-                    resolve(doc);
-                },
-                reject
-            )
-        });
+        let url = 'documents/' + docId;
+        let res = await me.restClient.fetch(url, 'GET', '', '');
+        await me._docRelFields(res);
+        if ((await me.doorsVersion) < '008') await me._attachments(res);
+        let doc = new Document(res, me);
+        await doc._dispatchEvent('Document_Open');
+        return doc;
     }
 
     get doorsVersion() {
         var me = this;
-        return new Promise(async (resolve, reject) => {
-            if (me.#doorsVersion !== undefined) {
-                resolve(me.#doorsVersion);
-
-            } else {
+        if (me.#doorsVersion !== undefined) {
+            return Promise.resolve(me.#doorsVersion);
+        } else {
+            return (async () => {
                 let url = 'doorsversion';
-                me.restClient.fetch(url, 'GET', '', '').then(
-                    async res => {
-                        let ver = res.split('.');
-                        ver.forEach((el, ix) => {
-                            ver[ix] = me.utils.lZeros(el, 3);
-                        });
-                        me.#doorsVersion = ver.join('.');
-                        resolve(me.#doorsVersion);
-                    },
-                    reject
-                );
-            }        
-        });
+                let res = await me.restClient.fetch(url, 'GET', '', '');
+                let ver = res.split('.');
+                ver.forEach((el, ix) => {
+                    ver[ix] = me.utils.lZeros(el, 3);
+                });
+                me.#doorsVersion = ver.join('.');
+                return me.#doorsVersion;
+            })();
+        }
     }
 
     /**
@@ -716,17 +701,11 @@ export class Session {
     Retorna un folder por su fld_id.
     @returns {Promise<Folder>}
     */
-    foldersGetFromId(fldId) {
+    async foldersGetFromId(fldId) {
         var me = this;
-        return new Promise((resolve, reject) => {
-            var url = 'folders/' + fldId + '';
-            me.restClient.fetch(url, 'GET', '', '').then(
-                res => {
-                    resolve(new Folder(res, me));
-                },
-                reject
-            )
-        })
+        var url = 'folders/' + fldId;
+        let res = await me.restClient.fetch(url, 'GET', '', '');
+        return new Folder(res, me);
     };
 
     /**
@@ -734,17 +713,11 @@ export class Session {
     Si curFolderId no se envia se asume 1001.
     @returns {Promise<Folder>}
     */
-    foldersGetFromPath(fldPath, curFolderId) {
+    async foldersGetFromPath(fldPath, curFolderId) {
         var me = this;
-        return new Promise((resolve, reject) => {
-            var url = 'folders/' + (curFolderId ? curFolderId : 1001) + '/children?folderpath=' + me.utils.encUriC(fldPath);
-            me.restClient.fetch(url, 'GET', '', '').then(
-                res => {
-                    resolve(new Folder(res, me));
-                },
-                reject
-            )
-        })
+        var url = 'folders/' + (curFolderId ? curFolderId : 1001) + '/children?folderpath=' + me.utils.encUriC(fldPath);
+        let res = await me.restClient.fetch(url, 'GET', '', '');
+        return new Folder(res, me);
     };
 
     /**
@@ -803,20 +776,16 @@ export class Session {
     */
     get instance() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#instance) {
+        if (!me.#instance) {
+            return (async () => {
                 var url = 'instance';
-                me.restClient.fetch(url, 'GET', '', '').then(
-                    res => {
-                        me.#instance = res;
-                        resolve(me.#instance);
-                    },
-                    reject
-                )
-            } else {
-                resolve(me.#instance);
-            }
-        });
+                let res = await me.restClient.fetch(url, 'GET', '', '');
+                me.#instance = res;
+                return me.#instance;
+            })();
+        } else {
+            return Promise.resolve(me.#instance);
+        }
     }
 
     /**
@@ -838,25 +807,19 @@ export class Session {
     Cierra la sesion.
     @returns {Promise}
     */
-    logoff() {
+    async logoff() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            var url = 'session/logoff';
-            me.restClient.fetch(url, 'POST', {}, '').then(
-                res => {
-                    me._reset();
-                    resolve(res);
-                },
-                reject
-            )
-        })
+        var url = 'session/logoff';
+        let res = await me.restClient.fetch(url, 'POST', {}, '');
+        me._reset();
+        return res;
     };
 
     /**
     Inicia la sesion. Devuelve el authToken.
     @returns {Promise<string>}
     */
-    logon(login, password, instance, liteMode) {
+    async logon(login, password, instance, liteMode) {
         var me = this;
         var url = 'session/logon';
         var data = {
@@ -865,15 +828,9 @@ export class Session {
             instanceName: instance,
             liteMode: liteMode ? true : false,
         };
-        return new Promise((resolve, reject) => {
-            me.restClient.fetch(url, 'POST', data, '').then(
-                token => {
-                    me.authToken = token;
-                    resolve(token);
-                },
-                reject
-            );
-        });
+        let token = await me.restClient.fetch(url, 'POST', data, '');
+        me.authToken = token;
+        return token;
     };
 
     /**
@@ -1006,31 +963,18 @@ export class Session {
     Devuelve o setea tags de session.
     @returns {Promise<Object>}
     */
-    tags(key, value) {
+    async tags(key, value) {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (value === undefined) {
-                // Devuelve
-                var url = 'session/tags';
-                me.restClient.fetch(url, 'GET', '', '').then(
-                    res => {
-                        if (key === undefined) {
-                            resolve(res);
-                        } else {
-                            resolve(res[key]);
-                        }
-                    },
-                    reject
-                )
-            } else {
-                // Setea
-                var url = 'session/tags';
-                me.restClient.fetch(url, 'POST', { key, value }, '').then(
-                    res => { resolve(res) },
-                    reject
-                )
-            } 
-        })
+        if (value === undefined) {
+            // Devuelve
+            var url = 'session/tags';
+            let res = await me.restClient.fetch(url, 'GET', '', '');
+            return key === undefined ? res : res[key];
+        } else {
+            // Setea
+            var url = 'session/tags';
+            return await me.restClient.fetch(url, 'POST', { key, value }, '');
+        }
     }
 
     tagsAdd(key, value) {
@@ -1056,15 +1000,9 @@ export class Session {
     Reemplaza los tokens de text
     @returns {Promise<string>}
     */
-    tokensReplace(text) {
-        var me = this;
-        return new Promise((resolve, reject) => {
-            var url = 'session/tokens/replaced?text=' + encodeURIComponent(text ? text : '');
-            me.restClient.fetch(url, 'POST', {}, '').then(
-                res => { resolve(res) },
-                reject
-            )
-        })
+    async tokensReplace(text) {
+        var url = 'session/tokens/replaced?text=' + encodeURIComponent(text ? text : '');
+        return await this.restClient.fetch(url, 'POST', {}, '');
     }        
 
     /**
@@ -1175,48 +1113,33 @@ export class Account {
     }
 
     /** Metodo interno, no usar */
-    _accountsGet(listFunction, account) {
+    async _accountsGet(listFunction, account) {
         var me = this;
-        return new Promise((resolve, reject) => {
-            me[listFunction]().then(
-                res => {
-                    if (res.has(account)) {
-                        resolve(res.get(account));
-
-                    } else {
-                        // Busca por id
-                        var acc;
-                        if (!isNaN(parseInt(account)) && (acc = res.find(el => el.id == account))) {
-                            resolve(acc);
-                        } else {
-                            //console.log('Account not found: ' + account);
-                            resolve(undefined);
-                        }
-                    }
-                },
-                reject
-            )
-        });
+        let res = await me[listFunction]();
+        if (res.has(account)) {
+            return res.get(account);
+        } else {
+            // Busca por id
+            var acc;
+            if (!isNaN(parseInt(account)) && (acc = res.find(el => el.id == account))) {
+                return acc;
+            } else {
+                return undefined;
+            }
+        }
     }
 
     /** Metodo interno, no usar */
-    _accountsList(property, endPoint) {
+    async _accountsList(property, endPoint) {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (me.#json[property]) {
-                resolve(me._accountsMap(me.#json[property]));
-
-            } else {
-                var url = 'accounts/' + me.id + '/' + endPoint;
-                me.session.restClient.fetch(url, 'GET', '', '').then(
-                    res => {
-                        me.#json[property] = res;
-                        resolve(me._accountsMap(me.#json[property]));
-                    },
-                    reject
-                )
-            }
-        });
+        if (me.#json[property]) {
+            return me._accountsMap(me.#json[property]);
+        } else {
+            var url = 'accounts/' + me.id + '/' + endPoint;
+            let res = await me.session.restClient.fetch(url, 'GET', '', '');
+            me.#json[property] = res;
+            return me._accountsMap(me.#json[property]);
+        }
     }
 
     /** Metodo interno, no usar */
@@ -1452,26 +1375,20 @@ export class Account {
     Guarda.
     @returns {Promise<Account>}
     */
-    save() {
+    async save() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            var type = me instanceof User ? 'user' : 'account';
-            var url, method;
-            if (me.isNew || me.id === undefined) {
-                url = type + 's';
-                method = 'PUT';
-            } else {
-                url = type + 's/' + me.id;
-                method = 'POST';
-            }
-            me.session.restClient.fetch(url, method, me.toJSON(), type).then(
-                res => {
-                    me.#json = res;
-                    resolve(me);
-                },
-                reject
-            )
-        })
+        var type = me instanceof User ? 'user' : 'account';
+        var url, method;
+        if (me.isNew || me.id === undefined) {
+            url = type + 's';
+            method = 'PUT';
+        } else {
+            url = type + 's/' + me.id;
+            method = 'POST';
+        }
+        let res = await me.session.restClient.fetch(url, method, me.toJSON(), type);
+        me.#json = res;
+        return me;
     }
 
     /**
@@ -1871,39 +1788,30 @@ export class Attachment {
     Guarda el adjunto inmediatamente.
     @returns {Promise}
     */
-    save() {
+    async save() {
         if (!this.isNew) throw new Error('I\'m not new');
 
         var me = this;
-        return new Promise(async (resolve, reject) => {
-            if (await me.session.doorsVersion < '008.000.000.000') {
-                await Promise.all(me.promises);
-                var formData = new FormData();
-                var fs = await me.fileStream;
-                var blob = (fs instanceof Blob ? fs : new Blob([fs]));
-                formData.append('attachment', blob, me.name);
-                if (me.description || me.description == 0) formData.append('description', me.description);
-                if (me.group || me.group == 0) formData.append('group', me.group);
-                var url = 'documents/' + me.parent.id + '/attachments';
-                me.session.restClient.fetchRaw(url, 'POST', formData).then(
-                    async res => {
-                        let resJson = await res.json();
-                        let newId = Math.max(...resJson.InternalObject.map(el => el.AttId));
-                        let newJson = resJson.InternalObject.find(el => el.AttId == newId);
-                        if (me.name != newJson.Name) reject(new Error('Same name expected'));
-                        Object.assign(me.#json, newJson);
-                        me.#json.AccName = (await me.session.currentUser).name;
-                        //me.#json.File = fs; // Para que no se postee cdo grabe el doc
-                        //me.parent.toJSON().Attachments.push(newJson);
-                        resolve(me);
-                    },
-                    reject
-                );
-
-            } else {
-                resolve(undefined);
-            }
-        });
+        if (await me.session.doorsVersion < '008.000.000.000') {
+            await Promise.all(me.promises);
+            var formData = new FormData();
+            var fs = await me.fileStream;
+            var blob = (fs instanceof Blob ? fs : new Blob([fs]));
+            formData.append('attachment', blob, me.name);
+            if (me.description || me.description == 0) formData.append('description', me.description);
+            if (me.group || me.group == 0) formData.append('group', me.group);
+            var url = 'documents/' + me.parent.id + '/attachments';
+            let res = await me.session.restClient.fetchRaw(url, 'POST', formData);
+            let resJson = await res.json();
+            let newId = Math.max(...resJson.InternalObject.map(el => el.AttId));
+            let newJson = resJson.InternalObject.find(el => el.AttId == newId);
+            if (me.name != newJson.Name) throw new Error('Same name expected');
+            Object.assign(me.#json, newJson);
+            me.#json.AccName = (await me.session.currentUser).name;
+            return me;
+        } else {
+            return undefined;
+        }
     }
 
     /**
@@ -2155,69 +2063,56 @@ export class Directory {
     Devuelve un account por name o id.
     @returns {Promise<Account>}
     */
-    accounts(account) {
+    async accounts(account) {
         var me = this;
-        return new Promise((resolve, reject) => {
-            var url;
-            if (account || account == 0) {
-                if (isNaN(parseInt(account))) {
-                    url = 'accounts/name=' + me.session.utils.encUriC(account);
-                    //url = 'accounts/name/' + me.session.utils.encUriC(account);
-                } else {
-                    // todo: cambiar por /accounts/{accId}
-                    url = 'accounts?accIds=' + account;
-                }
-
+        var url;
+        if (account || account == 0) {
+            if (isNaN(parseInt(account))) {
+                url = 'accounts/name=' + me.session.utils.encUriC(account);
+                //url = 'accounts/name/' + me.session.utils.encUriC(account);
             } else {
-                reject(new Error('Invalid account spec: ' + account));
+                // todo: cambiar por /accounts/{accId}
+                url = 'accounts?accIds=' + account;
             }
+        } else {
+            throw new Error('Invalid account spec: ' + account);
+        }
 
-            me.session.restClient.fetch(url, 'GET', '', '').then(
-                res => {
-                    if (Array.isArray(res)) {
-                        if (res.length == 0) {
-                            reject(new Error('Account not found (' + account + ')'));
-                        } else if (res.length > 1) {
-                            reject(new Error('Vague expression (' + account + ')'));
-                        } else {
-                            resolve(new Account(res[0], me.session));
-                        }
-                    } else {
-                        resolve(new Account(res, me.session));
-                    }
-                },
-                reject
-            )
-        });
+        let res = await me.session.restClient.fetch(url, 'GET', '', '');
+        if (Array.isArray(res)) {
+            if (res.length == 0) {
+                throw new Error('Account not found (' + account + ')');
+            } else if (res.length > 1) {
+                throw new Error('Vague expression (' + account + ')');
+            } else {
+                return new Account(res[0], me.session);
+            }
+        } else {
+            return new Account(res, me.session);
+        }
     }
 
     /**
     Crea un nuevo account. type: 1=User / 2=Group.
     @returns {(Promise<User>|Promise<Account>)}
     */
-    accountsNew(type) {
+    async accountsNew(type) {
         var me = this;
-        return new Promise((resolve, reject) => {
-            var url;
-            if (type == 1) {
-                url = 'users/new';
-            } else if (type == 2) {
-                url = 'groups/new';
-            } else {
-                reject(new Error('Invalid account type'));
-            }
+        var url;
+        if (type == 1) {
+            url = 'users/new';
+        } else if (type == 2) {
+            url = 'groups/new';
+        } else {
+            throw new Error('Invalid account type');
+        }
 
-            me.session.restClient.fetch(url, 'GET', '', '').then(
-                res => {
-                    if (type == 1) {
-                        resolve(new User(res, me.session));
-                    } else if (type == 2) {
-                        resolve(new Account(res, me.session));
-                    }
-                },
-                reject
-            )
-        })
+        let res = await me.session.restClient.fetch(url, 'GET', '', '');
+        if (type == 1) {
+            return new User(res, me.session);
+        } else {
+            return new Account(res, me.session);
+        }
     }
 
     /**
@@ -2474,26 +2369,18 @@ export class Document {
     Devuelve o establece si se heredan permisos.
     @returns {Promise<boolean>}
     */
-    aclInherits(value) {
+    async aclInherits(value) {
         if (value === undefined) {
             return (this.fields('inherits').value ? true : false);
         } else {
             var me = this;
-            return new Promise((resolve, reject) => {
-                var url = 'documents/' + this.id + '/aclinherits/' + value;
-                this.session.restClient.fetch(url, 'POST', {}, '').then(
-                    res => {
-                        if (res) {
-                            me.#json.AclInherits = (value ? true : false);
-                            me.fields('inherits').toJSON().Value = (value ? 1 : 0);
-                        }
-                        resolve(res);
-                    },
-                    err => {
-                        reject(err);
-                    }
-                )
-            });
+            var url = 'documents/' + this.id + '/aclinherits/' + value;
+            let res = await this.session.restClient.fetch(url, 'POST', {}, '');
+            if (res) {
+                me.#json.AclInherits = (value ? true : false);
+                me.fields('inherits').toJSON().Value = (value ? 1 : 0);
+            }
+            return res;
         }
     }
 
@@ -2748,20 +2635,16 @@ export class Document {
     */
     get form() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#form) {
+        if (!me.#form) {
+            return (async () => {
                 var url = 'forms/' + me.formId;
-                me.session.restClient.fetch(url, 'GET', '', '').then(
-                    res => {
-                        me.#form = new Form(res, me.session);
-                        resolve(me.#form);
-                    },
-                    reject
-                )
-            } else {
-                resolve(me.#form);
-            }
-        });
+                let res = await me.session.restClient.fetch(url, 'GET', '', '');
+                me.#form = new Form(res, me.session);
+                return me.#form;
+            })();
+        } else {
+            return Promise.resolve(me.#form);
+        }
     }
 
     /**
@@ -2808,22 +2691,13 @@ export class Document {
     Log de cambios.
     @returns {Promise<Object[]>}
     */
-    log() {
+    async log() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#log) {
-                var url = 'documents/' + me.id + '/fieldslog';
-                me.session.restClient.fetch(url, 'GET', '', '').then(
-                    res => {
-                        me.#log = res;
-                        resolve(me.#log);
-                    },
-                    reject
-                )
-            } else {
-                resolve(me.#log);
-            }
-        });
+        if (!me.#log) {
+            var url = 'documents/' + me.id + '/fieldslog';
+            me.#log = await me.session.restClient.fetch(url, 'GET', '', '');
+        }
+        return me.#log;
     }
 
     /**
@@ -2953,54 +2827,36 @@ export class Document {
     Guarda el documento.
     @returns {Promise<Document>}
     */
-    save() {
+    async save() {
         var me = this;
-        return new Promise(async (resolve, reject) => {
-            try {
-                await me._dispatchEvent('Document_BeforeSave');
-            } catch(err) {
-                reject(err);
-            }
-            var tags = me.#json.Tags;
+        await me._dispatchEvent('Document_BeforeSave');
+        var tags = me.#json.Tags;
 
-            // Saco el File de los adjuntos que no son nuevos
-            for (let att of me.#json.Attachments) {
-                if (!att.IsNew) delete att.File;
-            };
+        // Saco el File de los adjuntos que no son nuevos
+        for (let att of me.#json.Attachments) {
+            if (!att.IsNew) delete att.File;
+        };
 
-            // Espera Promesas
-            try {
-                await me.awaitPromises();
-            } catch(err) {
-                reject(err);
-            }
+        // Espera Promesas
+        await me.awaitPromises();
 
-            var url = 'documents';
-            me.session.restClient.fetch(url, 'PUT', me.#json, 'document').then(
-                async res => {
-                    let ver = await me.session.doorsVersion;
-                    if (ver < '008.000.000.002') {
-                        // issue #237, el res no viene actualizado
-                        let url = 'documents/' + me.id;
-                        res = await me.session.restClient.fetch(url, 'GET', '', '');
-                    }
-                    await me.session._docRelFields(res);
-                    if (ver < '008') await me.session._attachments(res);
-                    me.#json = res;
-                    me.#json.Tags = Object.assign(tags, me.#json.Tags); // Restauro los tags, creo que no hace falta
+        var url = 'documents';
+        let res = await me.session.restClient.fetch(url, 'PUT', me.#json, 'document');
+        let ver = await me.session.doorsVersion;
+        if (ver < '008.000.000.002') {
+            // issue #237, el res no viene actualizado
+            let url = 'documents/' + me.id;
+            res = await me.session.restClient.fetch(url, 'GET', '', '');
+        }
+        await me.session._docRelFields(res);
+        if (ver < '008') await me.session._attachments(res);
+        me.#json = res;
+        me.#json.Tags = Object.assign(tags, me.#json.Tags); // Restauro los tags, creo que no hace falta
 
-                    try {
-                        await me._dispatchEvent('Document_AfterSave');
-                    } catch(err) {
-                        reject(err);
-                    }
+        await me._dispatchEvent('Document_AfterSave');
 
-                    me._reset();
-                    resolve(me);
-                },
-                reject
-            );
-        });
+        me._reset();
+        return me;
     }
 
     /**
@@ -3456,25 +3312,17 @@ export class Folder {
     Devuelve o establece si se heredan permisos.
     @returns {Promise<boolean>}
     */
-    aclInherits(value) {
+    async aclInherits(value) {
         if (value === undefined) {
             return (this.#json.AclInherits ? true : false);
         } else {
             var me = this;
-            return new Promise((resolve, reject) => {
-                var url = 'folders/' + this.id + '/aclinherits/' + value;
-                this.session.restClient.fetch(url, 'POST', {}, '').then(
-                    res => {
-                        if (res) {
-                            me.#json.AclInherits = (value ? true : false);
-                        }
-                        resolve(res);
-                    },
-                    err => {
-                        reject(err);
-                    }
-                )
-            });
+            var url = 'folders/' + this.id + '/aclinherits/' + value;
+            let res = await this.session.restClient.fetch(url, 'POST', {}, '');
+            if (res) {
+                me.#json.AclInherits = (value ? true : false);
+            }
+            return res;
         }
     }
 
@@ -3677,21 +3525,15 @@ export class Folder {
     Crea un nuevo documento.
     @returns {Promise<Document>}
     */
-    documentsNew() {
+    async documentsNew() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            var url = 'folders/' + me.id + '/documents/new';
-            me.session.restClient.fetch(url, 'GET', '', '').then(
-                async res => {
-                    await me.session._docRelFields(res);
-                    res.Attachments = [];
-                    let doc = new Document(res, me.session, me);
-                    await doc._dispatchEvent('Document_Open');
-                    resolve(doc);
-                },
-                reject
-            );
-        })
+        var url = 'folders/' + me.id + '/documents/new';
+        let res = await me.session.restClient.fetch(url, 'GET', '', '');
+        await me.session._docRelFields(res);
+        res.Attachments = [];
+        let doc = new Document(res, me.session, me);
+        await doc._dispatchEvent('Document_Open');
+        return doc;
     }
 
     /*
@@ -3742,38 +3584,28 @@ export class Folder {
     folder(name) // Devuelve la carpeta hija con nombre name.
     @returns {Promise<Folder>}
     */
-    folder(name) {
+    async folder(name) {
         let me = this;
-        return new Promise((resolve, reject) => {
-            if (name !== undefined) {
-                /*
-                No la devuelvo de la coleccion xq a veces no vienen todas
-                calculo debe ser por el permiso read/view
-                */
-                let url = 'folders/' + me.id + '/children?foldername=' + me.session.utils.encUriC(name);
-                me.session.restClient.fetch(url, 'GET', '', '').then(
-                    res => {
-                        resolve(new Folder(res, me.session, me));
-                    },
-                    reject
-                )  
-            } else {
-                // Devuelve la coleccion
-                if (!me.#foldersMap) {
-                    let url = 'folders/' + me.id + '/childrens';
-                    me.session.restClient.fetch(url, 'GET', '', '').then(
-                        res => {
-                            me.#foldersMap = new CIMap();
-                            for (let el of res) {
-                                me.#foldersMap.set(el.Name, new Folder(el, me.session, me));
-                            }
-                            resolve(me.#foldersMap);
-                        },
-                        reject
-                    )  
+        if (name !== undefined) {
+            /*
+            No la devuelvo de la coleccion xq a veces no vienen todas
+            calculo debe ser por el permiso read/view
+            */
+            let url = 'folders/' + me.id + '/children?foldername=' + me.session.utils.encUriC(name);
+            let res = await me.session.restClient.fetch(url, 'GET', '', '');
+            return new Folder(res, me.session, me);
+        } else {
+            // Devuelve la coleccion
+            if (!me.#foldersMap) {
+                let url = 'folders/' + me.id + '/childrens';
+                let res = await me.session.restClient.fetch(url, 'GET', '', '');
+                me.#foldersMap = new CIMap();
+                for (let el of res) {
+                    me.#foldersMap.set(el.Name, new Folder(el, me.session, me));
                 }
             }
-        });
+            return me.#foldersMap;
+        }
     }
 
     /** Alias de folder */
@@ -3798,21 +3630,17 @@ export class Folder {
     */
     get form() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#form) {
+        if (!me.#form) {
+            return (async () => {
                 var url = 'forms/' + me.formId;
-                me.session.restClient.fetch(url, 'GET', '', '').then(
-                    res => {
-                        me.#json.Form = res;
-                        me.#form = new Form(res, me.session);
-                        resolve(me.#form);
-                    }
-                ),
-                reject
-            } else {
-                resolve(me.#form);
-            }
-        });
+                let res = await me.session.restClient.fetch(url, 'GET', '', '');
+                me.#json.Form = res;
+                me.#form = new Form(res, me.session);
+                return me.#form;
+            })();
+        } else {
+            return Promise.resolve(me.#form);
+        }
     }
 
     /**
@@ -4236,58 +4064,44 @@ export class Folder {
     views(name) // Devuelve la vista name.
     @returns {(Promise<CIMap>|Promise<View>)}
     */
-    views(name) {
+    async views(name) {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (name !== undefined) {
-                me.views().then(
-                    res => {
-                        if (res.has(name)) {
-                            resolve(res.get(name));
-                        } else {
-                            reject(new Error('View not found: ' + name));
-                        }
-                    },
-                    reject
-                )
+        if (name !== undefined) {
+            let res = await me.views();
+            if (res.has(name)) {
+                return res.get(name);
             } else {
-                if (!me.#viewsMap) {
-                    var url = 'folders/' + me.id + '/views';
-                    me.session.restClient.fetch(url, 'GET', '', '').then(
-                        res => {
-                            // Ordena
-                            res.sort(function (a, b) {
-                                // Privadas al ult
-                                if (!a['Private'] && b['Private']) {
-                                    return -1;
-                                } else if (a['Private'] && !b['Private']) {
-                                    return 1;
-                                } else {
-                                    var aTitle = a['Description'] ? a['Description'] : a['Name'];
-                                    var bTitle = b['Description'] ? b['Description'] : b['Name'];
-                                    if (aTitle.toLowerCase() < bTitle.toLowerCase()) {
-                                        return -1;
-                                    } else {
-                                        return 1;
-                                    };
-                                };
-                            });
-
-                            me.#viewsMap = new CIMap();
-                            for (var el of res) {
-                                me.#viewsMap.set(el.Name, new View(el, me.session, me));
-                            }
-                            resolve(me.#viewsMap);
-                        },
-                        reject
-                    )
-
-                } else {
-                    resolve(me.#viewsMap);
-                }
-
+                throw new Error('View not found: ' + name);
             }
-        })
+        } else {
+            if (!me.#viewsMap) {
+                var url = 'folders/' + me.id + '/views';
+                let res = await me.session.restClient.fetch(url, 'GET', '', '');
+                // Ordena
+                res.sort(function (a, b) {
+                    // Privadas al ult
+                    if (!a['Private'] && b['Private']) {
+                        return -1;
+                    } else if (a['Private'] && !b['Private']) {
+                        return 1;
+                    } else {
+                        var aTitle = a['Description'] ? a['Description'] : a['Name'];
+                        var bTitle = b['Description'] ? b['Description'] : b['Name'];
+                        if (aTitle.toLowerCase() < bTitle.toLowerCase()) {
+                            return -1;
+                        } else {
+                            return 1;
+                        };
+                    };
+                });
+
+                me.#viewsMap = new CIMap();
+                for (var el of res) {
+                    me.#viewsMap.set(el.Name, new View(el, me.session, me));
+                }
+            }
+            return me.#viewsMap;
+        }
     }
 
     /** Alias de viewsNew. */
@@ -6727,93 +6541,66 @@ class RestClient {
             }
         }
 
-        return new Promise((resolve, reject) => {
-            // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-            fetch(completeUrl, {
-                method: method,
-                cache: 'no-cache',
-                headers: headers,
-                body: data != null ? data : null,
-            }).then((response) => {
-                //TODO
-                /* var firstCharCode = body.charCodeAt(0);
-                if (firstCharCode === 65279) {
-                    //console.log('First character "' + firstChar + '" (character code: ' + firstCharCode + ') is invalid so removing it.');
-                    body = body.substring(1);
-                }*/
-
-                response.text().then(function (textBody) {
-                    let firstCharCode = textBody.charCodeAt(0);
-                    if (firstCharCode === 65279) {
-                        //console.log('First character "' + firstChar + '" (character code: ' + firstCharCode + ') is invalid so removing it.');
-                        textBody = textBody.substring(1);
-                    }
-                    let parsedJson;
-                    try {
-                        parsedJson = JSON.parse(textBody);
-                    } catch(err) {
-                        debugger;
-                        console.warn('Cannot parse server response', completeUrl, textBody);
-                    }
-                    if (response.ok) {
-                        resolve(parsedJson.InternalObject);
-                    } else {
-                        let err;
-                        if (parsedJson) {
-                            err = new Error(me.session.utils.errMsg(parsedJson));
-                            err.doorsException = parsedJson;
-                        } else {
-                            err = new Error(response.status + ' (' + response.statusText + ')');
-                        }
-                        err.requestUrl = completeUrl;
-                        err.requestMethod = method;
-                        reject(err);
-                    }
-                });
-            }).catch((error) => {
-                debugger;
-                reject(error);
-            });
+        // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+        let response = await fetch(completeUrl, {
+            method: method,
+            cache: 'no-cache',
+            headers: headers,
+            body: data != null ? data : null,
         });
+
+        let textBody = await response.text();
+        let firstCharCode = textBody.charCodeAt(0);
+        if (firstCharCode === 65279) {
+            textBody = textBody.substring(1);
+        }
+        let parsedJson;
+        try {
+            parsedJson = JSON.parse(textBody);
+        } catch(err) {
+            debugger;
+            console.warn('Cannot parse server response', completeUrl, textBody);
+        }
+        if (response.ok) {
+            return parsedJson.InternalObject;
+        } else {
+            let err;
+            if (parsedJson) {
+                err = new Error(me.session.utils.errMsg(parsedJson));
+                err.doorsException = parsedJson;
+            } else {
+                err = new Error(response.status + ' (' + response.statusText + ')');
+            }
+            err.requestUrl = completeUrl;
+            err.requestMethod = method;
+            throw err;
+        }
     }
 
-    fetchRaw(url, method, data) {
+    async fetchRaw(url, method, data) {
         var me = this;
         var completeUrl = me.session.serverUrl + '/' + url;
         var headers = me.credentials();
 
-        return new Promise((resolve, reject) => {
-            // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-            fetch(completeUrl, {
-                method: method,
-                cache: 'no-cache',
-                //credentials: 'include',
-                headers: headers,
-                body: data ? data : null,
-
-            }).then(
-                response => {
-                    if (response.ok) {
-                        resolve(response);
-                    } else {
-                        response.text().then(
-                            res => {
-                                debugger;
-                                let json = JSON.parse(res);
-                                reject(new Error(me.session.utils.errMsg(json)));
-                            }
-                        );
-                    }
-                },
-                err => {
-                    debugger;
-                    reject(err);
-                }
-            )
+        // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+        let response = await fetch(completeUrl, {
+            method: method,
+            cache: 'no-cache',
+            headers: headers,
+            body: data ? data : null,
         });
 
-
-    };
+        if (response.ok) {
+            return response;
+        } else {
+            let res = await response.text();
+            let json = JSON.parse(res);
+            let err = new Error(me.session.utils.errMsg(json));
+            err.requestUrl = completeUrl;
+            err.requestMethod = method;
+            throw err;
+        }
+    }
 
     /**
     @returns {Session}
