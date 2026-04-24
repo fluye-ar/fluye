@@ -30,4 +30,4 @@ Luego accediendo con una cuenta con privilegios de administración, a la secció
 
 *(screenshot no disponible en versión local)*
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

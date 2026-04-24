@@ -3657,11 +3657,9 @@ export class Folder {
     }
     */
 
-    /*
     get haveFolders() {
-        //todo
+        return this.#json.HaveFolders ? true : false;
     }
-    */
 
     /*
     get haveViews() {
@@ -4736,24 +4734,18 @@ export class Node {
         if (typeof(EventSource) == 'function' && typeof(window) == 'object') {
             let ins = (await me.session.instance).Name;
             if (!window.drsServerEvents) {
-                let es = new EventSource(await me.server + 
-                    '/ssevents?ins=' + encodeURIComponent(ins));
+                let es;
+                if (await me.isFluye) {
+                    let token = encodeURIComponent(me.session.encrypt(me.session.authToken));
+                    let serverUrl = encodeURIComponent(me.session.serverUrl);
+                    es = new EventSource(
+                        `https://sse.fluye.ar/watch/${encodeURIComponent(ins)}?token=${token}&serverUrl=${serverUrl}`
+                    );
+                } else {
+                    es = new EventSource(await me.server +
+                        '/ssevents?ins=' + encodeURIComponent(ins));
+                }
                 window.drsServerEvents = es;
-
-                /*
-                todo: mejorar la reconexion
-                https://www.npmjs.com/package/reconnecting-eventsource
-
-                es.onerror = ev => {
-                    console.log('error', es.readyState);
-                }
-                es.onopen = ev => {
-                    console.log('open', es.readyState);
-                }
-                setInterval(() => {
-                    console.log('readyState', es.readyState);
-                }, 1000);
-                */
             }
             return window.drsServerEvents;
 
@@ -4776,13 +4768,23 @@ export class Node {
         let me = this;
         let ins = (await me.session.instance).Name;
         if (options.instance == undefined) options.instance = ins;
-        return await fetch(await me.server + '/ssevents' , {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(options),
-        });
+        if (await me.isFluye) {
+            let body = Object.assign({}, options, {
+                token: me.session.encrypt(me.session.authToken),
+                serverUrl: me.session.serverUrl,
+            });
+            return await fetch(`https://sse.fluye.ar/push/${encodeURIComponent(options.instance)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+        } else {
+            return await fetch(await me.server + '/ssevents', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(options),
+            });
+        }
     }
 
     /**

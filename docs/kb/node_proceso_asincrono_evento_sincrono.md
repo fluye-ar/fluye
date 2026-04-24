@@ -42,4 +42,4 @@ El proceso asíncrono corre en la misma sesión que el síncrono, asegurarse que
 
 Los eventos síncronos de documentos tienen un timeout de 30 segundos, el resto de 2 minutos.
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

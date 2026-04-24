@@ -86,4 +86,4 @@ Ademas conviene calendarizar un job para reconstruir el indice por las noches. E
 
 Mediante el procedimiento `sp_help_fulltext_tables` puede obtenerse el listado de tablas indexadas. Consultar la documentacion de SQL para otros procedimientos `sp_help_fulltext_xx`.
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

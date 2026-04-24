@@ -16,4 +16,4 @@ Muestra el historial de cambios para campos de un documento. Puede consultarse p
 
 Información de ejecucion de eventos asincronos, se utiliza en caso de mal funcionamiento del sistema. Puede borrarse sin afectar el funcionamiento. Rara vez se utiliza pasados unos meses.
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

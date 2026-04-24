@@ -136,7 +136,7 @@ Desarrollo, Doors, Controles, Base de datos, Errores, Herramientas, Soporte, Con
 | Artículo | Etiquetas | Fecha |
 |----------|-----------|-------|
 | Actualizaciones de estados de mensajes de Whatsapp | — | 2025-10-04 |
-| Whatsapp Connector - Usando las funciones de base de datos | Conectores, Whatsapp, Desarrollo | 2025-05-28 |
+| Whatsapp Connector - Usando las funciones de base de datos | Conectores, Whatsapp, Desarrollo | 2025-05-28 | ✅ `wappcnn_funciones_db.md` |
 | Enviar notificaciones del sistema via Whatsapp | — | 2025-05-21 |
 | Whatsapp Cnn - Funciones de BD no devuelven valores actualizados | — | 2024-11-08 |
 | Actualización asíncrona de WAPP_RESUME sin SQL Service Broker | — | 2025-04-01 |
@@ -254,4 +254,4 @@ Desarrollo, Doors, Controles, Base de datos, Errores, Herramientas, Soporte, Con
 
 **Nota:** Los artículos se bajan a `fluye/docs/kb/` a medida que se necesitan. Para descargar uno, usar `mcp__notionApi__API-get-block-children` con el `page_id` del artículo.
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

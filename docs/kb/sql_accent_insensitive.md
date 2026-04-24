@@ -32,4 +32,4 @@ ORDER BY ordinal_position
 
 Eliminar el índice de texto completo de la tabla, cambiar el collate de las columnas y luego volver a crearlo.
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

@@ -9,4 +9,4 @@ timers.setTimeout(myFunc, 100);
 
 [Más información - Node.js Timers](https://nodejs.org/api/timers.html)
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

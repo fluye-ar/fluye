@@ -40,4 +40,4 @@ sse.addEventListener('doc:change', async ev => {
 });
 ```
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

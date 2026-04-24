@@ -11,4 +11,4 @@ Para poder ordenar una vista en forma ascendente colocando los NULL al último, 
 - Luego de crear el campo calculado refrescar el caché de campos del form
 - Por último agregar en el orden de la vista 1ro **FPANULL (asc)** y luego **FECHAPROXACCION (asc)**
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

@@ -5,4 +5,4 @@ SELECT * FROM sys.computed_columns
 WHERE object_id = OBJECT_ID('SYS_FIELDS_999')
 ```
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

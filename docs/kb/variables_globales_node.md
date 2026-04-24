@@ -68,4 +68,4 @@ var myMod = await mlib.gitImport({ repo: 'myRepo', path: 'my/path.mjs' });
 await myMod.setContext(ctx);
 ```
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

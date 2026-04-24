@@ -39,4 +39,4 @@ let att = doc.attachmentsAdd(fileName);
 await att.fileStream2(cert); // Las promesas se resuelven internamente
 ```
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

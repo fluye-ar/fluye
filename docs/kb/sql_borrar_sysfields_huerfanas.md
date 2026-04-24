@@ -31,4 +31,4 @@ deallocate mycurs
 
 Si desea ver las tablas antes de borrarlas descomente la línea con el PRINT y comente la línea con el EXECUTE
 
-Ing Jorge Pagano - Cloudy CRM
+Jorge Pagano - Fluye

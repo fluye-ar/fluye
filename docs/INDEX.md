@@ -40,8 +40,8 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 
 | Archivo | Descripción |
 |---------|-------------|
-| `/Desarrollo/doors/CONTROLS.md` | **Sistema de controles** - Database-driven UI forms |
-| `doors/GENERIC3.md` | Formularios ASP + Bootstrap 3 (legacy) |
+| `/Desarrollo/doors/docs/CONTROLS.md` | **Sistema de controles** - Database-driven UI forms |
+| `doors/docs/GENERIC3.md` | Formularios ASP + Bootstrap 3 (legacy) |
 | `fluye-lib/client/liveforms7/README.md` | Formularios web/mobile (era generic6) |
 | `fluye-lib/client/liveforms7/controls7.md` | API de controles |
 | `fluye-lib/client/liveforms7/DESIGN.md` | Layout, controles y diseño de formularios |
@@ -55,11 +55,11 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 | Archivo | Descripción |
 |---------|-------------|
 | `doors/README.md` | **Arquitectura completa**, tech stack, DB schema, documentation index |
-| `doors/ACL.md` | Control de acceso y seguridad (ACL, permisos, SYS_READERS) |
-| `doors/CONNECTIONS.md` | Gestión de conexiones |
-| `doors/VIEWS.md` | Sistema de vistas |
-| `doors/CODELIB.md` | Code library y sistema #include |
-| `doors/FORMS.md` | SYS_FORMS schema, GUIDs de sistema, runtimes, ACTIONS XML |
+| `doors/docs/ACL.md` | Control de acceso y seguridad (ACL, permisos, SYS_READERS) |
+| `doors/docs/CONNECTIONS.md` | Gestión de conexiones |
+| `doors/docs/VIEWS.md` | Sistema de vistas |
+| `doors/docs/CODELIB.md` | Code library y sistema #include |
+| `doors/docs/FORMS.md` | SYS_FORMS schema, GUIDs de sistema, runtimes, ACTIONS XML |
 
 ### Componentes (READMEs por directorio)
 
@@ -83,8 +83,8 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 
 | Archivo | Descripción |
 |---------|-------------|
-| `doors/SYNCEVENTS.md` | **12 eventos sincrónicos** - BeforeSave, AfterSave, Open, etc |
-| `doors/ASYNCEVENTS.md` | Eventos background - Timer, OnSave, OnDelete |
+| `doors/docs/SYNCEVENTS.md` | **12 eventos sincrónicos** - BeforeSave, AfterSave, Open, etc |
+| `doors/docs/ASYNCEVENTS.md` | Eventos background - Timer, OnSave, OnDelete |
 | `fluye/docs/SSE.md` | **Server-Sent Events** - Tiempo real .NET → Events.v8 → Browser |
 | `fluye/docs/RELATIONS.md` | **Relations (JOINs)** - LEFT JOIN en search via Events.v8, 10x mas rapido que campos calculados |
 
@@ -92,9 +92,9 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 
 | Archivo | Descripción |
 |---------|-------------|
-| `doors/LOGS.md` | **Sistema de logs** - erYYMMDD.log, dpYYMMDD.log, acYYMMDD.log |
-| `doors/SYS_DOC_LOG.md` | **Audit log y recovery** - Data recovery scripts, LOG_CONF |
-| `doors/SYS_DML_LOG.md` | DML audit log |
+| `doors/docs/LOGS.md` | **Sistema de logs** - erYYMMDD.log, dpYYMMDD.log, acYYMMDD.log |
+| `doors/docs/SYS_DOC_LOG.md` | **Audit log y recovery** - Data recovery scripts, LOG_CONF |
+| `doors/docs/SYS_DML_LOG.md` | DML audit log |
 
 ---
 
@@ -382,15 +382,15 @@ mcp__notionApi__API-get-block-children → block_id: "<page_id>"
 const kbIndex = await loadMd('fluye/docs/INDEX.md');
 
 // Busca en el índice qué MD cargar según la pregunta del usuario
-// Ejemplo: usuario pregunta por "sync events" → carga doors/SYNCEVENTS.md
+// Ejemplo: usuario pregunta por "sync events" → carga doors/docs/SYNCEVENTS.md
 ```
 
 ### Para Usuarios
 
-- **Pregunta sobre eventos:** Ver `doors/SYNCEVENTS.md` o `doors/ASYNCEVENTS.md`
-- **Problema con logs:** Ver `doors/LOGS.md`
-- **Recovery de datos:** Ver `doors/SYS_DOC_LOG.md` + `Node/README_REVERSION_OPP_979374.md`
-- **Formularios:** Ver `doors/CONTROLS.md` + `doors/GENERIC3.md` o `fluye-lib/client/liveforms7/`
+- **Pregunta sobre eventos:** Ver `doors/docs/SYNCEVENTS.md` o `doors/docs/ASYNCEVENTS.md`
+- **Problema con logs:** Ver `doors/docs/LOGS.md`
+- **Recovery de datos:** Ver `doors/docs/SYS_DOC_LOG.md` + `Node/README_REVERSION_OPP_979374.md`
+- **Formularios:** Ver `doors/docs/CONTROLS.md` + `doors/docs/GENERIC3.md` o `fluye-lib/client/liveforms7/`
 - **IA y búsquedas:** Ver `fluye-lib/ai/README.md` + `fluye-lib/ai/searchwiz/`
 
 ---
@@ -424,5 +424,5 @@ find /Users/Jorge/Desarrollo -name "*.md" -type f -not -path "*/node_modules/*" 
 
 ---
 
-**Ing Jorge Pagano - Cloudy CRM**
+**Jorge Pagano - Fluye**
 **Versión:** 1.1 (2026-02-11)

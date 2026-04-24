@@ -183,4 +183,4 @@ const user = await dir.users(accId);     // user.login, user.isAdmin
 
 ---
 
-**Ing Jorge Pagano - Cloudy CRM**
+**Jorge Pagano - Fluye**
