@@ -88,17 +88,22 @@ export class FluyeSession {
 
         // Guardar la Promise para que llamadas concurrentes la esperen
         me.#doorsSessions[name] = (async () => {
-            let res = await me.fetch('/session/openregdoors', {
-                method: 'POST',
-                body: JSON.stringify({ name }),
-            });
-            let data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Connect failed');
+            try {
+                let res = await me.fetch('/session/openregdoors', {
+                    method: 'POST',
+                    body: JSON.stringify({ name }),
+                });
+                let data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Connect failed');
 
-            if (!me.#doorsClient) me.#doorsClient = await me.utils.import({ repo: 'fluye', path: 'doorsClient.mjs' });
-            let session = new me.#doorsClient.Session(data.serverUrl, data.authToken);
-            me.#doorsSessions[name] = session; // Reemplazar Promise con Session
-            return session;
+                if (!me.#doorsClient) me.#doorsClient = await me.utils.import({ repo: 'fluye', path: 'doorsClient.mjs' });
+                let session = new me.#doorsClient.Session(data.serverUrl, data.authToken);
+                me.#doorsSessions[name] = session; // Reemplazar Promise con Session
+                return session;
+            } catch (err) {
+                delete me.#doorsSessions[name]; // Limpiar para que reintente
+                throw err;
+            }
         })();
         return me.#doorsSessions[name];
     }
