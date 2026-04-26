@@ -1717,19 +1717,15 @@ export class Attachment {
     */
     get owner() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#owner) {
-                me.session.directory.accounts(me.ownerId).then(
-                    res => {
-                        me.#owner = res.cast2User();
-                        resolve(me.#owner);
-                    },
-                    reject
-                )
-            } else {
-                resolve(me.#owner);
-            }
-        });
+        if (!me.#owner) {
+            return (async () => {
+                var acc = await me.session.directory.accounts(me.ownerId);
+                me.#owner = acc.cast2User();
+                return me.#owner;
+            })();
+        } else {
+            return Promise.resolve(me.#owner);
+        }
     }
 
     /**
@@ -2751,19 +2747,15 @@ export class Document {
     */
     get owner() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#owner) {
-                me.session.directory.accounts(me.ownerId).then(
-                    res => {
-                        me.#owner = res.cast2User();
-                        resolve(me.#owner);
-                    },
-                    reject
-                )
-            } else {
-                resolve(me.#owner);
-            }
-        });
+        if (!me.#owner) {
+            return (async () => {
+                var acc = await me.session.directory.accounts(me.ownerId);
+                me.#owner = acc.cast2User();
+                return me.#owner;
+            })();
+        } else {
+            return Promise.resolve(me.#owner);
+        }
     }
 
     /**
@@ -3768,19 +3760,15 @@ export class Folder {
     */
     get owner() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#owner) {
-                me.session.directory.accounts(me.ownerId).then(
-                    res => {
-                        me.#owner = res.cast2User();
-                        resolve(me.#owner);
-                    },
-                    reject
-                )
-            } else {
-                resolve(me.#owner);
-            }
-        });
+        if (!me.#owner) {
+            return (async () => {
+                var acc = await me.session.directory.accounts(me.ownerId);
+                me.#owner = acc.cast2User();
+                return me.#owner;
+            })();
+        } else {
+            return Promise.resolve(me.#owner);
+        }
     }
 
     /**
@@ -4166,6 +4154,7 @@ export class Form {
     #fieldsMap;
     #properties;
     #userProperties;
+    #owner;
 
     constructor(form, session) {
         this.#json = form;
@@ -4292,8 +4281,16 @@ export class Form {
     }
 
     get owner() {
-        if (this.#json.Owner) return new User(this.#json.Owner, this.#session);
-        return null;
+        var me = this;
+        if (!me.#owner) {
+            return (async () => {
+                var acc = await me.session.directory.accounts(me.ownerId);
+                me.#owner = acc.cast2User();
+                return me.#owner;
+            })();
+        } else {
+            return Promise.resolve(me.#owner);
+        }
     }
 
     get ownerId() {
@@ -6318,19 +6315,15 @@ export class View {
 
     get owner() {
         var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#owner) {
-                me.session.directory.accounts(me.ownerId).then(
-                    res => {
-                        me.#owner = res.cast2User();
-                        resolve(me.#owner);
-                    },
-                    reject
-                )
-            } else {
-                resolve(me.#owner);
-            }
-        });
+        if (!me.#owner) {
+            return (async () => {
+                var acc = await me.session.directory.accounts(me.ownerId);
+                me.#owner = acc.cast2User();
+                return me.#owner;
+            })();
+        } else {
+            return Promise.resolve(me.#owner);
+        }
     }
 
     get ownerId() {
