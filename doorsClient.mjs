@@ -739,23 +739,25 @@ export class Session {
 
     /**
     Retorna la lista de formularios, o un formulario si especifico el id.
-    @returns {Promise<CIMap>|Promise<Form>}
+    @returns {Promise<Form[]>|Promise<Form>}
     */
-    /*
-    forms(id) {
-        //todo
+    async forms(id) {
+        if (id !== undefined) {
+            var result = await this.restClient.fetch('forms/' + id, 'GET', '', '');
+            return new Form(result, this);
+        }
+        var list = await this.restClient.fetch('forms', 'GET', '', '');
+        return list.map(f => new Form(f, this));
     }
-    */
 
     /**
     Crea un nuevo formulario.
     @returns {Promise<Form>}
     */
-    /*
-    formsNew() {
-        //todo
+    async formsNew() {
+        var result = await this.restClient.fetch('forms/new', 'GET', '', '');
+        return new Form(result, this);
     }
-    */
 
     /**
     searchForms As String, searchText As String, [Formula As String], [orderField As String], [orderDirection As DoorsOrderFieldDirection])
@@ -4170,99 +4172,64 @@ export class Form {
         this.#session = session;
     }
     
-    /*
     acl() {
-        //todo
+        var url = 'forms/' + this.guid + '/acl/';
+        return this.session.restClient.fetch(url, 'GET', '', '');
     }
-    */
 
-    /*
-    aclGrant(account, access) {
-        //todo
-        var url = 'documents/' + this.id + '/acl/' + access + '/grant/' + account;
-        return this.session.restClient.fetch(url, 'POST', {}, '');
+    async aclGrant(account, access) {
+        var url = 'forms/' + this.guid + '/acl/' + access + '/grant/' + account;
+        var result = await this.session.restClient.fetch(url, 'POST', {}, '');
+        if (result === false) throw new Error('aclGrant failed: ' + access + ' for account ' + account + ' on form ' + this.id);
+        return result;
     }
-    */
 
-    /*
-    aclRevoke(account, access) {
-        //todo
-        var url = 'documents/' + this.id + '/acl/' + access + '/revoke/' + account;
-        return this.session.restClient.fetch(url, 'DELETE', {}, '');
-    }
-    */
-
-    /*
-    aclRevokeAll(account) {
-        //todo
-        var url = 'documents/' + this.id + '/acl/revokeAll';
-        if (account) {
-            // Si viene account es un revokeAll para esa cuenta
-            url += '/' + account;
+    async aclRevoke(account, access) {
+        var url;
+        if (access) {
+            url = 'forms/' + this.guid + '/acl/' + access + '/revoke/' + account;
+        } else {
+            url = 'forms/' + this.guid + '/acl/revokeall/' + account;
         }
         return this.session.restClient.fetch(url, 'DELETE', {}, '');
     }
-    */
 
-    /*
-    actions() {
-        //todo
+    async aclRevokeAll() {
+        var url = 'forms/' + this.guid + '/acl/revokeall/';
+        return this.session.restClient.fetch(url, 'DELETE', {}, '');
     }
-    */
 
-    /*
     get application() {
-        //todo
+        return this.#json.Application;
     }
     set application(value) {
-        //todo
+        this.#json.Application = value;
     }
-    */
 
-    /*
-    copy() {
-        //todo
-    }
-    */
-
-    /*
     get created() {
-        //todo
+        return this.session.utils.cDate(this.#json.Created);
     }
-    */
 
-    /*
-    currentAccess(access, explicit) {
-        //todo
+    async currentAccess(access) {
+        var url = 'acl/access?permission=' + encodeURIComponent(access)
+            + '&objType=' + Form.objectType
+            + '&inherits=false&objId=' + this.id;
+        return this.session.restClient.fetch(url, 'GET', '', '');
     }
-    */
-
-    /*
-    delete() {
-        //todo
-    }
-    */
 
     get description() {
         return this.#json.Description;
     }
-    /*
     set description(value) {
-        //todo
+        this.#json.Description = value;
     }
-    */
 
-    /*
-    events() {
-        //todo
+    get descriptionRaw() {
+        return this.#json.DescriptionRaw;
     }
-    */
-
-    /*
-    eventsList() {
-        //todo
+    set descriptionRaw(value) {
+        this.#json.DescriptionRaw = value;
     }
-    */
 
     fields(field) {
         var me = this;
@@ -4290,36 +4257,28 @@ export class Form {
         this.#json.Guid = value;
     }
 
-    /*
     get icon() {
-        //todo
+        return this.#json.Icon;
     }
-    */
 
-    /*
     get iconRaw() {
-        //todo
+        return this.#json.IconRaw;
     }
     set iconRaw(value) {
-        //todo
+        this.#json.IconRaw = value;
     }
-    */
 
     get id() {
         return this.#json.FrmId;
     }
 
-    /*
     get isNew() {
-        //todo
+        return this.#json.IsNew;
     }
-    */
 
-    /*
     get modified() {
-        //todo
+        return this.session.utils.cDate(this.#json.Modified);
     }
-    */
 
     get name() {
         return this.#json.Name;
@@ -4332,40 +4291,14 @@ export class Form {
         return Form.objectType;
     }
 
-    /**
-    Creador del Form.
-    @returns {Promise<User>}
-    */
-    /*
     get owner() {
-        //todo
-        var me = this;
-        return new Promise((resolve, reject) => {
-            if (!me.#owner) {
-                me.session.directory.accounts(me.ownerId).then(
-                    res => {
-                        me.#owner = res.cast2User();
-                        resolve(me.#owner);
-                    },
-                    reject
-                )
-            } else {
-                resolve(me.#owner);
-            }
-        });
+        if (this.#json.Owner) return new User(this.#json.Owner, this.#session);
+        return null;
     }
-    */
 
-    /**
-    ACC_ID del creador del Form.
-    @returns {number}
-    */
-    /*
     get ownerId() {
-        //todo
-        return this.#json.AccId
+        return this.#json.AccId;
     }
-    */
 
     /**
     @example
@@ -4379,48 +4312,28 @@ export class Form {
         return this.#properties.set(property, value);
     }
 
-    /*
-    get readonly() {
-        //todo
+    get readOnly() {
+        return this.#json.ReadOnly;
     }
-    */
 
-    /*
-    save() {
-        //todo
+    async save() {
+        var me = this;
+        var url, method;
+        if (me.id > 0) {
+            url = 'forms/' + me.id;
+            method = 'POST';
+        } else {
+            url = 'forms';
+            method = 'PUT';
+        }
+        var result = await me.session.restClient.fetch(url, method, {}, me.#json);
+        if (result) me.#json = result;
+        return me;
     }
-    */
-
-    /*
-    search() {
-        //todo
-    }
-    */
-
-    /*
-    searchGroups() {
-        //todo
-    }
-    */
 
     get session() {
         return this.#session;
     }
-
-    /*
-    get styleScriptActiveCode() {
-        //todo
-    }
-    */
-
-    /*
-    get styleScriptDefinition() {
-        //todo
-    }
-    set styleScriptDefinition(value) {
-        //todo
-    }
-    */
 
     get tags() {
         if (!this.#json.Tags) this.#json.Tags = {};
@@ -4434,16 +4347,17 @@ export class Form {
     get url() {
         return this.#json.Url;
     }
+    set url(value) {
+        this.#json.Url = value;
+    }
 
     get urlRaw() {
         return this.#json.UrlRaw;
     }
-    /*
     set urlRaw(value) {
-        //todo
+        this.#json.UrlRaw = value;
     }
-    */
-    
+
     /**
     @example
     userProperties() // Devuelve la coleccion.
