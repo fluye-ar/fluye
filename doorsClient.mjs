@@ -1902,6 +1902,10 @@ export class Database {
     @returns {Promise<number>}
     */
     async nextVal(sequence) {
+        if (await this.session.doorsVersion >= '008.000.000.017') {
+            var res = await this.session.restClient.fetch('sequences/' + encodeURIComponent(sequence) + '/nextval', 'GET', '', '');
+            return parseInt(res);
+        }
         var res = await this.session.utils.execVbs(`
             Response.Write dSession.Db.NextVal(${ this.session.utils.vbsEncodeString(sequence) })
         `);
