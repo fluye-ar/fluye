@@ -82,7 +82,7 @@ window.fluye = {
         */
         confirm: function (text, options) {
             let opt = Object.assign({
-                title: 'Fluye',
+                title: 'Confirmar',
                 icon: 'https://cdn.fluye.ar/ghf/fluye/brand/iso-logo.png',
                 buttons: [
                     { text: 'Cancelar', class: 'btn-secondary', value: false },
