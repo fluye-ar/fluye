@@ -3211,7 +3211,8 @@ export class Field {
         }
     }
     set value(value) {
-        if (!this.updatable || this.computed) throw new Error('Field not updatable: ' + this.name);
+        // RelFields (TableAlias) permiten asignacion de valor pasajero aunque no sean updatable
+        if ((!this.updatable && !this.#json.TableAlias) || this.computed) throw new Error('Field not updatable: ' + this.name);
         if ((value === null || value === undefined) && !this.nullable) throw new Error('Field not nullable: ' + this.name);
 
         if (this.type == 1) { // String
