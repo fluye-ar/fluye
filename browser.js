@@ -59,6 +59,77 @@ window.fluye = {
         _preloader: null,
 
         /**
+        Muestra un modal de confirmación Bootstrap 5.
+        @param {string} text - Contenido (texto plano o HTML)
+        @param {object} [options] - Opciones
+        @param {string} [options.title='Fluye'] - Título del modal (con logo)
+        @param {string} [options.icon] - URL del icono del título (def: logo Fluye)
+        @param {Array} [options.buttons] - Botones custom. Cada uno: { text, class, value }
+        @returns {Promise} Resuelve con el value del botón clickeado, o false si se cierra con X/Escape
+        @example
+        // Simple (como confirm nativo)
+        if (await fluye.bs.confirm('¿Borrar este plan?')) { ... }
+
+        // Con opciones
+        let result = await fluye.bs.confirm('Se borrarán 24 cuotas', {
+            title: 'Borrar plan',
+            buttons: [
+                { text: 'Cancelar', class: 'btn-secondary', value: false },
+                { text: 'Borrar', class: 'btn-danger', value: 'delete' },
+            ]
+        });
+        // result = false (cancelar/X/escape) o 'delete'
+        */
+        confirm: function (text, options) {
+            let opt = Object.assign({
+                title: 'Fluye',
+                icon: 'https://cdn.fluye.ar/ghf/fluye/brand/iso-logo.png',
+                buttons: [
+                    { text: 'Cancelar', class: 'btn-secondary', value: false },
+                    { text: 'Aceptar', class: 'btn-primary', value: true },
+                ],
+            }, options);
+
+            let iconHtml = opt.icon ? `<img src="${opt.icon}" class="rounded me-2" style="width:20px;">` : '';
+            let btnsHtml = opt.buttons.map((b, i) =>
+                `<button type="button" class="btn ${b.class || 'btn-secondary'}" data-btn-idx="${i}">${b.text}</button>`
+            ).join('');
+
+            let $modal = $(`
+                <div class="modal fade" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        ${iconHtml}<h5 class="modal-title">${opt.title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">${text}</div>
+                      <div class="modal-footer">${btnsHtml}</div>
+                    </div>
+                  </div>
+                </div>
+            `);
+
+            $('body').append($modal);
+            let modal = new bootstrap.Modal($modal[0]);
+            let resolved = false;
+            modal.show();
+
+            return new Promise(resolve => {
+                $modal.find('[data-btn-idx]').on('click', function () {
+                    resolved = true;
+                    let idx = $(this).data('btn-idx');
+                    modal.hide();
+                    resolve(opt.buttons[idx].value);
+                });
+                $modal.on('hidden.bs.modal', () => {
+                    $modal.remove();
+                    if (!resolved) resolve(false);
+                });
+            });
+        },
+
+        /**
         Carga los archivos de un input file como adjuntos al documento
         options = {
             input, // Elemento input file con los archivos a cargar

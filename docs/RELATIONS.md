@@ -171,6 +171,44 @@ let res = await fetch(url, {
 });
 ```
 
+## WAPP_RESUME: match telefonico
+
+Antes de armar la RELATION, verificar el match rate con un query directo para decidir la estrategia de join:
+
+```sql
+SELECT
+  (SELECT COUNT(*) FROM SYS_FIELDS_XXX f INNER JOIN SYS_DOCUMENTS d ON f.DOC_ID=d.DOC_ID WHERE d.FLD_ID=YYYY AND f.CELULAR IS NOT NULL AND LEN(f.CELULAR)>5) as total,
+  (SELECT COUNT(*) FROM SYS_FIELDS_XXX f INNER JOIN SYS_DOCUMENTS d ON f.DOC_ID=d.DOC_ID INNER JOIN WAPP_RESUME w ON w.EXTPHONE=f.CELULAR WHERE d.FLD_ID=YYYY AND f.CELULAR IS NOT NULL) as match_directo
+```
+
+### CELULAR normalizado (~100% match directo)
+
+Si CELULAR ya tiene el formato de EXTPHONE (solo numeros, con codigo de pais):
+
+```json
+{
+    "name": "RWAPP",
+    "from": "WAPP_RESUME",
+    "joinOn": "RWAPP.EXTPHONE = SYS_FIELDS.CELULAR"
+}
+```
+
+Usa el indice `IX_WAPPRES_EXTINT` por igualdad. Maximo rendimiento.
+
+### CELULAR con formatos variados (match bajo)
+
+Si CELULAR tiene espacios, guiones, o prefijos distintos, matchear por los ultimos 10 digitos via `EXTPHONE_REV`:
+
+```json
+{
+    "name": "RWAPP",
+    "from": "WAPP_RESUME",
+    "joinOn": "LEFT(RWAPP.EXTPHONE_REV, 10) = LEFT(REVERSE(dbo.GetNumbers(SYS_FIELDS.CELULAR)), 10)"
+}
+```
+
+`GetNumbers` en el joinOn se ejecuta 1 vez por fila (vs N veces con N campos calculados). En pruebas reales: ~3x mas rapido que campos calculados.
+
 ## Reglas importantes
 
 - La relacion entre el form y la tabla relacionada debe ser **1 a 1**. Si es 1:N, agrupar en la subconsulta.

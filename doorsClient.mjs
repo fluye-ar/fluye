@@ -415,6 +415,7 @@ export class SimpleBuffer extends Uint8Array {
 export class Session {
     #restClient;
     #v8Client;
+    #fluyeClient;
     #directory;
     #serverUrl;
     #authToken;
@@ -434,6 +435,7 @@ export class Session {
     constructor(serverUrl, authToken) {
         this.#restClient = new RestClient(this);
         this.#v8Client = new V8Client(this);
+        this.#fluyeClient = new FluyeClient(this);
         this.#serverUrl = serverUrl;
         this.#authToken = authToken;
     }
@@ -782,6 +784,15 @@ export class Session {
             return (async () => {
                 var url = 'instance';
                 let res = await me.restClient.fetch(url, 'GET', '', '');
+
+                if (await me.node.isFluye) {
+                    try {
+                        res.fluye = await me.fluyeClient.fetch('instance/config');
+                    } catch (e) {
+                        // No bloquea — PG no disponible no rompe la sesión
+                    }
+                }
+
                 me.#instance = res;
                 return me.#instance;
             })();
@@ -1055,6 +1066,10 @@ export class Session {
 
     get v8Client() {
         return this.#v8Client;
+    }
+
+    get fluyeClient() {
+        return this.#fluyeClient;
     }
 
     get v8Disabled() {
@@ -6544,6 +6559,67 @@ class RestClient {
             ret.ApiKey = this.session.apiKey;
         }
         return ret;
+    }
+};
+
+
+class FluyeClient {
+    #session;
+
+    constructor(session) {
+        this.#session = session;
+    }
+
+    /*
+    options = {
+        method: 'GET',
+        params: {},     // Query params (GET) o body (POST/PUT)
+        raw: false,     // Si es true devuelve el response sin parsear
+    }
+    Retorna: data del response v9 ({ data, error, meta } → data)
+    */
+    async fetch(url, options) {
+        let me = this;
+        await utilsPromise;
+
+        let opt = Object.assign({ method: 'GET' }, options);
+
+        try {
+            let fullUrl = (await me.session.node.server) + '/api/v9/' + url;
+            let body;
+            let params = typeof(opt.params) != 'string' ? JSON.stringify(opt.params) : opt.params;
+            let method = opt.method.toUpperCase();
+            if (method == 'GET' || method == 'DELETE') {
+                if (params) fullUrl += '?' + params;
+            } else {
+                body = params;
+            }
+
+            let headers = { 'Content-Type': 'application/json' };
+            if (me.session.authToken) headers['AuthToken'] = me.session.authToken;
+            else if (me.session.apiKey) headers['ApiKey'] = me.session.apiKey;
+
+            let res = await fetch(fullUrl, { method, headers, body, cache: 'no-store' });
+
+            if (res.ok) {
+                if (opt.raw) return res;
+                let resJson = await res.json();
+                if (resJson.error) throw new Error(resJson.error.message || JSON.stringify(resJson.error));
+                return resJson.data;
+            } else {
+                let resTxt = await res.text();
+                let resJson;
+                try { resJson = JSON.parse(resTxt) } catch (e) {};
+                throw new Error(resJson?.error?.message || resTxt);
+            }
+        } catch(er) {
+            console.error(er, { consoleTag1: 'fluyeClient', consoleTag2: url });
+            throw er;
+        }
+    }
+
+    get session() {
+        return this.#session;
     }
 };
 
