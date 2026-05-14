@@ -205,7 +205,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 |---------|-------------|
 | `fluye/README.md` | SDK para browser |
 | `fluye/browser.md` | API browser |
-| `fluye/client.md` | Client SDK |
+| `fluye/doorsClient.md` | Client SDK |
 
 ### fluye-web (Landing/Marketing)
 

@@ -46,7 +46,7 @@ window.fluye = {
         }
         if (!fluye.doorsSession) {
             fluye.doorsSession = new fluye.doorsClient.Session();
-            fluye.session = fluye.doorsSession;      // backward compat, sacar el 1/4
+            //fluye.session = fluye.doorsSession;      // backward compat, sacar el 1/4
             window.fdSession = fluye.doorsSession;
             window.fSession = fluye.doorsSession;    // backward compat, sacar el 1/4
         }
@@ -586,7 +586,7 @@ window.fluye = {
     @param {Object} [context] - Si viene, llama a setContext del módulo
     @returns {Promise<any>} El módulo cargado
     @example
-    const aiChat = await fluye.mod('ai/chat', () => fSession.import({ ... }), ctx);
+    const aiChat = await fluye.mod('ai/chat', () => fdSession.import({ ... }), ctx);
     */
     mod: async function(key, loader, context) {
         if (!this.mods[key]) {

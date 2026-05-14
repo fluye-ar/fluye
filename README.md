@@ -10,7 +10,7 @@ Próximamente verás novedades.
 
 | Documento | Descripción |
 |-----------|-------------|
-| [client.md](client.md) | SDK JavaScript - Referencia de API |
+| [doorsClient.md](doorsClient.md) | SDK JavaScript - Referencia de API |
 | [browser.md](browser.md) | Utilidades para apps web (Bootstrap, upload, etc.) |
 
 ---

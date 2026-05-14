@@ -279,7 +279,7 @@ if (fluye.urlParams.get('_fresh') == '1') {
 
 ## Ver también
 
-- [client.md](client.md) - SDK JavaScript completo
+- [doorsClient.md](doorsClient.md) - SDK JavaScript completo
 
 ---
 
