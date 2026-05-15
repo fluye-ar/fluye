@@ -17,8 +17,6 @@ SDK JavaScript para Fluye/Doors. Node.js y browser.
 | Leer/escribir config de instancia | `fdSession.settings` | `settings('MI_SETTING')` o `settings('MI_SETTING', 'valor')` |
 | Leer/escribir config de carpeta | `folder.properties` | `folder.properties('MI_PROP')` o `folder.properties('MI_PROP', 'valor')` |
 
-**Importante:** Si leíste un MD que dice que un valor o campo es X, usá ese valor exacto. No adivines otro. Si no encontrás la info, buscá con cdnFind o preguntá al usuario.
-
 ## Inicializacion
 
 ```javascript
@@ -342,6 +340,7 @@ utils.CryptoJS                // crypto-js
 - Fechas SQL: formato `'YYYY-MM-DD'`. Funciones SQL Server: `YEAR()`, `MONTH()`, `GETDATE()`, `CONVERT()`.
 - **SIEMPRE** usar `db.sqlEnc()` para valores en SQL dinamico (prevenir injection).
 - `doc.log()` retorna el audit log de UN documento. Para queries masivas de SYS_DOC_LOG, usar `db.openRecordset()`.
+- **SYS_DOC_LOG:** los campos OLD_VALUE y NEW_VALUE son tipo `text`. NO usar `=` para comparar, usar `CAST(OLD_VALUE AS VARCHAR(100)) LIKE '1247'`. La columna de fecha es `LOG_DATE` (no MODIFIED). JOIN con `SYS_ACCOUNTS` por `ACC_ID` para el nombre.
 
 ---
 

@@ -119,7 +119,7 @@ let res = await folder.search({
 });
 ```
 
-**`v8: true` es obligatorio.** El server .NET no soporta relaciones; sin este parametro los campos de relacion dan error "Invalid column name".
+**`v8: true`** era obligatorio hasta Doors 8.0.0.8. A partir de **Doors 8.0.0.9**, el server .NET soporta relaciones de forma nativa y `v8: true` ya no es necesario.
 
 ### Objeto Folder — metodo fields()
 

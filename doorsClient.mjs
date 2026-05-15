@@ -304,6 +304,32 @@ export function inNode() {
     return (typeof(window) == 'undefined' && typeof(process) != 'undefined');
 }
 
+function parseAdoRecordsetXml(xml, session) {
+    let parser = new session.utils.fastXmlParser.XMLParser({
+        ignoreAttributes: false,
+        ignoreDeclaration: true,
+        removeNSPrefix: true,
+        trimValues: true,
+        parseAttributeValue: true,
+        attributeNamePrefix : '',
+        attributesGroupName : 'attributes',
+    });
+    let json = parser.parse(xml);
+
+    let ret = [];
+    let rows = json.xml.data.row;
+    if (rows) {
+        if (Array.isArray(rows)) {
+            rows.forEach((el, ix) => {
+                ret.push(el.attributes);
+            });
+        } else {
+            ret.push(rows.attributes);
+        }
+    }
+    return ret;
+}
+
 /**
 Map Case Insensitive
 */
@@ -421,6 +447,7 @@ export class Session {
     #authToken;
     #apiKey;
     #db;
+    #masterDb;
     #utils;
     #currentUser;
     #push;
@@ -845,6 +872,17 @@ export class Session {
         me.authToken = token;
         return token;
     };
+
+    /**
+    Metodos de base de datos master.
+    @returns {MasterDatabase}
+    */
+    get masterDb() {
+        if (!this.#masterDb) {
+            this.#masterDb = new MasterDatabase(this);
+        };
+        return this.#masterDb;
+    }
 
     /**
     Ejecucion de codigo en el servidor.
@@ -1945,36 +1983,8 @@ export class Database {
             `);
 
             var txt = await res.text();
-            return me.parseAdoRecordsetXml(txt);
+            return parseAdoRecordsetXml(txt, me.session);
         }
-    }
-
-    parseAdoRecordsetXml(xml) {
-        let me = this;
-        // fastXmlParser - https://github.com/NaturalIntelligence/fast-xml-parser/blob/HEAD/docs/v4/2.XMLparseOptions.md
-        let parser = new me.session.utils.fastXmlParser.XMLParser({
-            ignoreAttributes: false,
-            ignoreDeclaration: true,
-            removeNSPrefix: true,
-            trimValues: true,
-            parseAttributeValue: true,
-            attributeNamePrefix : '',
-            attributesGroupName : 'attributes',
-        });
-        let json = parser.parse(xml);
-
-        let ret = [];
-        let rows = json.xml.data.row;
-        if (rows) {
-            if (Array.isArray(rows)) {
-                rows.forEach((el, ix) => {
-                    ret.push(el.attributes);
-                });
-            } else {
-                ret.push(rows.attributes);
-            }
-        }
-        return ret;
     }
 
     /** Alias de sqlEncode */
@@ -4384,6 +4394,42 @@ export class Form {
     }
 };
 
+export class MasterDatabase {
+    #session;
+    
+    constructor(session) {
+        this.#session = session;
+    }
+
+    /**
+    Ejecuta una consulta a la base de datos.
+    @returns {Promise<Object[]>}
+    */
+    async openRecordset(sql) {
+        if (await this.session.doorsVersion >= '009') {
+            return this.session.restClient.fetch('masterdb/query', 'POST', { sql }, '');
+        } else {
+            let me = this;
+            await utilsPromise;
+
+            var res = await this.session.utils.execVbs(`
+                Set rcs = dSession.MasterDb.OpenRecordset(${ this.session.utils.vbsEncodeString(sql) })
+                rcs.Save Response, 1
+                rcs.Close
+            `);
+
+            var txt = await res.text();
+            return parseAdoRecordsetXml(txt, me.session);
+        }
+    }
+    
+    /**
+    @returns {Session}
+    */
+    get session() {
+        return this.#session;
+    }
+}
 
 export class Node {
     #session;
