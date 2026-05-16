@@ -426,7 +426,7 @@ window.fluye = {
             'bootstrap-icons': 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
             'tailwind': 'https://cdn.tailwindcss.com',
             'inter-font': { src: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', tag: 'link' },
-            'wiz': { src: { repo: 'fluye-lib', path: 'ai/wiz/wiz.js' } },
+            'wiz': { src: { repo: 'fluye-core', path: 'wiz/wiz.js' } },
         };
 
         if (!Array.isArray(assets)) assets = [assets];

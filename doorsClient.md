@@ -16,6 +16,10 @@ SDK JavaScript para Fluye/Doors. Node.js y browser.
 | Buscar usuarios/cuentas | `directory.accountsSearch` | `dir.accountsSearch("NAME LIKE '%Juan%'")` |
 | Leer/escribir config de instancia | `fdSession.settings` | `settings('MI_SETTING')` o `settings('MI_SETTING', 'valor')` |
 | Leer/escribir config de carpeta | `folder.properties` | `folder.properties('MI_PROP')` o `folder.properties('MI_PROP', 'valor')` |
+| Leer/modificar sync events | `folder.events` / `form.events` | `const evn = await folder.events('Document_BeforeSave'); evn.code = '...'; await folder.save();` |
+| Leer/modificar async events | `folder.asyncEvents` | `const evns = await folder.asyncEvents(); evns[0].disabled = true; await folder.save();` |
+| Crear subcarpeta | `folder.foldersNew` | `const sub = await folder.foldersNew(1, frmId); sub.name = 'X'; await sub.save();` (ver nota abajo) |
+| Buscar form por GUID | `fdSession.forms` | `const form = await fdSession.forms('F89ECD42...')` |
 
 ## Inicializacion
 
@@ -43,7 +47,21 @@ Session (fdSession)
  |    +-- doc(id|formula) -> Document
  |    +-- documentsNew() -> Document
  |    +-- fields() -> CIMap<Field>
+ |    +-- events(name?) -> CIMap<SyncEvent>    ← NEW
+ |    +-- asyncEvents() -> AsyncEvent[]        ← NEW
+ |    +-- asyncEventsNew(type?) -> AsyncEvent   ← NEW
+ |    +-- foldersNew(type?, frmId?) -> Folder   ← NEW
+ |    +-- save() -> Folder                      ← NEW
+ |    +-- acl() / aclGrant() / aclRevoke()
  |    +-- properties(name, value?) / userProperties(name, value?)
+ |    +-- views(name?) -> CIMap<View>
+ +-- forms(id|guid?) -> Form|Form[]             ← UPDATED
+ |    +-- events(name?) -> CIMap<SyncEvent>    ← NEW
+ |    +-- save() -> Form
+ |    +-- fields() -> CIMap<Field>
+ |    +-- properties(name, value?)
+ +-- foldersTree() -> Object[]                  ← NEW
+ +-- formsNew() -> Form
  +-- doc(id) -> Document
  |    +-- fields(name) -> Field (.value get/set)
  |    +-- save() / delete()
@@ -51,8 +69,10 @@ Session (fdSession)
  |    +-- attachments() -> CIMap<Attachment>
  |    +-- properties(name, value?)
  +-- db -> Database
- |    +-- openRecordset(sql) -> Object[]  (SELECT directo a BD)
+ |    +-- openRecordset(sql) -> Object[]  (SELECT directo a BD instancia)
  |    +-- execute(sql) -> number  (INSERT/UPDATE/DELETE)
+ +-- masterDb -> MasterDatabase
+ |    +-- openRecordset(sql) -> Object[]  (SELECT directo a BD master)
  +-- directory -> Directory
  +-- settings(name, value?) / userSettings(name, value?)
 ```
@@ -65,6 +85,9 @@ Session (fdSession)
 | `logoff()` | Cerrar sesion |
 | `webSession()` | Tomar sesion del browser (cookies) |
 | `folder(id\|path)` | Obtener carpeta. Cache 60s |
+| `foldersTree()` | Arbol completo de carpetas |
+| `forms(id\|guid?)` | Form por FRM_ID, por GUID (string 32 chars), o todos |
+| `formsNew()` | Crear form nuevo (template en memoria) |
 | `doc(id)` | Obtener documento por DOC_ID |
 | `settings(name, value?)` | Leer/escribir setting de instancia |
 | `userSettings(name, value?)` | Setting del usuario logueado |
@@ -126,13 +149,99 @@ Parametros: `{ groups, totals, formula, order, maxDocs, recursive, groupsOrder, 
 | `doc("CAMPO = 'x'")` | Documento por formula (debe retornar exactamente 1) |
 | `documentsNew()` / `newDoc()` | Crear documento nuevo (en memoria, sin DOC_ID hasta save) |
 | `documentsDelete(ids[]\|formula, purge?)` | Borrar. purge=true sin papelera |
+| `events(name?)` | Sync events (CIMap\<SyncEvent\>, cacheado) |
+| `asyncEvents()` | Async events (AsyncEvent[], cacheado) |
+| `asyncEventsNew(type?)` | Crear async event (0=Timer, 1=Trigger). Se agrega a la coleccion |
 | `folders(name?)` | Subcarpetas (CIMap) |
+| `foldersNew(type?, frmId?)` | Crear subcarpeta (1=Document, 2=Link) |
+| `save()` | Guardar folder + sync events dirty + async events dirty |
 | `fields(name?)` | Campos del formulario (async, CIMap\<Field\>) |
+| `acl()` | ACL completo (propios + heredados) |
+| `aclOwn()` | ACL propios |
+| `aclGrant(accId, access)` | Otorgar permiso |
+| `aclRevoke(accId, access)` | Revocar permiso |
+| `aclRevokeAll(accId?)` | Revocar todos |
+| `aclInherits(value?)` | Leer/setear herencia de permisos |
 | `properties(name, value?)` | Properties de carpeta (leer/escribir) |
 | `userProperties(name, value?)` | Properties por usuario |
 | `views(name?)` | Vistas de la carpeta |
 
 Propiedades: `id` (FLD_ID), `name`, `path`, `formId` (FRM_ID), `parentId`, `description`
+
+### Sync Events
+
+```javascript
+// Leer (cacheado, 12 slots siempre)
+const events = await folder.events();
+const evn = await folder.events('Document_BeforeSave'); // por nombre
+const evn = await folder.events(3); // por SevId
+
+// Modificar (marca dirty)
+evn.code = 'nuevo codigo VBS';
+evn.overrides = true; // folder events
+// evn.overridable = true; evn.extensible = true; // form events
+
+// Guardar — dos opciones:
+await evn.save();      // individual (POST directo)
+await folder.save();   // batch (persiste todos los dirty)
+```
+
+Propiedades SyncEvent: `id`, `name`, `code`, `overrides` (folder), `overridable`/`extensible` (form), `hasCode`, `modified`, `fldId`, `frmId`
+
+### Async Events
+
+```javascript
+// Leer (cacheado)
+const events = await folder.asyncEvents();
+
+// Modificar existente (marca dirty)
+events[0].code = 'nuevo codigo';
+events[0].disabled = true;
+
+// Crear nuevo (se agrega a la coleccion)
+const evn = await folder.asyncEventsNew(0); // 0=Timer
+evn.code = 'codigo del timer';
+evn.login = 'admin';
+evn.timerFrequence = '5';
+evn.timerTime = '08:00:00';
+
+// Guardar — dos opciones:
+await evn.save();      // individual (via execVbs)
+await folder.save();   // batch (persiste todos los dirty)
+```
+
+Propiedades AsyncEvent: `id`, `type` (0=Timer, 1=Trigger), `code`, `codeTimeOut`, `codeType`, `disabled`, `login`, `password`, `isCom`, `class_`, `method`, `timerFrequence`, `timerMode`, `timerTime`, `timerNextRun`, `triggerEvent`, `triggerPropertyName`, `recursive`, `isNew`, `created`, `modified`
+
+> **Nota:** AsyncEvent.save() usa `execVbs()` internamente (no hay endpoint REST). Requiere que la instancia soporte execapi.asp.
+
+## Form
+
+```javascript
+// Obtener por ID
+const form = await fdSession.forms(102);
+
+// Obtener por GUID (string 32+ chars)
+const form = await fdSession.forms('F89ECD42FAFF48FDA229E4D5C5F433ED');
+
+// Desde folder
+const form = await folder.form;
+
+// Sync events del form (cacheados)
+const events = await form.events();
+events.get('Document_BeforeSave').code = 'nuevo codigo';
+events.get('Document_BeforeSave').overridable = true;
+
+// Guardar form + sync events dirty
+await form.save();
+
+// Crear form nuevo
+const newForm = await fdSession.formsNew();
+newForm.name = 'MiForm';
+newForm.urlRaw = 'generic6.asp';
+await newForm.save();
+```
+
+Propiedades: `id` (FRM_ID), `guid`, `name`, `description`, `descriptionRaw`, `urlRaw`, `application`, `isNew`, `created`, `modified`
 
 ## Document
 
@@ -265,6 +374,19 @@ const acc = await db.openRecordset("SELECT ACC_ID, NAME, EMAIL FROM SYS_ACCOUNTS
 const fields = await db.openRecordset("SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SYS_FIELDS_307'");
 ```
 
+## MasterDatabase — SQL directo a master
+
+Para queries contra la base de datos master (doorsMaster). Util para consultar tablas compartidas entre instancias (SYS_INSTANCES, configuraciones globales, etc.).
+
+```javascript
+const masterDb = fdSession.masterDb;
+
+// SELECT — retorna Array de objetos
+const instances = await masterDb.openRecordset("SELECT * FROM SYS_INSTANCES WHERE ACTIVE = 1");
+```
+
+> **Nota:** MasterDatabase solo expone `openRecordset()` (read-only). No tiene `execute()`, `nextVal()` ni `sqlEnc()`. Para encode de valores usar `fdSession.db.sqlEnc()`.
+
 ## Directory
 
 ```javascript
@@ -322,6 +444,8 @@ utils.getGuid()               // UUID v4
 utils.encUriC(text)           // encodeURIComponent seguro
 utils.htmlEncode(text)        // HTML entities
 utils.encrypt(str) / decrypt(str) // AES via CryptoJS
+utils.execVbs(code)           // Ejecutar VBScript server-side (API COM)
+utils.vbsEncodeString(text)   // Encodear string para VBS (escapa comillas, newlines)
 utils.moment                  // moment-timezone
 utils.numeral                 // numeral.js
 utils.CryptoJS                // crypto-js

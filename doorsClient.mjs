@@ -760,18 +760,29 @@ export class Session {
     Retorna el arbol de carpetas.
     @returns {Promise<Object>}
     */
-    /*
-    foldersTree() {
-        //todo
-    }
+    /**
+    Retorna el árbol completo de carpetas.
+    @returns {Promise<Object[]>}
     */
+    foldersTree() {
+        return this.restClient.fetch('folders', 'GET', '', '');
+    }
 
     /**
-    Retorna la lista de formularios, o un formulario si especifico el id.
+    Retorna la lista de formularios, un formulario por id, o uno por GUID.
+    @param {number|string} [id] - FRM_ID (number) o GUID (string sin guiones, 32 chars)
     @returns {Promise<Form[]>|Promise<Form>}
     */
     async forms(id) {
         if (id !== undefined) {
+            // Si es string largo (32+ chars sin guiones) → buscar por GUID
+            if (typeof id === 'string' && id.length >= 32 && isNaN(parseInt(id))) {
+                var guid = id.replaceAll('-', '').toUpperCase();
+                var list = await this.restClient.fetch('forms', 'GET', '', '');
+                var found = list.find(f => (f.Guid || '').replaceAll('-', '').toUpperCase() === guid);
+                if (!found) throw new Error('Form not found: GUID ' + guid);
+                return new Form(found, this);
+            }
             var result = await this.restClient.fetch('forms/' + id, 'GET', '', '');
             return new Form(result, this);
         }
@@ -3295,6 +3306,8 @@ export class Folder {
     #viewsMap;
     #owner;
     #fieldsMap;
+    #asyncEventsArr;
+    #syncEventsMap;
 
     constructor(folder, session, parent) {
         this.#json = folder;
@@ -3413,19 +3426,35 @@ export class Folder {
     }
 
     /**
-    Retorna la lista de eventos asincronos
-
-    @returns {Promise<Object[]>}
-    [{
-        Class, Code, CodeTimeOut, CodeType, Created, Disabled, EvnId, FldId, HasCode, 
-        InsId, IsCom, IsNew, Login, Method, Modified, Password, Recursive, Tags, TimerFrecuence, 
-        TimerMode, TimerNextRun, TimerTime, TriggerEvent, TriggerPropertyName, Type
-    }]
+    Retorna la lista de eventos asíncronos del folder (cacheada).
+    @returns {Promise<AsyncEvent[]>}
     */
-    asyncEvents() {
+    async asyncEvents() {
         let me = this;
-        let url = 'folders/' + me.id + '/asyncevents';        
-        return me.session.restClient.fetch(url, 'GET', '', '');
+        if (!me.#asyncEventsArr) {
+            let url = 'folders/' + me.id + '/asyncevents';
+            let res = await me.session.restClient.fetch(url, 'GET', '', '');
+            me.#asyncEventsArr = res.map(el => new AsyncEvent(el, me.session, me));
+        }
+        return me.#asyncEventsArr;
+    }
+
+    /**
+    Crea un nuevo async event y lo agrega a la colección.
+    Se persiste con folder.save().
+    @param {number} [eventType=0] - 0=Timer, 1=Trigger
+    @returns {Promise<AsyncEvent>}
+    */
+    async asyncEventsNew(eventType) {
+        let me = this;
+        let type = eventType || 0;
+        let url = 'folders/' + me.id + '/asyncevents/' + type + '/new';
+        let res = await me.session.restClient.fetch(url, 'GET', '', '');
+        let evn = new AsyncEvent(res, me.session, me);
+        // Asegurar que la colección esté cargada y agregar
+        await me.asyncEvents();
+        me.#asyncEventsArr.push(evn);
+        return evn;
     }
 
     /*
@@ -3561,17 +3590,35 @@ export class Folder {
         return doc;
     }
 
-    /*
-    events() {
-        //todo
-    }
+    /**
+    Retorna los sync events del folder (cacheados).
+    Sin argumento retorna un CIMap con los 12 eventos.
+    Con argumento (nombre o id) retorna un SyncEvent específico.
+    @param {string|number} [event] - Nombre (ej: 'Document_BeforeSave') o ID (1-12)
+    @returns {Promise<CIMap<SyncEvent>>|Promise<SyncEvent>}
     */
-
-    /*
-    eventsList() {
-        //todo
+    async events(event) {
+        var me = this;
+        if (!me.#syncEventsMap) {
+            var url = 'folders/' + me.id + '/syncevents';
+            var res = await me.session.restClient.fetch(url, 'GET', '', '');
+            me.#syncEventsMap = new CIMap();
+            for (var el of res) {
+                me.#syncEventsMap.set(el.Name, new SyncEvent(el, me.session, me, 'folder'));
+            }
+        }
+        if (event !== undefined) {
+            if (typeof event === 'number') {
+                for (var [, ev] of me.#syncEventsMap) {
+                    if (ev.id === event) return ev;
+                }
+                throw new Error('SyncEvent not found: ID ' + event);
+            }
+            if (me.#syncEventsMap.has(event)) return me.#syncEventsMap.get(event);
+            throw new Error('SyncEvent not found: ' + event);
+        }
+        return me.#syncEventsMap;
     }
-    */
 
     /*
     get externalAttachments() {
@@ -3638,11 +3685,21 @@ export class Folder {
         return this.folder(name);
     }
     
-    /*
-    foldersNew() {
-        //todo
-    }
+    /**
+    Crea una nueva subcarpeta.
+    @param {number} [folderType=1] - 1=Document, 2=Link
+    @param {number} [formId] - FRM_ID del formulario a asignar (solo folderType=1)
+    @returns {Promise<Folder>}
     */
+    async foldersNew(folderType, formId) {
+        var me = this;
+        var type = folderType || 1;
+        var frm = formId || 0;
+        var url = 'folders/new/parentFolderId=' + me.id + '&folderType=' + type + '&formId=' + frm;
+        var res = await me.session.restClient.fetch(url, 'GET', '', '');
+        me.#foldersMap = undefined;
+        return new Folder(res, me.session, me);
+    }
 
     /** Alias de type */
     get folderType() {
@@ -3917,11 +3974,53 @@ export class Folder {
         }
     }
 
-    /*
-    save() {
-        //todo
-    }
+    /**
+    Guarda el folder (crear o actualizar).
+    Si hay async events nuevos o modificados, los persiste via execVbs.
+    @returns {Promise<Folder>}
     */
+    async save() {
+        var me = this;
+        var url, method;
+        if (me.#json.IsNew) {
+            url = 'folders';
+            method = 'PUT';
+        } else {
+            url = 'folders/' + me.id;
+            method = 'POST';
+        }
+        var result = await me.session.restClient.fetch(url, method, me.#json, 'folder');
+        if (result) me.#json = result;
+
+        // Persistir sync events pendientes (via REST)
+        if (me.#syncEventsMap) {
+            for (var [, ev] of me.#syncEventsMap) {
+                if (ev._isDirty) await ev.save();
+            }
+        }
+
+        // Persistir async events pendientes (via execVbs)
+        if (me.#asyncEventsArr) {
+            var dirty = me.#asyncEventsArr.filter(ev => ev._isDirty);
+            if (dirty.length) {
+                await me._saveAsyncEvents(dirty);
+            }
+        }
+
+        return me;
+    }
+
+    /**
+    Persiste async events pendientes.
+    @private
+    */
+    async _saveAsyncEvents(events) {
+        for (var evn of events) {
+            await evn.save();
+        }
+        // Recargar colección después de guardar
+        this.#asyncEventsArr = undefined;
+    }
 
     /**
     Busca documentos.
@@ -4181,6 +4280,7 @@ export class Form {
     #properties;
     #userProperties;
     #owner;
+    #syncEventsMap;
 
     constructor(form, session) {
         this.#json = form;
@@ -4244,6 +4344,36 @@ export class Form {
     }
     set descriptionRaw(value) {
         this.#json.DescriptionRaw = value;
+    }
+
+    /**
+    Retorna los sync events del form (cacheados).
+    Sin argumento retorna un CIMap con los 12 eventos.
+    Con argumento (nombre o id) retorna un SyncEvent específico.
+    @param {string|number} [event] - Nombre (ej: 'Document_BeforeSave') o ID (1-12)
+    @returns {Promise<CIMap<SyncEvent>>|Promise<SyncEvent>}
+    */
+    async events(event) {
+        var me = this;
+        if (!me.#syncEventsMap) {
+            var url = 'forms/' + me.id + '/syncevents';
+            var res = await me.session.restClient.fetch(url, 'GET', '', '');
+            me.#syncEventsMap = new CIMap();
+            for (var el of res) {
+                me.#syncEventsMap.set(el.Name, new SyncEvent(el, me.session, me, 'form'));
+            }
+        }
+        if (event !== undefined) {
+            if (typeof event === 'number') {
+                for (var [, ev] of me.#syncEventsMap) {
+                    if (ev.id === event) return ev;
+                }
+                throw new Error('SyncEvent not found: ID ' + event);
+            }
+            if (me.#syncEventsMap.has(event)) return me.#syncEventsMap.get(event);
+            throw new Error('SyncEvent not found: ' + event);
+        }
+        return me.#syncEventsMap;
     }
 
     fields(field) {
@@ -4351,6 +4481,14 @@ export class Form {
         }
         var result = await me.session.restClient.fetch(url, method, {}, me.#json);
         if (result) me.#json = result;
+
+        // Persistir sync events pendientes
+        if (me.#syncEventsMap) {
+            for (var [, ev] of me.#syncEventsMap) {
+                if (ev._isDirty) await ev.save();
+            }
+        }
+
         return me;
     }
 
@@ -6215,6 +6353,536 @@ export class Utilities {
     */
     xmlParser(options) {
         return new this.fastXmlParser.XMLParser(options);
+    }
+}
+
+
+/**
+Representa un async event de un folder (timer o trigger).
+@example
+const events = await folder.asyncEvents();
+const evn = events[0];
+console.log(evn.code, evn.type, evn.disabled);
+
+// Crear nuevo
+const newEvn = await folder.asyncEventsNew(0); // 0=Timer, 1=Trigger
+newEvn.code = 'código';
+newEvn.login = 'admin';
+// await newEvn.save(); // Pendiente: requiere endpoint REST (ver doors/tickets/260516)
+*/
+export class AsyncEvent {
+    #json;
+    #session;
+    #parent;
+    #dirty;
+
+    constructor(asyncEvent, session, parent) {
+        this.#json = asyncEvent;
+        this.#session = session;
+        this.#parent = parent;
+        this.#dirty = false;
+    }
+
+    /**
+    Si el evento tiene cambios pendientes de guardar.
+    @returns {boolean}
+    */
+    get _isDirty() {
+        return this.#dirty || this.isNew;
+    }
+
+    /**
+    Clase COM (solo si isCom=true).
+    @returns {string}
+    */
+    get class_() {
+        return this.#json.Class;
+    }
+    set class_(value) {
+        this.#json.Class = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Código del evento.
+    @returns {string}
+    */
+    get code() {
+        return this.#json.Code;
+    }
+    set code(value) {
+        this.#json.Code = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Timeout del código en segundos.
+    @returns {number}
+    */
+    get codeTimeOut() {
+        return this.#json.CodeTimeOut;
+    }
+    set codeTimeOut(value) {
+        this.#json.CodeTimeOut = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Tipo de código (ej: 'vbscript').
+    @returns {string}
+    */
+    get codeType() {
+        return this.#json.CodeType;
+    }
+    set codeType(value) {
+        this.#json.CodeType = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Fecha de creación.
+    @returns {string}
+    */
+    get created() {
+        return this.#json.Created;
+    }
+
+    /**
+    Si el evento está deshabilitado.
+    @returns {boolean}
+    */
+    get disabled() {
+        return this.#json.Disabled;
+    }
+    set disabled(value) {
+        this.#json.Disabled = value;
+        this.#dirty = true;
+    }
+
+    /**
+    ID del folder al que pertenece.
+    @returns {number}
+    */
+    get fldId() {
+        return this.#json.FldId;
+    }
+
+    /**
+    Si el evento tiene código.
+    @returns {boolean}
+    */
+    get hasCode() {
+        return this.#json.HasCode;
+    }
+
+    /**
+    ID del async event (EvnId).
+    @returns {number}
+    */
+    get id() {
+        return this.#json.EvnId;
+    }
+
+    /**
+    Si usa componente COM.
+    @returns {boolean}
+    */
+    get isCom() {
+        return this.#json.IsCom;
+    }
+    set isCom(value) {
+        this.#json.IsCom = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Si es nuevo (no guardado).
+    @returns {boolean}
+    */
+    get isNew() {
+        return this.#json.IsNew;
+    }
+
+    /**
+    Login de ejecución.
+    @returns {string}
+    */
+    get login() {
+        return this.#json.Login;
+    }
+    set login(value) {
+        this.#json.Login = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Método COM (solo si isCom=true).
+    @returns {string}
+    */
+    get method() {
+        return this.#json.Method;
+    }
+    set method(value) {
+        this.#json.Method = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Fecha de última modificación.
+    @returns {string}
+    */
+    get modified() {
+        return this.#json.Modified;
+    }
+
+    /**
+    Referencia al folder padre.
+    @returns {Folder}
+    */
+    get parent() {
+        return this.#parent;
+    }
+
+    /**
+    Password de ejecución.
+    @returns {string}
+    */
+    get password() {
+        return this.#json.Password;
+    }
+    set password(value) {
+        this.#json.Password = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Si aplica a subcarpetas (solo triggers).
+    @returns {boolean}
+    */
+    get recursive() {
+        return this.#json.Recursive;
+    }
+    set recursive(value) {
+        this.#json.Recursive = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Guarda el async event individualmente via execVbs.
+    @returns {Promise<AsyncEvent>}
+    */
+    async save() {
+        var me = this;
+        var vbs = me.#session.utils.vbsEncodeString;
+        var lines = [];
+        lines.push('Set fld = dSession.FoldersGetFromId(' + me.#parent.id + ')');
+
+        if (me.isNew) {
+            lines.push('Set evn = fld.AsyncEvents.Add(' + me.type + ')');
+        } else {
+            lines.push('Set evn = fld.AsyncEvents("ID=' + me.id + '")');
+        }
+
+        if (me.code) lines.push('evn.Code = ' + vbs(me.code));
+        if (me.login) lines.push('evn.Login = ' + vbs(me.login));
+        if (me.password) lines.push('evn.Password = ' + vbs(me.password));
+        lines.push('evn.Disabled = ' + (me.disabled ? 'True' : 'False'));
+
+        if (me.isCom) {
+            lines.push('evn.IsCom = True');
+            if (me.class_) lines.push('evn.Class = ' + vbs(me.class_));
+            if (me.method) lines.push('evn.Method = ' + vbs(me.method));
+        } else {
+            lines.push('evn.IsCom = False');
+            if (me.codeTimeOut) lines.push('evn.CodeTimeOut = ' + me.codeTimeOut);
+        }
+
+        if (me.type === 0) {
+            if (me.timerFrequence) lines.push('evn.TimerFrecuence = ' + vbs(me.timerFrequence));
+            if (me.timerMode !== undefined) lines.push('evn.TimerMode = ' + me.timerMode);
+            if (me.timerTime) lines.push('evn.TimerTime = ' + vbs(me.timerTime));
+            if (me.timerNextRun) lines.push('evn.TimerNextRun = ' + vbs(me.timerNextRun));
+        } else {
+            if (me.triggerEvent !== undefined && me.triggerEvent !== null) lines.push('evn.TriggerEvent = ' + me.triggerEvent);
+            if (me.triggerPropertyName) lines.push('evn.TriggerPropertyName = ' + vbs(me.triggerPropertyName));
+            lines.push('evn.Recursive = ' + (me.recursive ? 'True' : 'False'));
+        }
+
+        lines.push('fld.Save');
+        await me.#session.utils.execVbs(lines.join('\n'));
+        me.#dirty = false;
+        return me;
+    }
+
+    /**
+    @returns {Session}
+    */
+    get session() {
+        return this.#session;
+    }
+
+    /**
+    Tags del evento.
+    @returns {Object}
+    */
+    get tags() {
+        return this.#json.Tags;
+    }
+
+    /**
+    Frecuencia del timer (solo type=0).
+    @returns {string}
+    */
+    get timerFrequence() {
+        return this.#json.TimerFrecuence;
+    }
+    set timerFrequence(value) {
+        this.#json.TimerFrecuence = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Modo del timer (solo type=0).
+    @returns {number}
+    */
+    get timerMode() {
+        return this.#json.TimerMode;
+    }
+    set timerMode(value) {
+        this.#json.TimerMode = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Próxima ejecución del timer (solo type=0).
+    @returns {string}
+    */
+    get timerNextRun() {
+        return this.#json.TimerNextRun;
+    }
+    set timerNextRun(value) {
+        this.#json.TimerNextRun = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Hora del timer (solo type=0). Formato "HH:MM:SS".
+    @returns {string}
+    */
+    get timerTime() {
+        return this.#json.TimerTime;
+    }
+    set timerTime(value) {
+        this.#json.TimerTime = value;
+        this.#dirty = true;
+    }
+
+    /**
+    @returns {Object}
+    */
+    toJSON() {
+        return this.#json;
+    }
+
+    /**
+    Evento trigger (solo type=1).
+    @returns {number}
+    */
+    get triggerEvent() {
+        return this.#json.TriggerEvent;
+    }
+    set triggerEvent(value) {
+        this.#json.TriggerEvent = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Property name del trigger (solo type=1).
+    @returns {string}
+    */
+    get triggerPropertyName() {
+        return this.#json.TriggerPropertyName;
+    }
+    set triggerPropertyName(value) {
+        this.#json.TriggerPropertyName = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Tipo de evento: 0=Timer, 1=Trigger.
+    @returns {number}
+    */
+    get type() {
+        return this.#json.Type;
+    }
+}
+
+
+/**
+Representa un sync event de un folder o form.
+@example
+const events = await folder.events();
+const evn = events.get('Document_BeforeSave');
+evn.code = 'nuevo código';
+await evn.save();
+*/
+export class SyncEvent {
+    #json;
+    #parent;
+    #session;
+    #parentType; // 'folder' o 'form'
+    #dirty;
+
+    constructor(syncEvent, session, parent, parentType) {
+        this.#json = syncEvent;
+        this.#session = session;
+        this.#parent = parent;
+        this.#parentType = parentType;
+        this.#dirty = false;
+    }
+
+    /**
+    Si el evento tiene cambios pendientes de guardar.
+    @returns {boolean}
+    */
+    get _isDirty() {
+        return this.#dirty;
+    }
+
+    /**
+    Código del evento.
+    @returns {string}
+    */
+    get code() {
+        return this.#json.Code;
+    }
+    set code(value) {
+        this.#json.Code = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Si el form permite que sea extensible (solo form events).
+    @returns {boolean}
+    */
+    get extensible() {
+        return this.#json.Extensible;
+    }
+    set extensible(value) {
+        this.#json.Extensible = value;
+        this.#dirty = true;
+    }
+
+    /**
+    ID del folder al que pertenece (solo folder events).
+    @returns {number}
+    */
+    get fldId() {
+        return this.#json.FldId;
+    }
+
+    /**
+    ID del form al que pertenece.
+    @returns {number}
+    */
+    get frmId() {
+        return this.#json.FrmId;
+    }
+
+    /**
+    Si el evento tiene código.
+    @returns {boolean}
+    */
+    get hasCode() {
+        return this.#json.HasCode;
+    }
+
+    /**
+    ID del sync event (SevId).
+    @returns {number}
+    */
+    get id() {
+        return this.#json.SevId;
+    }
+
+    /**
+    Fecha de última modificación.
+    @returns {string}
+    */
+    get modified() {
+        return this.#json.Modified;
+    }
+
+    /**
+    Nombre del evento (ej: Document_BeforeSave).
+    @returns {string}
+    */
+    get name() {
+        return this.#json.Name;
+    }
+
+    /**
+    Si el form permite que folders lo overrideen (solo form events).
+    @returns {boolean}
+    */
+    get overridable() {
+        return this.#json.Overridable;
+    }
+    set overridable(value) {
+        this.#json.Overridable = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Si este folder overridea el evento del form (solo folder events).
+    @returns {boolean}
+    */
+    get overrides() {
+        return this.#json.Overrides;
+    }
+    set overrides(value) {
+        this.#json.Overrides = value;
+        this.#dirty = true;
+    }
+
+    /**
+    Referencia al folder o form padre.
+    @returns {Folder|Form}
+    */
+    get parent() {
+        return this.#parent;
+    }
+
+    /**
+    Guarda el sync event individualmente.
+    @returns {Promise<SyncEvent>}
+    */
+    async save() {
+        var me = this;
+        var url;
+        if (me.#parentType === 'folder') {
+            url = 'folders/' + me.#parent.id + '/syncevent';
+        } else {
+            url = 'form/' + me.#parent.id + '/syncevent';
+        }
+        var result = await me.#session.restClient.fetch(url, 'POST', me.#json, 'syncEvent');
+        if (result) me.#json = result;
+        me.#dirty = false;
+        return me;
+    }
+
+    /**
+    @returns {Session}
+    */
+    get session() {
+        return this.#session;
+    }
+
+    /**
+    @returns {Object}
+    */
+    toJSON() {
+        return this.#json;
     }
 }
 
