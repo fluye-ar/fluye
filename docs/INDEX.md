@@ -424,5 +424,5 @@ find /Users/Jorge/Desarrollo -name "*.md" -type f -not -path "*/node_modules/*" 
 
 ---
 
-**Jorge Pagano - Fluye**
+**Jorge Pagano - Fluye Labs**
 **Versión:** 1.1 (2026-02-11)

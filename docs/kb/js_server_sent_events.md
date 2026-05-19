@@ -32,4 +32,4 @@ sse.addEventListener('myapp:myentity:myevent', async ev => {
 
 Ver [doc:change - Evento de documento modificado](doc_change_evento.md).
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

@@ -775,8 +775,8 @@ export class Session {
     */
     async forms(id) {
         if (id !== undefined) {
-            // Si es string largo (32+ chars sin guiones) → buscar por GUID
-            if (typeof id === 'string' && id.length >= 32 && isNaN(parseInt(id))) {
+            // Si es string largo (32+ chars) → buscar por GUID
+            if (typeof id === 'string' && id.replaceAll('-', '').length >= 32) {
                 var guid = id.replaceAll('-', '').toUpperCase();
                 var list = await this.restClient.fetch('forms', 'GET', '', '');
                 var found = list.find(f => (f.Guid || '').replaceAll('-', '').toUpperCase() === guid);
@@ -3427,14 +3427,17 @@ export class Folder {
 
     /**
     Retorna la lista de eventos asíncronos del folder (cacheada).
-    @returns {Promise<AsyncEvent[]>}
+    @returns {(Promise<AsyncEvent[]>|Promise<AsyncEvent>)}
     */
-    async asyncEvents() {
+    async asyncEvents(id) {
         let me = this;
         if (!me.#asyncEventsArr) {
             let url = 'folders/' + me.id + '/asyncevents';
             let res = await me.session.restClient.fetch(url, 'GET', '', '');
             me.#asyncEventsArr = res.map(el => new AsyncEvent(el, me.session, me));
+        }
+        if (id !== undefined) {
+            return me.#asyncEventsArr.find(ev => ev.id === id);
         }
         return me.#asyncEventsArr;
     }
@@ -3451,7 +3454,6 @@ export class Folder {
         let url = 'folders/' + me.id + '/asyncevents/' + type + '/new';
         let res = await me.session.restClient.fetch(url, 'GET', '', '');
         let evn = new AsyncEvent(res, me.session, me);
-        // Asegurar que la colección esté cargada y agregar
         await me.asyncEvents();
         me.#asyncEventsArr.push(evn);
         return evn;
@@ -3999,28 +4001,24 @@ export class Folder {
             }
         }
 
-        // Persistir async events pendientes (via execVbs)
+        // Persistir async events
         if (me.#asyncEventsArr) {
-            var dirty = me.#asyncEventsArr.filter(ev => ev._isDirty);
-            if (dirty.length) {
-                await me._saveAsyncEvents(dirty);
+            if (await me.session.doorsVersion >= '008.000.000.025') {
+                // REST bulk: manda coleccion sin los deleted, server compara y borra faltantes
+                var url = 'folders/' + me.id + '/asyncevents';
+                var evArr = me.#asyncEventsArr.filter(ev => !ev._isDeleted).map(ev => ev.toJSON());
+                await me.session.restClient.fetch(url, 'POST', evArr, 'asyncEvents');
+            } else {
+                // execVbs individual (servers viejos)
+                var pending = me.#asyncEventsArr.filter(ev => ev._isDeleted ? !ev.isNew : ev._isDirty);
+                for (var evn of pending) await evn._persistVbs();
             }
+            me.#asyncEventsArr = undefined;
         }
 
         return me;
     }
 
-    /**
-    Persiste async events pendientes.
-    @private
-    */
-    async _saveAsyncEvents(events) {
-        for (var evn of events) {
-            await evn.save();
-        }
-        // Recargar colección después de guardar
-        this.#asyncEventsArr = undefined;
-    }
 
     /**
     Busca documentos.
@@ -4472,14 +4470,14 @@ export class Form {
     async save() {
         var me = this;
         var url, method;
-        if (me.id > 0) {
-            url = 'forms/' + me.id;
-            method = 'POST';
-        } else {
+        if (me.isNew) {
             url = 'forms';
             method = 'PUT';
+        } else {
+            url = 'forms/' + me.id;
+            method = 'POST';
         }
-        var result = await me.session.restClient.fetch(url, method, {}, me.#json);
+        var result = await me.session.restClient.fetch(url, method, me.#json, 'form');
         if (result) me.#json = result;
 
         // Persistir sync events pendientes
@@ -6368,19 +6366,21 @@ console.log(evn.code, evn.type, evn.disabled);
 const newEvn = await folder.asyncEventsNew(0); // 0=Timer, 1=Trigger
 newEvn.code = 'código';
 newEvn.login = 'admin';
-// await newEvn.save(); // Pendiente: requiere endpoint REST (ver doors/tickets/260516)
+await folder.save(); // Bulk POST: manda toda la coleccion, server compara y borra faltantes
 */
 export class AsyncEvent {
     #json;
     #session;
     #parent;
     #dirty;
+    #deleted;
 
     constructor(asyncEvent, session, parent) {
         this.#json = asyncEvent;
         this.#session = session;
         this.#parent = parent;
         this.#dirty = false;
+        this.#deleted = false;
     }
 
     /**
@@ -6390,6 +6390,24 @@ export class AsyncEvent {
     get _isDirty() {
         return this.#dirty || this.isNew;
     }
+
+    /**
+    Si el evento está marcado para borrar.
+    @returns {boolean}
+    */
+    get _isDeleted() {
+        return this.#deleted;
+    }
+
+    /**
+    Marca el evento para eliminación. Se persiste con folder.save().
+    */
+    remove() { this.#deleted = true; }
+
+    /**
+    Alias de remove().
+    */
+    delete() { this.#deleted = true; }
 
     /**
     Clase COM (solo si isCom=true).
@@ -6472,7 +6490,7 @@ export class AsyncEvent {
     @returns {boolean}
     */
     get hasCode() {
-        return this.#json.HasCode;
+        return this.#json.HasCode ?? (this.#json.Code?.length > 0);
     }
 
     /**
@@ -6568,22 +6586,34 @@ export class AsyncEvent {
     }
 
     /**
-    Guarda el async event individualmente via execVbs.
-    @returns {Promise<AsyncEvent>}
+    Persiste o elimina el async event via execVbs (COM). Para servers < 8.0.0.24.
+    @private
     */
-    async save() {
+    async _persistVbs() {
         var me = this;
         var vbs = me.#session.utils.vbsEncodeString;
         var lines = [];
         lines.push('Set fld = dSession.FoldersGetFromId(' + me.#parent.id + ')');
 
-        if (me.isNew) {
-            lines.push('Set evn = fld.AsyncEvents.Add(' + me.type + ')');
+        if (me.#deleted) {
+            lines.push('fld.AsyncEvents.Remove "ID=' + me.id + '"');
+        } else if (me.isNew) {
+            lines.push('Set evn = fld.AsyncEvents.Add');
+            lines.push('evn.EventType = ' + me.type);
+            me._pushVbsProps(lines, vbs);
         } else {
             lines.push('Set evn = fld.AsyncEvents("ID=' + me.id + '")');
+            me._pushVbsProps(lines, vbs);
         }
 
-        if (me.code) lines.push('evn.Code = ' + vbs(me.code));
+        lines.push('fld.Save');
+        await me.#session.utils.execVbs(lines.join('\n'));
+        me.#dirty = false;
+    }
+
+    /** @private */
+    _pushVbsProps(lines, vbs) {
+        var me = this;
         if (me.login) lines.push('evn.Login = ' + vbs(me.login));
         if (me.password) lines.push('evn.Password = ' + vbs(me.password));
         lines.push('evn.Disabled = ' + (me.disabled ? 'True' : 'False'));
@@ -6594,24 +6624,27 @@ export class AsyncEvent {
             if (me.method) lines.push('evn.Method = ' + vbs(me.method));
         } else {
             lines.push('evn.IsCom = False');
-            if (me.codeTimeOut) lines.push('evn.CodeTimeOut = ' + me.codeTimeOut);
+            if (me.code) {
+                lines.push('Set sb = dSession.ConstructNewStringBuilder');
+                var codeLines = me.code.split('\n');
+                for (var i = 0; i < codeLines.length; i++) {
+                    var clean = codeLines[i].replace(/\r$/, '');
+                    lines.push('sb.Append ' + vbs(clean) + (i < codeLines.length - 1 ? ' & vbCrLf' : ''));
+                }
+                lines.push('evn.Code = sb.ToString');
+            }
+            if (me.codeTimeOut) lines.push('evn.CodeTimeout = ' + me.codeTimeOut);
         }
 
         if (me.type === 0) {
-            if (me.timerFrequence) lines.push('evn.TimerFrecuence = ' + vbs(me.timerFrequence));
             if (me.timerMode !== undefined) lines.push('evn.TimerMode = ' + me.timerMode);
+            if (me.timerFrequence !== undefined) lines.push('evn.TimerFrequence = ' + vbs(me.timerFrequence || ''));
             if (me.timerTime) lines.push('evn.TimerTime = ' + vbs(me.timerTime));
-            if (me.timerNextRun) lines.push('evn.TimerNextRun = ' + vbs(me.timerNextRun));
         } else {
             if (me.triggerEvent !== undefined && me.triggerEvent !== null) lines.push('evn.TriggerEvent = ' + me.triggerEvent);
             if (me.triggerPropertyName) lines.push('evn.TriggerPropertyName = ' + vbs(me.triggerPropertyName));
             lines.push('evn.Recursive = ' + (me.recursive ? 'True' : 'False'));
         }
-
-        lines.push('fld.Save');
-        await me.#session.utils.execVbs(lines.join('\n'));
-        me.#dirty = false;
-        return me;
     }
 
     /**
@@ -6794,7 +6827,7 @@ export class SyncEvent {
     @returns {boolean}
     */
     get hasCode() {
-        return this.#json.HasCode;
+        return this.#json.HasCode ?? (this.#json.Code?.length > 0);
     }
 
     /**
@@ -6996,6 +7029,7 @@ export class View {
     }
     set definition(value) {
         this.#json.Definition = value;
+        delete this.#json.DefinitionXml; // v9 prioriza XML sobre JSON, limpiar para que use el JSON
     }
 
     get description() {
@@ -7121,6 +7155,7 @@ export class View {
     }
     set styleScript(value) {
         this.#json.StyleScriptDefinition = value;
+        delete this.#json.StyleScriptDefinitionXml; // v9 prioriza XML sobre JSON
     }
 
     get tags() {

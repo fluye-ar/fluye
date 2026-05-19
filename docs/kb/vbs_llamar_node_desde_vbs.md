@@ -201,4 +201,4 @@ var payload = ctx.message.payload;
 return { success: true, data: 'algo' };
 ```
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

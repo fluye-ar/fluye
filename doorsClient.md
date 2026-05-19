@@ -468,4 +468,4 @@ utils.CryptoJS                // crypto-js
 
 ---
 
-**Jorge Pagano - Fluye**
+**Jorge Pagano - Fluye Labs**

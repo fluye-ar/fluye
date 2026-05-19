@@ -39,4 +39,4 @@ let att = doc.attachmentsAdd(fileName);
 await att.fileStream2(cert); // Las promesas se resuelven internamente
 ```
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

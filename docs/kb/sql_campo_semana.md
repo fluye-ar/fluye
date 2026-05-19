@@ -6,4 +6,4 @@ Mediante este ALTER podemos crear un campo calculado que indique el 1er dia de l
 alter table SYS_FIELDS_999 add SEMANA as convert(varchar(10), dateadd(day, 2 - datepart(weekday, FECHA), FECHA), 20)
 ```
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

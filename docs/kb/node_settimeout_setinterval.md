@@ -9,4 +9,4 @@ timers.setTimeout(myFunc, 100);
 
 [Más información - Node.js Timers](https://nodejs.org/api/timers.html)
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

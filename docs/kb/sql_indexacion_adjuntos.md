@@ -8,4 +8,4 @@ La indexacion de texto de SQL Server soporta por defecto los siguientes formatos
 
 > Para mas informacion consultar: [Manejo de indices de texto mediante T-SQL en SQL Server](sql_indices_texto_tsql.md)
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

@@ -254,4 +254,4 @@ Desarrollo, Doors, Controles, Base de datos, Errores, Herramientas, Soporte, Con
 
 **Nota:** Los artículos se bajan a `fluye/docs/kb/` a medida que se necesitan. Para descargar uno, usar `mcp__notionApi__API-get-block-children` con el `page_id` del artículo.
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

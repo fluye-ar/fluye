@@ -187,4 +187,4 @@ try {
 
 ---
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

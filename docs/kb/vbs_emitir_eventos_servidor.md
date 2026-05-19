@@ -40,4 +40,4 @@ sse.addEventListener('doc:change', async ev => {
 });
 ```
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

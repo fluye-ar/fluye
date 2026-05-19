@@ -18,4 +18,4 @@ Esto permite aliviar la carga del servicio Trigger Events, sobre todo en carpeta
 AgenteCommitNode Doc, 305 ' --> Incluir el evnId
 ```
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

@@ -30,4 +30,4 @@ Luego accediendo con una cuenta con privilegios de administración, a la secció
 
 *(screenshot no disponible en versión local)*
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

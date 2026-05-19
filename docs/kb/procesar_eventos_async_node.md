@@ -28,4 +28,4 @@ var doc = await folder.doc(payload.doc); // Solo en triggers
 
 Outbox implementa un timer en Node que recorre una carpeta con correos y los manda. Para más info [ver el código](https://github.com/CloudyVisionArg/Global/blob/main/outbox/timer.js).
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs

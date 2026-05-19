@@ -176,4 +176,4 @@ ctx.message = {
 }
 ```
 
-Jorge Pagano - Fluye
+Jorge Pagano - Fluye Labs
