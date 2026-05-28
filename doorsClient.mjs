@@ -750,13 +750,6 @@ export class Session {
     };
 
     /**
-    Alias de utils.import
-    */
-    import(module) {
-        return this.utils.import(module);
-    };
-
-    /**
     Retorna el arbol de carpetas.
     @returns {Promise<Object>}
     */
@@ -807,6 +800,13 @@ export class Session {
         //todo
     }
     */
+
+    /**
+    Alias de utils.import
+    */
+    import(module) {
+        return this.utils.import(module);
+    };
 
     /**
     Retorna la instancia actual.
