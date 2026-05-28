@@ -4,3 +4,6 @@ node_modules/
 **/.DS_Store
 Thumbs.db:encryptable
 Thumbs.db
+
+# Claude Code - config local/personal (no compartida)
+.claude/settings.local.json
