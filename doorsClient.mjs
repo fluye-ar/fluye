@@ -4885,7 +4885,7 @@ export class Node {
         if (options.instance == undefined) options.instance = ins;
         if (await me.isFluye) {
             let body = Object.assign({}, options, {
-                token: me.session.encrypt(me.session.authToken),
+                token: me.session.utils.encrypt(me.session.authToken),
                 serverUrl: me.session.serverUrl,
             });
             return await fetch(`https://sse.fluye.ar/push/${encodeURIComponent(options.instance)}`, {
