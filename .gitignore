@@ -5,5 +5,5 @@ node_modules/
 Thumbs.db:encryptable
 Thumbs.db
 
-# Claude Code - config local/personal (no compartida)
-.claude/settings.local.json
+# Claude Code local settings (per-machine, auto-generated permissions)
+**/.claude/settings.local.json

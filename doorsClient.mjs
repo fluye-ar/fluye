@@ -828,6 +828,7 @@ export class Session {
                         res.fluye = await me.fluyeClient.fetch('instance/config');
                     } catch (e) {
                         // No bloquea — PG no disponible no rompe la sesión
+                        console.warn(e);
                     }
                 }
 
@@ -4850,7 +4851,7 @@ export class Node {
             if (!window.drsServerEvents) {
                 let es;
                 if (await me.isFluye) {
-                    let token = encodeURIComponent(me.session.encrypt(me.session.authToken));
+                    let token = encodeURIComponent(me.session.utils.encrypt(me.session.authToken));
                     let serverUrl = encodeURIComponent(me.session.serverUrl);
                     es = new EventSource(
                         `https://sse.fluye.ar/watch/${encodeURIComponent(ins)}?token=${token}&serverUrl=${serverUrl}`
