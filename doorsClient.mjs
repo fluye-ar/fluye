@@ -7415,7 +7415,12 @@ class V8Client {
         }, options);
 
         try {
-            let fullUrl = (await me.session.node.server) + '/restful/' + url;
+            // let fullUrl = (await me.session.node.server) + '/restful/' + url;
+
+            let ep = (await me.session.node.config).endpoint;
+            // Reemplazar el /exec final por /restful
+            let fullUrl = ep.replace(/\/exec$/, '/restful/') + url;
+
             let body;
             let params = typeof(opt.params) != 'string' ? JSON.stringify(opt.params) : opt.params;
             let method = opt.method.toUpperCase();
