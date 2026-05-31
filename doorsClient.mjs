@@ -4630,7 +4630,9 @@ export class Node {
         function parseSetting(target, setting) {
             try {
                 let jsn = JSON.parse(setting);
+                target.endpoint = jsn.server;
                 try { target.server = origin(jsn.server) } catch(err) {};
+                target.debugEndpoint = jsn.debugServer;
                 try { target.debugServer = origin(jsn.debugServer) } catch(err) {};
                 if (jsn.repo !== undefined) target.repo = jsn.repo;
                 if (jsn.ref !== undefined) target.ref = jsn.ref;
