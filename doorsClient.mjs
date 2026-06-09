@@ -1594,7 +1594,7 @@ export class Attachment {
         var me = this;
 
         if (!me.#json.File) {
-            let url = 'documents/' + me.parent.id + '/attachments/' + me.id;
+            let url = 'documents/' + me.parent.id + '/attachments/' + me.id + '?raw=1';
             let res = await me.session.restClient.fetchRaw(url, 'GET', '');
             let buf = await res.arrayBuffer();
             me.#json.File = await me._checkBuffer(buf, onProgress);
