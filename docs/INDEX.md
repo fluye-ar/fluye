@@ -58,6 +58,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 | `doors/docs/ACL.md` | Control de acceso y seguridad (ACL, permisos, SYS_READERS) |
 | `doors/docs/CONNECTIONS.md` | Gestión de conexiones |
 | `doors/docs/VIEWS.md` | Sistema de vistas |
+| `doors/docs/EXPORT.md` | Export de vistas a Excel: flujo, límite con codelib `ViewExport`, traza `SYS_EXPORT_LOG` |
 | `doors/docs/CODELIB.md` | Code library y sistema #include |
 | `doors/docs/FORMS.md` | SYS_FORMS schema, GUIDs de sistema, runtimes, ACTIONS XML |
 
