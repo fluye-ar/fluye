@@ -55,6 +55,7 @@ Session (fdSession)
  |    +-- acl() / aclGrant() / aclRevoke()
  |    +-- properties(name, value?) / userProperties(name, value?)
  |    +-- views(name?) -> CIMap<View>
+ |    +-- viewsNew() -> View                     ← NEW
  +-- forms(id|guid?) -> Form|Form[]             ← UPDATED
  |    +-- events(name?) -> CIMap<SyncEvent>    ← NEW
  |    +-- save() -> Form
@@ -164,7 +165,8 @@ Parametros: `{ groups, totals, formula, order, maxDocs, recursive, groupsOrder, 
 | `aclInherits(value?)` | Leer/setear herencia de permisos |
 | `properties(name, value?)` | Properties de carpeta (leer/escribir) |
 | `userProperties(name, value?)` | Properties por usuario |
-| `views(name?)` | Vistas de la carpeta |
+| `views(name?)` | Vistas de la carpeta (CIMap\<View\>, cacheado) |
+| `viewsNew()` | Crear vista nueva (trae molde del server con VIE_ID asignado) |
 
 Propiedades: `id` (FLD_ID), `name`, `path`, `formId` (FRM_ID), `parentId`, `description`
 
@@ -213,6 +215,53 @@ await folder.save();   // batch (persiste todos los dirty)
 Propiedades AsyncEvent: `id`, `type` (0=Timer, 1=Trigger), `code`, `codeTimeOut`, `codeType`, `disabled`, `login`, `password`, `isCom`, `class_`, `method`, `timerFrequence`, `timerMode`, `timerTime`, `timerNextRun`, `triggerEvent`, `triggerPropertyName`, `recursive`, `isNew`, `created`, `modified`
 
 > **Nota:** AsyncEvent.save() usa `execVbs()` internamente (no hay endpoint REST). Requiere que la instancia soporte execapi.asp.
+
+### Views
+
+```javascript
+// Leer (cacheado)
+const views = await folder.views();          // CIMap<View>
+const v = await folder.views('Mis Pendientes'); // por nombre (throw si no existe)
+
+// Definición y estilo (getters async; lazy load)
+const def = await v.definition;              // { Fields, Groups, Orders, Filters, Formula, ... }
+const ss = await v.styleScript;              // StyleScriptDefinition
+
+// Crear vista nueva
+const nv = await folder.viewsNew();          // trae el molde del server con VIE_ID asignado
+nv.name = 'FID - Mis Pendientes';
+nv.description = 'FID - Mis Pendientes';
+nv.definition = def;                         // el setter limpia DefinitionXml (v9 prioriza XML)
+nv.styleScript = ss;                         // opcional
+await nv.save();                             // POST; tras guardar, nv.id trae el VIE_ID real
+
+// Editar vista existente
+const ev = await folder.views('Por estado');
+const d = await ev.definition;
+d.Formula = "estado = 'Activo'";
+ev.definition = d;
+await ev.save();
+```
+
+**Estructura de `definition` (JSON):**
+- `Fields.Items[]` — columnas mostradas. Cada item: `{ Field, Width, Description, IsVisible, IsImage, ... }`
+- `Groups.Items[]` — agrupaciones: `{ Field, Direction, OrderBy }`
+- `Orders.Items[]` — ordenamiento: `{ Field, Direction }`
+- `Filters.Items[]` — filtros estructurados
+- `Formula` — filtro libre SQL (ej. `RESPONSABLE_ID = [LOGGEDUSERID]`). Placeholders: `[LOGGEDUSERID]`, etc.
+
+Propiedades View: `id` (VIE_ID), `name`, `description`, `folderId`, `definition`, `styleScript`, `type`, `hasFilter`
+
+> ⚠️ **Crear vistas: SIEMPRE usar `folder.viewsNew()`, nunca armar el JSON a mano.** `viewsNew()`
+> hace `GET folders/{id}/views/new` y el server devuelve el molde con el VIE_ID asignado. Si se
+> copia el JSON de otra vista (con `VieId` heredado) y se manda crudo por POST/PUT, se inserta con
+> `VIE_ID = 0` y la segunda vista revienta con `Violation of PRIMARY KEY 'PK_VIEWS' ... duplicate
+> key (0)` (VIE_ID **no** es IDENTITY). Para clonar/transformar: leer `await src.definition`,
+> hacer deep-clone (`JSON.parse(JSON.stringify(def))`), modificar, y aplicarlo sobre una vista de
+> `viewsNew()`.
+
+> **Borrar vistas:** doorsClient no expone delete de vistas (los métodos ACL/delete están como
+> `//todo`). Borrar vía SQL: `DELETE FROM SYS_VIEWS WHERE FLD_ID=? AND VIE_ID=?`.
 
 ## Form
 

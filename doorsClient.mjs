@@ -897,6 +897,14 @@ export class Session {
     }
 
     /**
+    Devuelve un setting del master (solo lectura).
+    @returns {Promise}
+    */
+    masterSettings(setting) {
+        return this.restClient.fetch('mastersettings/' + this.utils.encUriC(setting), 'GET', '', '');
+    }
+
+    /**
     Ejecucion de codigo en el servidor.
     @returns {Node}
     */
@@ -1150,7 +1158,9 @@ export class Session {
                 resolve(true);
             } else {
                 try {
-                    let res = await fetch('/c/tkn.asp');
+                    let seg = (location.pathname.split('/')[1] || 'c');
+                    if (seg === 'w') seg = 'c';
+                    let res = await fetch('/' + seg + '/tkn.asp');
                     let txt = await res.text();
                     if (txt.length < 70) { // Cdo no hay sesion viene el chorizazo del error
                         me.authToken = txt;
