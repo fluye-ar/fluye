@@ -1152,19 +1152,25 @@ export class Session {
         return new Promise(async (resolve, reject) => {
             me.serverUrl = window.location.origin + '/restful';
 
-            try {
-                let seg = (location.pathname.split('/')[1] || 'c');
-                if (seg === 'w') seg = 'c';
-                let res = await fetch('/' + seg + '/tkn.asp');
-                let txt = await res.text();
-                if (txt.length < 70) {
-                    me.authToken = txt;
-                    resolve(true);
-                } else {
-                    resolve(false);
+            let tkn = me.utils.cookie('AuthToken');
+            if (tkn) {
+                me.authToken = tkn;
+                resolve(true);
+            } else {
+                try {
+                    let seg = (location.pathname.split('/')[1] || 'c');
+                    if (seg === 'w') seg = 'c';
+                    let res = await fetch('/' + seg + '/tkn.asp');
+                    let txt = await res.text();
+                    if (txt.length < 70) {
+                        me.authToken = txt;
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                } catch(err) {
+                    reject(err);
                 }
-            } catch(err) {
-                reject(err);
             }
         });
     }
