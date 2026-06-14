@@ -334,20 +334,6 @@ window.fluye = {
     connect: this.openDoors, // backward compat, sacar el 1/4
 
     /**
-    Se conecta a la sesion web, hace un redirect al login si no esta logueado
-    */
-    openDoors: async function() {
-        //todo: falta soporte app
-        if (!fluye.doorsSession) await fluye.init();
-        if (!await fluye.doorsSession.webSession() || !await fluye.doorsSession.isLogged) {
-            let path = location.pathname.replace(/^\/[^\/]+/, ''); // Saca el /c
-            location.href = '/w/auth/login?request=' + encodeURIComponent(path + location.search);
-            return;
-        }
-        await fluye.doorsSession.runSyncEventsOnClient(false);
-    },
-
-    /**
     Descarga un buffer como archivo
     @example
     downloadFile(buffer, 'logo.jpg');
@@ -424,8 +410,9 @@ window.fluye = {
             'bootstrap': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
             'bootstrap-css': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
             'bootstrap-icons': 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
-            'tailwind': 'https://cdn.tailwindcss.com',
             'inter-font': { src: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', tag: 'link' },
+            'maps': 'https://cdn.fluye.ar/ghf/fluye-lib/client/maps.js',
+            'tailwind': 'https://cdn.tailwindcss.com',
             'wiz': { src: { repo: 'fluye-lib', path: 'ai/wiz/wiz.js' } },
         };
 
@@ -580,6 +567,27 @@ window.fluye = {
     },
 
     /**
+    Espera a que un script (cargado vía fluye.load) termine de inicializarse.
+    Equivalente al scriptLoaded() legacy, en formato promise.
+    @param {string} id - id del script (sin el prefijo 'script_')
+    @returns {Promise<HTMLElement>} resuelve con el elemento cuando está cargado
+    @example
+    await fluye.loaded('mapsapi');
+    var ac = new google.maps.places.Autocomplete(el, { types: ['geocode'] });
+    */
+    loaded: async function (id) {
+        const el = document.getElementById('script_' + id);
+        if (!el) {
+            console.log('script_' + id + ' node not found');
+            return null;
+        }
+        if (typeof el.loaded === 'function') {
+            return new Promise(resolve => el.loaded(resolve));
+        }
+        return el;
+    },
+
+    /**
     Cache de módulos con lazy loading
     @param {string} key - Identificador del módulo
     @param {Function} loader - Función async que carga el módulo
@@ -600,6 +608,20 @@ window.fluye = {
 
     // Cache de modulos
     mods: {},
+
+    /**
+    Se conecta a la sesion web, hace un redirect al login si no esta logueado
+    */
+    openDoors: async function() {
+        //todo: falta soporte app
+        if (!fluye.doorsSession) await fluye.init();
+        if (!await fluye.doorsSession.webSession() || !await fluye.doorsSession.isLogged) {
+            let path = location.pathname.replace(/^\/[^\/]+/, ''); // Saca el /c
+            location.href = '/w/auth/login?request=' + encodeURIComponent(path + location.search);
+            return;
+        }
+        await fluye.doorsSession.runSyncEventsOnClient(false);
+    },
 
     /**
     Crea un formulario, hace submit de los datos y lo borra
