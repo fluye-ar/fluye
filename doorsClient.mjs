@@ -5870,9 +5870,8 @@ export class Utilities {
     }
     */
     ghCodeUrl(options) {
-        let opt = Object.assign({
-            owner: 'fluye-ar',
-        }, options);
+        let opt = { ...options };
+        opt.owner = opt.owner || 'fluye-ar';
 
         /*
         Puedo especificar el ref y fresh de los scripts en el localStorage, en un item asi:
