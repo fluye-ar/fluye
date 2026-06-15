@@ -624,21 +624,6 @@ window.fluye = {
     },
 
     /**
-    Helper para que los modulos legacy obtengan ctx y fdSession sin conocer el entorno.
-    Patron de uso en el modulo:
-        const { ctx, fdSession } = globalThis.fluye.reqCtx();
-    En browser fdSession es la session global de fluye y ctx queda vacio (los paths que usan
-    ctx.res, ctx.proxied, ctx.mainlib son server-only). En server hay una version equivalente
-    con AsyncLocalStorage en fluye-core/worker.js que aisla per-request bajo concurrencia.
-    */
-    reqCtx: function() {
-        return {
-            ctx: {},
-            fdSession: fluye.doorsSession,
-        };
-    },
-
-    /**
     Crea un formulario, hace submit de los datos y lo borra
     Se puede usar para abrir una nueva ventana haciendo POST
     @example
