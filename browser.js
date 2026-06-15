@@ -702,4 +702,21 @@ window.fluye = {
     },
 
     urlParams: new URLSearchParams(window.location.search),
+
+    /**
+    Factory de proxies para aislar ctx/fdSession en modulos legacy.
+    Patron de uso en el modulo:
+        const { ctx, fdSession, setContext } = globalThis.fluye.reqCtx();
+        export { ctx, fdSession, setContext };
+    En browser no hay race (single-thread) — cada call devuelve un closure independiente.
+    En server (fluye-core) hay una version equivalente con AsyncLocalStorage que aisla per-request.
+    */
+    reqCtx: function() {
+        let _ctx;
+        return {
+            ctx: new Proxy({}, { get: (_, p) => _ctx?.[p] }),
+            fdSession: new Proxy({}, { get: (_, p) => _ctx?.fdSession?.[p] }),
+            setContext: (c) => { _ctx = c; },
+        };
+    },
 }
