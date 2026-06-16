@@ -5399,7 +5399,8 @@ export class Utilities {
     #session;
     #cache;
     #execapiAcao;
-    
+    #execapiAcaoPromise;
+
     constructor(session) {
         this.#session = session;
         this.#cache = new CIMap();
@@ -5730,30 +5731,31 @@ export class Utilities {
     Access-Control-Allow-Origin cannot contain more than one origin.
     */
     get execapiAcao() {
+        if (this.#execapiAcao !== undefined) {
+            return Promise.resolve(this.#execapiAcao);
+        }
+        if (this.#execapiAcaoPromise) {
+            // Test ya en curso: todos los callers concurrentes comparten la misma promesa
+            return this.#execapiAcaoPromise;
+        }
         var me = this;
-        return new Promise(async (resolve, reject) => {
-            if (me.#execapiAcao !== undefined) {
-                resolve(me.#execapiAcao);
-
-            } else {
-                // Peticion de prueba sin ACAO
-                var data = 'AuthToken=' + encodeURIComponent(this.session.authToken) +
+        this.#execapiAcaoPromise = (async () => {
+            // Peticion de prueba sin ACAO
+            var data = 'AuthToken=' + encodeURIComponent(me.session.authToken) +
                 '&code=' + encodeURIComponent('Response.Write "OK"');
-                
-                try {
-                    var res = await fetch(this.session.serverUrl.replace('/restful', '/c/execapi.asp'), {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-                        body: data,
-                    });
-                    me.#execapiAcao = 0;
-
-                } catch(err) {
-                    me.#execapiAcao = 1;
-                }
-                resolve(me.#execapiAcao);
+            try {
+                await fetch(me.session.serverUrl.replace('/restful', '/c/execapi.asp'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                    body: data,
+                });
+                me.#execapiAcao = 0;
+            } catch(err) {
+                me.#execapiAcao = 1;
             }
-        });
+            return me.#execapiAcao;
+        })();
+        return this.#execapiAcaoPromise;
     }
 
     async execNode(options) {
