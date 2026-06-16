@@ -845,8 +845,17 @@ export class Session {
     @returns {Promise<boolean>}
     */
     get isLogged() {
-        var url = 'session/islogged';
-        return this.restClient.fetch(url, 'POST', {}, '');
+        // Cache de 1 min: el boot accede a isLogged varias veces y cada acceso hacia un POST a
+        // session/islogged. Cacheamos la promesa por 60s (dedup concurrente + secuencial).
+        // Trade-off: un logout en otra pestana tarda hasta 1 min en reflejarse aca.
+        let now = Date.now();
+        if (this._isLoggedCache && (now - this._isLoggedTime) < 60000) {
+            return this._isLoggedCache;
+        }
+        this._isLoggedTime = now;
+        this._isLoggedCache = this.restClient.fetch('session/islogged', 'POST', {}, '')
+            .catch(err => { this._isLoggedCache = null; throw err; });
+        return this._isLoggedCache;
     };
 
     /*
@@ -3545,14 +3554,28 @@ export class Folder {
         var me = this;
         return new Promise(async (resolve, reject) => {
             try {
-                //todo: Para evitar esta llamada seria necesario un endpoint con docId y fldId
-                var formula = isNaN(parseInt(document)) ? document : 'doc_id = ' + document;
-                var res = await me.search({ fields: 'doc_id', formula });
+                //todo: lo ideal seria un endpoint folder-scoped por id (folders/{fldId}/documents/{docId})
+                //      que valide pertenencia en el server. Falta ese ep.
+                // Mientras tanto: si es un doc_id, 1 round-trip (session.doc) + validacion de pertenencia
+                // client-side via doc.parentId. Si es una formula, search + fetch (como antes).
+                if (!isNaN(parseInt(document))) {
+                    let doc;
+                    try { doc = await me.session.doc(document); } catch (e) { doc = null; }
+
+                    if (!doc || (doc.parentId != null && doc.parentId != me.id)) {
+                        reject(new Error('Document not found (doc_id = ' + document + ')'));
+                    } else {
+                        resolve(doc);
+                    }
+                    return;
+                }
+
+                var res = await me.search({ fields: 'doc_id', formula: document });
 
                 if (res.length == 0) {
-                    reject(new Error('Document not found (' + formula + ')'));
+                    reject(new Error('Document not found (' + document + ')'));
                 } else if (res.length > 1) {
-                    reject(new Error('Vague expression (' + formula + ')'));
+                    reject(new Error('Vague expression (' + document + ')'));
                 } else {
                     let docId = res[0]['DOC_ID'];
                     resolve(await me.session.doc(docId));
