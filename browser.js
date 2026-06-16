@@ -28,20 +28,30 @@ window.fluye = {
     Carga el client y crea la session
     */
     init: async function() {
+        let fresh = (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : '');
+
+        // client.mjs y doorsClient.mjs son imports independientes: los lanzamos en paralelo y
+        // awaiteamos en orden (doorsClient se solapa con client en vez de esperarlo). ~400ms.
+        let clientP, doorsP;
         if (!fluye.client) {
             let branch = localStorage.getItem('fluyeClientBranch');
             let url = branch ? `https://cdn.fluye.ar/ghf/fluye@${branch}/client.mjs` : 'https://cdn.fluye.ar/ghf/fluye/client.mjs';
-            fluye.client = await import(url + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
+            clientP = import(url + fresh);
         }
+        if (!fluye.doorsClient) {
+            let branch = localStorage.getItem('fluyeDoorsClientBranch');
+            let url = branch ? `https://cdn.fluye.ar/ghf/fluye@${branch}/doorsClient.mjs` : 'https://cdn.fluye.ar/ghf/fluye/doorsClient.mjs';
+            doorsP = import(url + fresh);
+        }
+
+        if (clientP) fluye.client = await clientP;
         if (!fluye.session) {
             fluye.session = new fluye.client.FluyeSession();
             window.fSession = fluye.session;
         }
 
-        if (!fluye.doorsClient) {
-            let branch = localStorage.getItem('fluyeDoorsClientBranch');
-            let url = branch ? `https://cdn.fluye.ar/ghf/fluye@${branch}/doorsClient.mjs` : 'https://cdn.fluye.ar/ghf/fluye/doorsClient.mjs';
-            fluye.doorsClient = await import(url + (fluye.urlParams.get('_fresh') == '1' ? '?_fresh=1' : ''));
+        if (doorsP) {
+            fluye.doorsClient = await doorsP;
             fluye.client = fluye.doorsClient; // backward compat, sacar el 1/4
         }
         if (!fluye.doorsSession) {
