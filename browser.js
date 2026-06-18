@@ -122,19 +122,18 @@ window.fluye = {
 
             $('body').append($modal);
             let modal = new bootstrap.Modal($modal[0]);
-            let resolved = false;
             modal.show();
 
             return new Promise(resolve => {
+                let result = false;
                 $modal.find('[data-btn-idx]').on('click', function () {
-                    resolved = true;
-                    let idx = $(this).data('btn-idx');
+                    result = opt.buttons[$(this).data('btn-idx')].value;
                     modal.hide();
-                    resolve(opt.buttons[idx].value);
                 });
+                // Resuelve cuando el modal ya cerró del todo (evita que la acción siguiente lo deje colgado)
                 $modal.on('hidden.bs.modal', () => {
                     $modal.remove();
-                    if (!resolved) resolve(false);
+                    resolve(result);
                 });
             });
         },
