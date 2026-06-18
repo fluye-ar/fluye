@@ -515,6 +515,38 @@ utils.CryptoJS                // crypto-js
 - `doc.log()` retorna el audit log de UN documento. Para queries masivas de SYS_DOC_LOG, usar `db.openRecordset()`.
 - **SYS_DOC_LOG:** los campos OLD_VALUE y NEW_VALUE son tipo `text`. NO usar `=` para comparar, usar `CAST(OLD_VALUE AS VARCHAR(100)) LIKE '1247'`. La columna de fecha es `LOG_DATE` (no MODIFIED). JOIN con `SYS_ACCOUNTS` por `ACC_ID` para el nombre.
 
+## Accounts / Users
+
+```javascript
+const dir = fdSession.directory;
+
+// Buscar
+const found = await dir.accountsSearch("LOGIN = 'GTKACZYK'", '');   // Array
+const acc = await dir.accounts(3306);                               // por ACC_ID
+
+// Crear usuario
+const u = await dir.accountsNew(1);   // 1 = user, 2 = group
+u.name = 'Gisel Tkaczyk';
+u.fullName = 'Gisel Tkaczyk';
+u.login = 'GTKACZYK';
+u.password = '54321';
+u.disabled = false;
+await u.save();                       // crea (PUT) y asigna ACC_ID en u.id
+
+// Membresía de grupos (sobre el USER)
+await u.parentAccountsAdd(1000319);      // agregar a grupo
+await u.parentAccountsRemove(1000320);   // sacar de grupo
+
+// Forzar cambio de clave al entrar
+u.changePwdNextLogon = true;
+await u.save();
+```
+
+- Setters User: `name`, `fullName`, `login`, `password`, `disabled`, `changePwdNextLogon`, `email`, `phone`.
+- `account.TYPE`: 0 = user (en SQL), 1/2 = group. En `accountsNew()`: 1 = user, 2 = group.
+- ⚠️ **No setear `password` y `changePwdNextLogon=true` en el mismo `save()`:** el server resetea el flag al recibir un password nuevo. Hacerlo en **dos saves separados** (primero password, después el flag con `Password = null`).
+- Membresía vive en `SYS_ACC_REL` (`ACC_ID_PARENT` = grupo, `ACC_ID_CHILD` = miembro). `SYS_ACC_USERS` es datos del usuario (login/pwd/flags), NO membresía.
+
 ---
 
 **Jorge Pagano - Fluye Labs**
