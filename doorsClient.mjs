@@ -4756,7 +4756,7 @@ export class Node {
                 let url = me.session.utils.ghCodeUrl(code);
 
                 if (options.url) {
-                    url += '?msg=' + encodeURIComponent(utils.jsonStringify(data));
+                    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'msg=' + encodeURIComponent(utils.jsonStringify(data));
                     resolve(url);
 
                 } else {
