@@ -546,6 +546,7 @@ export class Session {
         return this.#apiKey;
     }
     set apiKey(value) {
+        if (this.#apiKey === value) return; // mismo valor: evitar _reset() (tira utils/caches y re-detecta execapiAcao en cada checkToken)
         this._reset();
         this.#apiKey = value;
         this._userChange();
@@ -567,6 +568,7 @@ export class Session {
         return this.#authToken;
     }
     set authToken(value) {
+        if (this.#authToken === value) return; // mismo valor: evitar _reset() (tira utils/caches y re-detecta execapiAcao en cada checkToken)
         this._reset();
         this.#authToken = value;
         this._userChange();
