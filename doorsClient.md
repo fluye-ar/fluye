@@ -170,6 +170,20 @@ Parametros: `{ groups, totals, formula, order, maxDocs, recursive, groupsOrder, 
 
 Propiedades: `id` (FLD_ID), `name`, `path`, `formId` (FRM_ID), `parentId`, `description`
 
+### Papelera / RecycleBin — ⚠️ PENDIENTES de implementar
+
+`doorsClient.mjs` **no** implementa restore/purge ni búsqueda en papelera (`Document.move()` y restore están como `//todo`). Los borrados con `documentsDelete(ids)` (sin `purge`) van a la papelera (`/SystemFolders/RecycleBin`, `FLD_ID=0`), pero **no hay forma de restaurarlos por el SDK** — solo desde la UI (`/inc/recyclebinrest.asp`).
+
+Los 3 endpoints existen en el **RESTFULL** (el mismo restful del SDK), tomados de `Doors.API.js` (SDK browser legacy). Implementarlos:
+
+| Método propuesto | Endpoint REST | Notas |
+|---|---|---|
+| `folderSearchDeleted(fields, formula, order, maxDocs, recursive, maxDescrLength)` | `GET folders/0/documents?fields=&formula=&order=&maxDocs=&recursive=&maxDescrLength=` | Lista docs en papelera. Campos para formula: `deleteDate`=p.modified, `deleteUser`=a2.name, `folder`=f.root_fld_path, `doc_id`=d.doc_id, `subject`=d.subject, `modified`=d.modified, `owner`=a.name |
+| `documentsRestore(docIds[])` | `POST folders/0/documents/restore` — body: array de doc_ids (key `docIds`) | Restaura al folder original. Devuelve los restaurados |
+| `documentsPurge(docIds[])` | `POST folders/0/documents/purge` — body: array de doc_ids (key `docIds`) | Borrado **definitivo** (irreversible) |
+
+Mientras no estén implementados: restaurar/purgar en lote vía consola del CRM con `DoorsAPI.documentsRestore([ids])` / `DoorsAPI.documentsPurge([ids])`, o desde `/inc/recyclebinrest.asp`.
+
 ### Sync Events
 
 ```javascript
