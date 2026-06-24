@@ -1,40 +1,103 @@
-# Fluye
+# Fluye Labs
 
-**Agentic Organization — Open-source SDKs**
+**Agentic Organization**
 
-SDKs y herramientas para construir sobre **Doors**, el motor BPM con 25+ años en producción que evoluciona a **Fluye**: workflows operados por chat, IA embebida, multi-cloud.
+SDKs y herramientas para **Doors** — el motor BPM con 25+ años en producción que evoluciona hacia workflows agénticos.
 
 ---
 
-## Qué estamos construyendo
+## Mundo JavaScript
 
 ### Motor de ejecución
 
-- **Fluye Compute** — Motor de eventos Node sobre Vercel + Postgres Neon. Endpoints `/api/v9/*` reemplazan gradualmente el backend .NET. Es la dirección que tomamos.
-- **Events.v8** — Motor on-premise (Node + MySQL). Sigue disponible como opción **self-hosted** para quienes no van a cloud.
+- **Fluye Compute** — Motor cloud sobre Vercel + Postgres Neon. Endpoints `/api/v9/*` reemplazan gradualmente el backend .NET. Es la evolución.
+- **Events.v8** — Motor self-hosted (Node.js + MySQL). Sigue disponible para quienes no van a cloud.
 
-### Toolkit COM x64 (Doors 9)
+### SDK
 
-Para llevar el stack legacy ASP/VBS de 32 a 64 bits sin tocar el código:
+- **doorsClient** — Cliente JS para Doors. Mismo módulo en browser y Node.js. Session, Folder, Document, Form, Directory, db. → [`doorsClient.md`](doorsClient.md)
+- **browser.js** — Utilidades para apps web: loader Bootstrap/jQuery, upload, helpers. → [`browser.md`](browser.md)
+- **client/** — Extensiones lazy (AI, instance). → [`client/`](client/README.md)
 
-- **doorsapi64** — API COM en C++. Reemplaza el stack VB6/.NET COM/WCF de 4 capas con una sola llamada directa al backend REST. ProgIds compatibles.
-- **fyjson** — Parser JSON COM basado en yyjson (C, MIT). 5x más rápido que V8, 26.000x más rápido que aspJSON. Disponible desde VBScript.
-- **NitroVbx** — Runtime x64 para los eventos VBS síncronos y asíncronos existentes.
-- **Reemplazos x64 validados** — aspSmartUpload, ScriptControl, MSXML.
+### LiveForms 7
 
-> **`doorsapi64`:** licencia dual — **gratis permanente para instancias single-admin**, o **uso libre sin restricción hasta 2027-11-01**. Después de esa fecha, multi-admin requiere licencia comercial. Binarios via `cdn.fluye.ar`.
+Sistema de formularios database-driven que renderiza el mismo control en **web** (Bootstrap 5.3) y **mobile** (Framework7). Evolución de los `generic*` ASP: saca el rendering del server y lo lleva al cliente, con extensiones business por repo.
 
-### Roadmap de Doors
+Distribuido vía `cdn.fluye.ar`.
+
+---
+
+## Mundo VBScript
+
+### Server-Side Rendering
+
+- **generic1** / **generic3** — Runtimes ASP Classic que renderizan formularios desde la definición DB. Stack legacy todavía en producción; convive con LiveForms 7 (cliente).
+
+### Toolkit COM x64
+
+Para llevar el stack ASP/VBS de 32 a 64 bits sin tocar el código existente. Todos los componentes mantienen los `ProgIds` originales — se cambia el Application Pool a x64 nativo y listo.
+
+- **doorsapi64** — API COM en C++. Reemplaza el stack VB6 / .NET COM / WCF de 4 capas con una sola llamada directa al backend REST.
+  > **Licencia:** gratis permanente para instancias **admin-only** (solo el usuario admin builtin, ID=0) · libre sin restricción hasta **2027-11-01** · después de esa fecha, instancias multi-usuario requieren licencia comercial.
+
+- **fyjson** — Parser JSON COM en C (basado en `yyjson`, MIT). 5x más rápido que V8, 26.000x más rápido que `aspJSON`. Disponible desde VBScript.
+  → Repo: [fluye-ar/fyjson](https://github.com/fluye-ar/fyjson) (open source)
+
+- **NitroVbx** — Runtime x64 de eventos VBS síncronos y asíncronos. Los eventos legacy corren acá sin cambios.
+
+- **aspSmartUpload64** — Reemplazo x64 de `aspSmartUpload` (upload de archivos en ASP).
+
+- **ScriptControl64** — Reemplazo x64 de `msscript.ocx` (eval de VBScript desde COM).
+
+### SDK VBScript
+
+Para programar dentro de eventos y codelibs de Doors.
+
+```vbs
+NodeInclude "fnode2"
+
+Dim fyj : Set fyj = CreateObject("fyjson")
+Dim resp : Set resp = fyj.Parse(httpClient.responseText)
+
+Set folder = node.Folder(123)
+Set docs = folder.Search("ESTADO = 'Abierto'")
+```
+
+| Archivo | Para qué |
+|---|---|
+| [`vbs/fnode2.vbs`](vbs/fnode2.vbs) | Acceso a recursos Fluye via REST (fyjson) |
+| [`vbs/node2.vbs`](vbs/node2.vbs) | Versión Cloudy / Doors 8 |
+| [`vbs/aspJson.vbs`](vbs/aspJson.vbs) | Parser JSON legacy (fallback sin fyjson) |
+
+---
+
+## Wiz
+
+Asistente IA contextual embebido en Fluye. Responde sobre la instancia (datos, procesos, configuración), busca en código y docs, y ejecuta acciones por chat. El primer feature visible de la organización agéntica.
+
+- Backend sobre Fluye Compute (`/api/v9/ai/*`)
+- Llega con **Doors 8.5**
+
+## Agentes WhatsApp
+
+Agentes IA que atienden WhatsApp como **pre-filtro**: responden FAQs con contexto del CRM, derivan a un humano lo que no les corresponde, y se prenden/apagan por agenda. Cada agente vive como un doc editable desde el CRM (prompt + modelo + cronograma + acciones de clock-in).
+
+- Editor visual en LiveForms 7
+- En producción: Antun / Chexa (Administración de Planes de Ahorro)
+
+---
+
+## Doors: roadmap
 
 | Versión | Qué trae | Estado |
 |---|---|---|
 | Doors 8 (Cloudy CRM) | Base | Producción |
 | **Doors 8.5** | Rebrand a Fluye + **Wiz** (asistente IA) | En transición |
-| Doors 9 | **Postgres** + **VbX** (toolkit COM x64) | Desarrollo |
+| Doors 9 | **Postgres** + **Toolkit COM x64** | Desarrollo |
 
 ---
 
-## SDK JavaScript
+## Quick Start — JavaScript
 
 **Browser:**
 
@@ -44,7 +107,6 @@ Para llevar el stack legacy ASP/VBS de 32 a 64 bits sin tocar el código:
     await include([{ id: 'fluye-client', src: 'https://cdn.fluye.ar/ghf/fluye/browser.js' }]);
     await fluye.openDoors();
     const fdSession = fluye.doorsSession;
-    // ...
   })();
 </script>
 ```
@@ -57,34 +119,7 @@ import { Session } from './doorsClient.mjs';
 const fdSession = new Session();
 fdSession.serverUrl = 'https://instancia.fluye.ar/restful';
 await fdSession.logon('usuario', process.env.PASSWORD, 'instancia');
-// ...
-await fdSession.logoff();
 ```
-
-📖 Referencia completa: [`doorsClient.md`](doorsClient.md) · [`browser.md`](browser.md) · [`client/`](client/README.md)
-
----
-
-## SDK VBScript
-
-Para programar dentro de eventos y codelibs de Doors. Usa `fyjson` (COM x64) para parsear/serializar JSON desde VBScript a velocidad nativa.
-
-```vbs
-NodeInclude "fnode2"
-
-Dim fyj : Set fyj = CreateObject("fyjson")
-Dim resp : Set resp = fyj.Parse(httpClient.responseText)
-
-' Acceso a recursos del server Fluye
-Set folder = node.Folder(123)
-Set docs = folder.Search("ESTADO = 'Abierto'")
-```
-
-| Archivo | Para qué |
-|---|---|
-| [`vbs/fnode2.vbs`](vbs/fnode2.vbs) | Acceso a recursos Fluye via REST (fyjson) |
-| [`vbs/node2.vbs`](vbs/node2.vbs) | Versión Cloudy/Doors 8 |
-| [`vbs/aspJson.vbs`](vbs/aspJson.vbs) | Parser JSON legacy (fallback sin fyjson) |
 
 ---
 
@@ -92,11 +127,11 @@ Set docs = folder.Search("ESTADO = 'Abierto'")
 
 | Carpeta / archivo | Qué es |
 |---|---|
-| [`doorsClient.mjs`](doorsClient.mjs) / [`doorsClient.md`](doorsClient.md) | SDK JS core — Session, Folder, Document, Form, Directory, db |
-| [`browser.js`](browser.js) / [`browser.md`](browser.md) | Utilidades web — loader de Bootstrap, jQuery, upload, helpers |
-| [`client/`](client/README.md) | Extensiones lazy del SDK JS (AI, instance) |
-| [`vbs/`](vbs/) | SDK VBScript (fnode2, node2, aspJson) |
-| [`brand/`](brand/) | Logos e isotipo Fluye (uso público) |
+| [`doorsClient.mjs`](doorsClient.mjs) / [`doorsClient.md`](doorsClient.md) | SDK JS core |
+| [`browser.js`](browser.js) / [`browser.md`](browser.md) | Utilidades web |
+| [`client/`](client/README.md) | Extensiones lazy del SDK JS |
+| [`vbs/`](vbs/) | SDK VBScript |
+| [`brand/`](brand/) | Logos e isotipo Fluye |
 | [`docs/`](docs/) | Notas técnicas — [RELATIONS](docs/RELATIONS.md), [SSE](docs/SSE.md), [INDEX](docs/INDEX.md) |
 | [`cdn/`](cdn/) | Script de indexado del CDN |
 
@@ -104,9 +139,10 @@ Set docs = folder.Search("ESTADO = 'Abierto'")
 
 ## Licencia
 
-- **SDKs JS y VBScript:** [LGPL v3](LICENSE)
-- **`doorsapi64`** (binario propietario): gratis permanente para instancias single-admin · libre sin restricción hasta **2027-11-01** · después de esa fecha, multi-admin pasa a licencia comercial.
-- **`fyjson`, `NitroVbx`:** binarios propietarios, uso libre.
+- **SDKs JavaScript y VBScript:** [LGPL v3](LICENSE)
+- **fyjson:** open source — ver [repo propio](https://github.com/fluye-ar/fyjson)
+- **doorsapi64** (binario propietario): gratis permanente para instancias **admin-only** (solo el usuario admin builtin, ID=0) · libre sin restricción hasta **2027-11-01** · después: instancias multi-usuario requieren licencia comercial.
+- **NitroVbx, aspSmartUpload64, ScriptControl64:** binarios propietarios, uso libre.
 
 ---
 
