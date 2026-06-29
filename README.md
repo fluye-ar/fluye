@@ -33,9 +33,11 @@ Distribuido vía `cdn.fluye.ar`.
 
 - **generic1** / **generic3** — Runtimes ASP Classic que renderizan formularios desde la definición DB. Stack legacy todavía en producción; convive con LiveForms 7 (cliente).
 
-### Toolkit COM x64
+### Toolkit COM x64 (VbX)
 
 Para llevar el stack ASP/VBS de 32 a 64 bits sin tocar el código existente. Todos los componentes mantienen los `ProgIds` originales — se cambia el Application Pool a x64 nativo y listo.
+
+> 📦 **Pack de instalación + instructivo:** [`vbx/`](vbx/) — Binarios en [GitHub Releases](https://github.com/fluye-ar/fluye/releases) (prefijo `vbx-`).
 
 - **doorsapi64** — API COM en C++. Reemplaza el stack VB6 / .NET COM / WCF de 4 capas con una sola llamada directa al backend REST.
   > **Licencia:** gratis permanente para instancias **admin-only** (solo el usuario admin builtin, ID=0) · libre sin restricción hasta **2027-11-01** · después de esa fecha, instancias multi-usuario requieren licencia comercial.
@@ -129,11 +131,9 @@ await fdSession.logon('usuario', process.env.PASSWORD, 'instancia');
 |---|---|
 | [`doorsClient.mjs`](doorsClient.mjs) / [`doorsClient.md`](doorsClient.md) | SDK JS core |
 | [`browser.js`](browser.js) / [`browser.md`](browser.md) | Utilidades web |
-| [`client/`](client/README.md) | Extensiones lazy del SDK JS |
 | [`vbs/`](vbs/) | SDK VBScript |
+| [`vbx/`](vbx/) | Toolkit COM x64 — binarios, instalación, ProgIds |
 | [`brand/`](brand/) | Logos e isotipo Fluye |
-| [`docs/`](docs/) | Notas técnicas — [RELATIONS](docs/RELATIONS.md), [SSE](docs/SSE.md), [INDEX](docs/INDEX.md) |
-| [`cdn/`](cdn/) | Script de indexado del CDN |
 
 ---
 
