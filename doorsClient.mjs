@@ -4652,9 +4652,14 @@ export class Node {
                 };
 
                 if (me.session.serverUrl && await me.session.isLogged) {
-                    // setting y userSetting
-                    parseSetting(cfg, await me.session.settings('NODE_CONFIG'))
-                    parseSetting(cfg, await me.session.userSettings('NODE_CONFIG'))
+                    // setting y userSetting: son independientes -> en paralelo (Promise.all preserva
+                    // el orden, asi user sigue pisando a global en el merge). Ticket 260628.
+                    let [s, us] = await Promise.all([
+                        me.session.settings('NODE_CONFIG'),
+                        me.session.userSettings('NODE_CONFIG'),
+                    ]);
+                    parseSetting(cfg, s)
+                    parseSetting(cfg, us)
                 }
 
                 me.#config = cfg;
