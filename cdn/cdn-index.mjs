@@ -23,6 +23,11 @@ if (!CF_API_TOKEN || !CF_ACCOUNT_ID || !D1_DATABASE_ID || !REPO_OWNER || !REPO_N
     process.exit(1);
 }
 
+// Purge-on-deploy (refresca R2 + evicta el edge cache de los archivos cambiados)
+const ZONE_ID = 'ae950b9dbde7100a126b4a787a482d6b';  // fluye.ar
+const BRANCH = process.env.GITHUB_REF_NAME || 'main';  // GitHub Actions setea GITHUB_REF_NAME
+const CDN_BASE = 'https://cdn.fluye.ar';
+
 const INDEXABLE_EXTS = new Set([
     'mjs', 'js', 'md', 'txt', 'css', 'html', 'sql', 'json', 'yml', 'yaml', 'toml',
 ]);
@@ -58,6 +63,49 @@ async function d1Query(sql, params = []) {
     const data = await res.json();
     if (!data.success) throw new Error(`D1: ${JSON.stringify(data.errors)}`);
     return data.result;
+}
+
+// Las 2 formas canonicas con que el worker cachea un archivo del default branch:
+// sin-ref (gh/{o}/{r}/{path}) + explicito (gh/{o}/{r}@{branch}/{path}).
+function purgeUrls(path) {
+    const base = `${CDN_BASE}/gh/${REPO_OWNER}/${REPO_NAME}`;
+    return [`${base}/${path}`, `${base}@${BRANCH}/${path}`];
+}
+
+// Refresca R2 desde GitHub (?_fresh=1) y purga el edge cache de las URLs canonicas.
+// changed → R2 reescribe contenido nuevo; deleted → worker recibe 404 y borra de R2.
+async function refreshAndPurge(paths) {
+    if (!paths.length) return;
+
+    // 1. Refrescar R2 (la forma @branch resuelve al ref correcto). R2 es global → 1 fetch por archivo.
+    for (const path of paths) {
+        const url = `${CDN_BASE}/gh/${REPO_OWNER}/${REPO_NAME}@${BRANCH}/${encodeURI(path)}?_fresh=1`;
+        try {
+            const r = await fetch(url);
+            if (!r.ok && r.status !== 404) console.error(`  fresh ${r.status} ${path}`);
+        } catch (err) {
+            console.error(`  fresh ERROR ${path}: ${err.message}`);
+        }
+    }
+
+    // 2. Purgar el edge (caches.default) de las 2 formas. Purge API: max 30 URLs por call.
+    const urls = paths.flatMap(purgeUrls);
+    for (let i = 0; i < urls.length; i += 30) {
+        const chunk = urls.slice(i, i + 30);
+        try {
+            const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/purge_cache`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${CF_API_TOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ files: chunk }),
+            });
+            const data = await res.json();
+            if (!data.success) console.error(`  purge ERROR: ${JSON.stringify(data.errors)}`);
+        } catch (err) {
+            console.error(`  purge ERROR: ${err.message}`);
+        }
+    }
+
+    console.log(`Purge: ${paths.length} archivos → R2 refrescado + edge purgado (${urls.length} URLs, branch ${BRANCH})`);
 }
 
 async function main() {
@@ -130,6 +178,11 @@ async function main() {
             errors++;
         }
     }
+
+    // Purge-on-deploy: refrescar R2 + evictar edge para TODOS los changed/deleted servibles
+    // (cualquier extension — el CDN sirve todo, no solo los indexables), excluyendo node_modules/.git.
+    const served = (p) => !EXCLUDED_PATHS.some(ex => p.includes(ex));
+    await refreshAndPurge([...changed, ...deleted].filter(served));
 
     console.log(`Done: ${indexed} indexed, ${toDelete.length} deleted, ${errors} errors`);
 }
