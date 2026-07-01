@@ -75,6 +75,8 @@ Session (fdSession)
  +-- masterDb -> MasterDatabase
  |    +-- openRecordset(sql) -> Object[]  (SELECT directo a BD master)
  +-- directory -> Directory
+ +-- node -> Node (exec / modCall server-side)
+ +-- sconsole -> { log, warn, error }   (consola server Fluye Compute)
  +-- settings(name, value?) / userSettings(name, value?)
 ```
 
@@ -98,6 +100,7 @@ Session (fdSession)
 | `directory` / `dir` | Acceso a cuentas/usuarios |
 | `db` | Acceso a base de datos (SQL directo) |
 | `node` | Ejecucion de codigo en servidor |
+| `sconsole` | Consola server-side (Fluye Compute). `log`/`warn`/`error` |
 
 ## Folder
 
@@ -490,6 +493,27 @@ const result = await fdSession.node.modCall({
     args: ['test@example.com']
 });
 ```
+
+## sconsole — consola server-side (Fluye Compute)
+
+Escribe en la consola de **Fluye Compute** directo desde browser o Node, sin pasar por `node.exec`. Firma **variadica identica a `console.log`** y ademas **llama a la consola nativa** (se ve en devtools/terminal Y viaja al server).
+
+```javascript
+// N argumentos + objeto de tags detectado en cualquier posicion (como console.log)
+fdSession.sconsole.log('caso creado', doc, { consoleTag1: 'ventas' });
+fdSession.sconsole.warn('reintentando', intento);
+fdSession.sconsole.error('sync fallo', err, { consoleTag1: 'sync' });
+
+// Es awaitable (fire-and-forget: no hace falta)
+await fdSession.sconsole.log('proceso ok', { consoleTag1: 'batch' });
+```
+
+- **Tags:** el objeto con `consoleTag1/2/3` se separa de los datos (en cualquier posicion). Si no pasas `consoleTag2`/`consoleTag3`, se autocompletan con **instancia** y **usuario** de la sesion.
+- **Datos:** los args restantes se serializan y unen con NBSP, **igual que la consola server-side interceptada**. Objetos → JSON, Errors → `serializeError` (stack completo), Dates → string.
+- **Consola nativa:** siempre se llama primero (inmediata, antes del envio). El objeto de tags no se pasa a la nativa.
+- **Fire-and-forget:** el envio nunca rompe al caller. Devuelve la Promise (resuelve la Response del POST) por si queres `await`.
+- **Kill-switch:** `fdSession.sconsole.disabled = true` corta el envio al server; la consola nativa se sigue llamando.
+- **Auth:** usa `AuthToken` (sesion logueada) o, si no, `ApiKey`. No requiere config extra.
 
 ## Utilities
 

@@ -451,6 +451,7 @@ export class Session {
     #utils;
     #currentUser;
     #push;
+    #sconsole;
     #instance;
     #node;
     #doorsVersion;
@@ -993,6 +994,111 @@ export class Session {
             let ret = 'att-' + (await me.instance).Name.toLowerCase();
             resolve(ret.replaceAll(/[^a-z0-9.-]/g, '-'));
         });
+    }
+
+    /**
+    Consola server-side de Fluye Compute (tabla node_console en Neon PG).
+    Escribe directo desde browser/Node sin pasar por node.exec.
+
+    Firma variadica identica a console.log: el objeto de tags ({ consoleTag1,
+    consoleTag2, consoleTag3 }) se detecta en cualquier posicion y se separa; el
+    resto son los datos. Ademas de enviar al server, llama a la consola nativa
+    (console.log/warn/error) con los datos, para verlo tambien en devtools/terminal.
+
+    Los datos se serializan y unen con NBSP, igual que dbConsole del lado server
+    (app/api/_lib/dbConsole.js), asi una entrada de sconsole se ve identica a un
+    console.log interceptado. Fire-and-forget: el envio nunca rompe al caller;
+    devuelve la Promise por si se quiere await. consoleTag2/consoleTag3 se
+    autocompletan con instancia/usuario desde el cache de la sesion (sin red extra:
+    solo si ya estan resueltos).
+
+    Kill-switch: fdSession.sconsole.disabled = true corta el envio al server (la
+    consola nativa se sigue llamando).
+
+    @example
+    fdSession.sconsole.log('caso creado', doc, { consoleTag1: 'ventas' });
+    fdSession.sconsole.error('sync fallo', err, { consoleTag1: 'sync' });
+    @returns {{ log: Function, warn: Function, error: Function, disabled: boolean }}
+    */
+    get sconsole() {
+        let me = this;
+        if (!me.#sconsole) {
+            const NBSP = String.fromCharCode(160);
+            // serializa un arg igual que dbConsole (app/api/_lib/dbConsole.js)
+            let toEntry = (val) => {
+                let type = typeof val;
+                if (type === 'string') return val;
+                if (type === 'number' || type === 'boolean') return val.toString();
+                if (type === 'undefined') return 'undefined';
+                if (type !== 'object') return String(val);   // function, symbol, bigint
+                let prot = Object.prototype.toString.call(val);
+                if (prot === '[object Null]') return 'null';
+                if (prot === '[object Date]') return val.toString();
+                if (prot === '[object Error]') {
+                    // serializeError (full, = dbConsole) una vez que cargo async (utilsPromise);
+                    // hasta entonces fallback sync a errMsg
+                    return _serializeError
+                        ? JSON.stringify(_serializeError.serializeError(val))
+                        : me.utils.errMsg(val);
+                }
+                let seen = new WeakSet();
+                return JSON.stringify(val, (k, v) => {
+                    if (typeof v === 'object' && v !== null) {
+                        if (seen.has(v)) return '[Circular]';
+                        seen.add(v);
+                    }
+                    return v;
+                });
+            };
+            // async: el caller no la espera (fire-and-forget), asi que podemos await
+            // instance/currentUser adentro sin bloquearlo. try/catch para no dejar
+            // rejection sin manejar si no hay sesion.
+            let send = async (method, args) => {
+                // separar el objeto de tags (el que trae consoleTagN) del resto,
+                // igual que console.log(data1, data2, { consoleTag1: 't1' }, data3)
+                let tags = {};
+                let raw = [];
+                for (let a of args) {
+                    if (a && typeof a === 'object' && !Array.isArray(a) &&
+                        (a.consoleTag1 !== undefined || a.consoleTag2 !== undefined || a.consoleTag3 !== undefined)) {
+                        tags = a;
+                    } else {
+                        raw.push(a);
+                    }
+                }
+                // consola nativa PRIMERO (inmediata, antes de cualquier await): solo los
+                // datos, sin el obj de tags (como dbConsole con retArgs)
+                console[method](...raw);
+                if (me.#sconsole.disabled) return;
+                // esperar utils (serializeError) e instancia/usuario resueltos; sin bloquear
+                // al caller y sin romper si algo falla
+                try { await utilsPromise; } catch (e) {}
+                let inst, user;
+                try { inst = await me.instance; } catch (e) {}
+                try { user = await me.currentUser; } catch (e) {}
+                let headers = { 'Content-Type': 'application/json' };
+                if (me.authToken) headers['AuthToken'] = me.authToken;
+                else if (me.apiKey) headers['ApiKey'] = me.apiKey;
+                return fetch('https://fluye.ar/api/console', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        method,
+                        data: raw.map(toEntry).join(NBSP),
+                        tag1: tags.consoleTag1,
+                        tag2: tags.consoleTag2 ?? inst?.Name,
+                        tag3: tags.consoleTag3 ?? user?.login,
+                    }),
+                }).catch(() => {});   // fire-and-forget: el dato ya se vio en consola nativa
+            };
+            me.#sconsole = {
+                log:   (...args) => send('log',   args),
+                warn:  (...args) => send('warn',  args),
+                error: (...args) => send('error', args),
+                disabled: false,
+            };
+        }
+        return me.#sconsole;
     }
 
     /**
