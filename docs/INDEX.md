@@ -126,7 +126,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 | Archivo | Descripción |
 |---------|-------------|
 | `fluye-core/app/README.md` | Aplicación web |
-| `fluye-core/app/api/README.md` | API REST |
+| `fluye/docs/api/` | **API REST pública** (Fluye Compute) — landing + [`EXEC.md`](api/EXEC.md) para `ghx`/`ghxf` |
 | `fluye-core/aws/README.md` | Infraestructura AWS |
 | `fluye-core/aws/terraform/README.md` | Terraform configs |
 | `fluye-core/cdn/README.md` | CDN configuration |
