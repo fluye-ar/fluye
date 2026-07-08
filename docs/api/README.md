@@ -121,16 +121,27 @@ Auth: `doors-authtoken` (sesión desde `openDoors()`) o `doors-apikey` (scripts 
 |---|---|---|
 | GET | `/api/v9/documents/relfields?docId=<int>&...` | Campos relacionados de un doc |
 
-### AI Calls (vía adapter Anthropic hoy)
+### AI Calls (multi-vendor, budget + metering)
 
-| Método | Path | Descripción |
-|---|---|---|
-| POST | `/api/v9/ai/call` | Llamada a modelo (proxy multi-provider, cobra budget, registra en `vendor_usage`) |
-| POST | `/api/v9/ai/request` | Ejecuta prompt-template AI |
-| GET | `/api/v9/ai/models` | Lista modelos disponibles |
-| GET | `/api/v9/ai/budget` | Consulta budget de la instancia |
-| GET | `/api/v9/ai/cdn/find` | Busca archivos en CDN |
-| GET | `/api/v9/ai/cdn/get` | Descarga archivo del CDN |
+| Método | Path | Vendor | Descripción |
+|---|---|---|---|
+| POST | `/api/v9/ai/call` | `anthropic-claude` | Chat completion (proxy multi-provider, cobra budget, registra en `vendor_usage`) |
+| POST | `/api/v9/ai/request` | `anthropic-claude` | Ejecuta prompt-template AI |
+| POST | `/api/v9/ai/stt` | `groq-whisper` | Speech-to-Text (transcripción de audio) |
+| GET | `/api/v9/ai/models` | — | Lista modelos disponibles |
+| GET | `/api/v9/ai/budget` | — | Consulta budget de la instancia |
+| GET | `/api/v9/ai/cdn/find` | — | Busca archivos en CDN |
+| GET | `/api/v9/ai/cdn/get` | — | Descarga archivo del CDN |
+
+**`POST /api/v9/ai/stt`** — Body:
+```json
+{ "audio_url": "https://…", "model": "whisper-large-v3-turbo", "language": "es", "prompt": "…" }
+```
+`model` opcional (default `whisper-large-v3-turbo`). Response:
+```json
+{ "text": "…", "duration": 42.3, "language": "es", "segments": [...], "model": "whisper-large-v3-turbo", "cost_usd": 0.00047, "usage_id": "…" }
+```
+Cobra por segundo transcrito (mínimo 10s por request, límite del vendor).
 
 ---
 
