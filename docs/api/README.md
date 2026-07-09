@@ -128,6 +128,7 @@ Auth: `doors-authtoken` (sesión desde `openDoors()`) o `doors-apikey` (scripts 
 | POST | `/api/v9/ai/call` | `anthropic-claude` | Chat completion (proxy multi-provider, cobra budget, registra en `vendor_usage`) |
 | POST | `/api/v9/ai/request` | `anthropic-claude` | Ejecuta prompt-template AI |
 | POST | `/api/v9/ai/stt` | `groq-whisper` | Speech-to-Text (transcripción de audio) |
+| POST | `/api/v9/ai/tts` | `elevenlabs-tts` | Text-to-Speech (síntesis de voz) |
 | GET | `/api/v9/ai/models` | — | Lista modelos disponibles |
 | GET | `/api/v9/ai/budget` | — | Consulta budget de la instancia |
 | GET | `/api/v9/ai/cdn/find` | — | Busca archivos en CDN |
@@ -142,6 +143,16 @@ Auth: `doors-authtoken` (sesión desde `openDoors()`) o `doors-apikey` (scripts 
 { "text": "…", "duration": 42.3, "language": "es", "segments": [...], "model": "whisper-large-v3-turbo", "cost_usd": 0.00047, "usage_id": "…" }
 ```
 Cobra por segundo transcrito (mínimo 10s por request, límite del vendor).
+
+**`POST /api/v9/ai/tts`** — Body:
+```json
+{ "text": "…", "voice_id": "4wDRKlxcHNOFO5kBvE81", "model": "eleven_turbo_v2_5", "output_format": "opus_48000_64" }
+```
+Todos los campos son opcionales excepto `text`. Defaults: voz Melisa (Argentine warm female), modelo turbo, formato ogg/opus (WhatsApp voice note nativo). Response:
+```json
+{ "audio_b64": "…", "mime_type": "audio/ogg", "byte_size": 8934, "char_count": 172, "model": "eleven_turbo_v2_5", "voice_id": "…", "cost_usd": 0.0086, "usage_id": "…" }
+```
+Cobra por caracter del texto de entrada. El consumer se encarga del upload/hosting del audio si necesita URL pública (Twilio, etc.).
 
 ---
 
