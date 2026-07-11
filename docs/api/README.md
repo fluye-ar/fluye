@@ -136,13 +136,22 @@ Auth: `doors-authtoken` (sesión desde `openDoors()`) o `doors-apikey` (scripts 
 
 **`POST /api/v9/ai/stt`** — Body:
 ```json
-{ "audio_url": "https://…", "model": "whisper-large-v3-turbo", "language": "es", "prompt": "…" }
+{
+  "audio_url":  "https://…",          // URL descargable (pública o backend con acceso)
+  "audio_b64":  "T2dnUw…",            // O bien los bytes en base64 (media protegida sin re-hostear)
+  "audio_mime": "audio/ogg",          // Hint del formato para audio_b64 (opcional)
+  "model":      "whisper-large-v3-turbo",
+  "language":   "es",
+  "prompt":     "…"
+}
 ```
-`model` opcional (default `whisper-large-v3-turbo`). Response:
+Requerido: **uno** de `audio_url` o `audio_b64` (no ambos). `model` opcional (default `whisper-large-v3-turbo`). El campo `media_id` está reservado para blob genérico futuro — hoy devuelve 501.
+
+Response:
 ```json
 { "text": "…", "duration": 42.3, "language": "es", "segments": [...], "model": "whisper-large-v3-turbo", "cost_usd": 0.00047, "usage_id": "…" }
 ```
-Cobra por segundo transcrito (mínimo 10s por request, límite del vendor).
+Cobra por segundo transcrito (mínimo 10s por request, límite del vendor). `audio_b64` es la vía recomendada para media protegida (Twilio/Meta): el connector baja el binario con su auth, lo pasa inline, y no queda hosted en ninguna URL pública.
 
 **`POST /api/v9/ai/tts`** — Body:
 ```json
