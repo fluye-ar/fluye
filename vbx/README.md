@@ -48,6 +48,39 @@ De 4 capas a 2. Mismo `ProgId` para el código que consume, sin cambios en VBScr
 
 ---
 
+## Compatibilidad por versión del server
+
+doorsapi64 se conecta al backend vía REST (`/restful/*`). Compatible con **Doors 7.4.38.1** en adelante — todos los métodos funcionan en v7 excepto los listados abajo.
+
+#### Requiere Doors 8+
+
+| Método | Endpoint REST |
+|--------|---------------|
+| `folder.App.NextVal(name)` | `GET sequences/{name}/nextval` |
+| `dSession.Db.NextVal(name)` | `GET sequences/{name}/nextval` |
+| `folder.AsyncEvents` (write) | `POST folders/{fldId}/asyncevents` |
+
+#### Requiere Doors 9+
+
+| Método | Endpoint REST |
+|--------|---------------|
+| `dSession.Db.OpenRecordset(sql)` | `POST db/query` |
+| `dSession.Db.Execute(sql)` | `POST db/query` |
+| `dSession.MasterDb.OpenRecordset(sql)` | `POST masterdb/query` |
+| `dSession.MasterDb.Execute(sql)` | `POST masterdb/query` |
+| `dSession.ClearAllCustomCache` | `POST session/clearAllCustomCache` |
+| `dSession.ClearObjectModelCache(name)` | `POST session/clearObjectModelCache/{name}` |
+| `dSession.TokensAdd(name, value)` | `POST session/tokens?name=&value=` |
+| `dSession.TokensGet(name)` | `GET session/tokens?name=` |
+| `dSession.LangString(id)` | `GET langstring/{id}` |
+| `folder.App.CodeLib(name)` | `GET folders/{fldId}/codelib?name=` |
+| `folder.App.ParseCodeIncludes(code)` | `POST folders/{fldId}/processcode` |
+| `evn.ActiveCode` | `POST folders/{fldId}/processcode` |
+
+Todo lo demás (Session, Document, Folder, Field, Attachment, Account, User, View, Properties, etc.) funciona en v7+.
+
+---
+
 ## Instalación
 
 ### Requisitos
@@ -55,7 +88,7 @@ De 4 capas a 2. Mismo `ProgId` para el código que consume, sin cambios en VBScr
 - Windows Server 2016+
 - IIS x64 con `Application Pool · Enable 32-Bit Applications = False`
 - Permisos de administrador para registrar COM
-- Doors / Fluye en versión 8.5 o superior
+- Doors 7.4.38.1+ / Doors 8 / Doors 9 (ver [Compatibilidad por versión](#compatibilidad-por-versión-del-server))
 
 ### Pasos
 
