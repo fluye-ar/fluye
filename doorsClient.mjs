@@ -518,6 +518,7 @@ export class Session {
         this.#billing = undefined;
         this.#v8Disabled = undefined;
         this._needsAuth = false;
+        this.#restClient?.clearCookies();   // cambio de host/sesion -> jar limpio
     }
 
     async _userChange() {
@@ -7335,9 +7336,16 @@ export class View {
 
 class RestClient {
     #session;
+    #cookies;   // jar por Session (solo Node): name -> "name=value". Sticky ALB (AWSALB) y demas.
 
     constructor(session) {
         this.#session = session;
+        this.#cookies = new Map();
+    }
+
+    /** Vacia el jar. Lo llama Session._reset() al cambiar serverUrl/authToken/apiKey. */
+    clearCookies() {
+        this.#cookies.clear();
     }
 
     async fetch(url, method, parameters, parameterName) {
@@ -7352,6 +7360,12 @@ class RestClient {
 
         var headers = me.credentials();
         headers['Content-Type'] = 'application/json';
+
+        // Cookie jar (solo Node): reenviar las cookies del host para mantener sticky del ALB.
+        // El fetch nativo de Node no persiste cookies; en browser el cookie store ya lo hace.
+        if (inNode() && me.#cookies.size) {
+            headers['Cookie'] = [...me.#cookies.values()].join('; ');
+        }
 
         if (parameters !== undefined && parameters !== null) {
             //URL parameters
@@ -7377,6 +7391,16 @@ class RestClient {
             headers: headers,
             body: data != null ? data : null,
         });
+
+        // Guardar las cookies recibidas (solo Node). getSetCookie() = Node >=18.14 (undici).
+        if (inNode()) {
+            let setCookies = response.headers.getSetCookie?.() || [];
+            for (let sc of setCookies) {
+                let pair = sc.split(';')[0].trim();   // "name=value" (sin atributos)
+                let eq = pair.indexOf('=');
+                if (eq > 0) me.#cookies.set(pair.slice(0, eq), pair);
+            }
+        }
 
         let textBody = await response.text();
         let firstCharCode = textBody.charCodeAt(0);
