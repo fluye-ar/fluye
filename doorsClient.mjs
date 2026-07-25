@@ -7509,7 +7509,11 @@ class FluyeClient {
         let opt = Object.assign({ method: 'GET' }, options);
 
         try {
-            let fullUrl = (await me.session.node.server) + '/api/v9/' + url;
+            // La API v9 vive en fluye.ar (Vercel), no en el dominio de la instancia. Hardcodear el host
+            // (como el console, más arriba) hace que funcione también desde instancias Cloudy
+            // (*.cloudycrm.net), cuyo server legacy no tiene /api/v9. resolveSession valida por AuthToken,
+            // así que el host no importa para la auth.
+            let fullUrl = 'https://fluye.ar/api/v9/' + url;
             let body;
             let params = typeof(opt.params) != 'string' ? JSON.stringify(opt.params) : opt.params;
             let method = opt.method.toUpperCase();
