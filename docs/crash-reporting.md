@@ -1,6 +1,10 @@
 # Crash reporting — errores del cliente a la consola del server
 
-**Estado:** ✅ Pattern activo — SDK ya expone `fdSession.sconsole` desde ticket `260630`.
+**Estado:** ✅ Pattern activo — método `wire()` en el SDK (a908344, 2026-07-25). Verificado end-to-end en Amatista con Wiz (`window.error` + `unhandled.rejection` llegaron a `node_console` con tags `wiz/AMATISTA/ADMIN`).
+
+## Apps que lo usan
+
+- **Wiz** — [`fluye-lib/ai/wiz/wiz.js:34`](../../fluye-lib/ai/wiz/wiz.js) llama `fdSession.sconsole.wire('wiz')` en el bootstrap.
 
 ## Qué resuelve
 
