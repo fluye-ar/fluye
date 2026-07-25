@@ -515,6 +515,23 @@ await fdSession.sconsole.log('proceso ok', { consoleTag1: 'batch' });
 - **Kill-switch:** `fdSession.sconsole.disabled = true` corta el envio al server; la consola nativa se sigue llamando.
 - **Auth:** usa `AuthToken` (sesion logueada) o, si no, `ApiKey`. No requiere config extra.
 
+### sconsole.wire(appName) — hook automático de crashes
+
+Hookea errores no capturados (`window.error` + `unhandledrejection` en browser; `process.on('uncaughtException'/'unhandledRejection')` en Node) a `sconsole.error`. Idempotente. Incluye dedup por línea 1 del stack (60s) + cap de 20 crashes/min por app.
+
+```javascript
+// Browser (llamar una vez al bootstrap, después de openDoors)
+fdSession.sconsole.wire('wiz');
+
+// Node (después del logon)
+session.sconsole.wire('mi-script');
+
+// Con opciones custom
+fdSession.sconsole.wire('wiz', { maxPerMin: 20, dedupMs: 60_000 });
+```
+
+Detalle del pattern: [`docs/crash-reporting.md`](docs/crash-reporting.md).
+
 ## Utilities
 
 ```javascript

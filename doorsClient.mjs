@@ -1097,6 +1097,87 @@ export class Session {
                 warn:  (...args) => send('warn',  args),
                 error: (...args) => send('error', args),
                 disabled: false,
+
+                /**
+                Hookea errores no capturados a sconsole.error. Idempotente (segunda
+                llamada = no-op). Browser: window.error + unhandledrejection.
+                Node: process.on('uncaughtException') + process.on('unhandledRejection').
+                @param {string} appName - Nombre corto para consoleTag1 (ej. 'wiz')
+                @param {object} [opts] - { maxPerMin=20, dedupMs=60000 }
+                */
+                wire: (appName, opts = {}) => {
+                    if (me.#sconsole._wired) return;
+                    me.#sconsole._wired = appName;
+
+                    const isBrowser = typeof window !== 'undefined' && typeof window.addEventListener === 'function';
+                    const isNode = typeof process !== 'undefined' && typeof process.on === 'function';
+                    if (!isBrowser && !isNode) {
+                        console.warn('sconsole.wire: entorno no soportado');
+                        return;
+                    }
+
+                    const maxPerMin = opts.maxPerMin ?? 20;
+                    const dedupMs = opts.dedupMs ?? 60_000;
+                    const seen = new Map();
+                    let sentThisMin = 0;
+                    let minStart = Date.now();
+
+                    const wireSend = (type, payload) => {
+                        const now = Date.now();
+                        if (now - minStart > 60_000) { minStart = now; sentThisMin = 0; }
+                        if (sentThisMin >= maxPerMin) return;
+
+                        const key = type + '|' + (payload.stack || payload.message || '').split('\n')[0];
+                        const last = seen.get(key);
+                        if (last && now - last < dedupMs) return;
+                        seen.set(key, now);
+
+                        sentThisMin++;
+                        me.#sconsole.error(type, {
+                            ...payload,
+                            ...(isBrowser
+                                ? { url: location.href, ua: navigator.userAgent }
+                                : { pid: process.pid, node: process.version }),
+                        }, { consoleTag1: appName });
+                    };
+
+                    if (isBrowser) {
+                        window.addEventListener('error', (ev) => {
+                            // Ignorar assets externos con CORS opaco (Script error.)
+                            if (ev.filename && !ev.filename.startsWith(location.origin) &&
+                                !ev.filename.startsWith('https://cdn.fluye.ar') &&
+                                !ev.filename.startsWith('https://cdn.cloudycrm.net')) return;
+                            wireSend('window.error', {
+                                message: ev.message,
+                                file: ev.filename,
+                                line: ev.lineno,
+                                col: ev.colno,
+                                stack: ev.error?.stack,
+                            });
+                        });
+                        window.addEventListener('unhandledrejection', (ev) => {
+                            const r = ev.reason;
+                            wireSend('unhandled.rejection', {
+                                message: r?.message || String(r),
+                                stack: r?.stack,
+                            });
+                        });
+                    } else {
+                        process.on('uncaughtException', (err) => {
+                            wireSend('uncaught.exception', {
+                                message: err?.message || String(err),
+                                stack: err?.stack,
+                            });
+                        });
+                        process.on('unhandledRejection', (reason) => {
+                            const r = reason;
+                            wireSend('unhandled.rejection', {
+                                message: r?.message || String(r),
+                                stack: r?.stack,
+                            });
+                        });
+                    }
+                },
             };
         }
         return me.#sconsole;

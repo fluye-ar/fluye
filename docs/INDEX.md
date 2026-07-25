@@ -207,6 +207,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 | `fluye/README.md` | SDK para browser |
 | `fluye/browser.md` | API browser |
 | `fluye/doorsClient.md` | Client SDK |
+| `fluye/docs/crash-reporting.md` | **Pattern**: errores del cliente → `node_console` (Neon). Auto-hook window.error + unhandledrejection vía `fdSession.sconsole` |
 
 ### fluye-web (Landing/Marketing)
 
