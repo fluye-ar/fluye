@@ -458,6 +458,7 @@ export class Session {
     #billing;
     #s3;
     #v8Disabled; // SYS_SETTING V8_DISABLED
+    #timeDiff = 0; // 260724: cache sync del currentUser.timeDiff (lo usan getter/setter de fechas)
     _needsAuth;
 
     constructor(serverUrl, authToken) {
@@ -531,21 +532,21 @@ export class Session {
         _moment.locale('es');
         _moment.tz.setDefault(serverTimeZone);
 
-        let __wasCached = !!me.#currentUser;
         if (await me.isLogged) {
             try {
                 let usr = await me.currentUser;
-                // 260724: el user ve las fechas en serverTimeZone + su timeDiff (horas).
-                // Ajusto el default tz de moment al offset del user, para que render/parse
-                // muestren naive-as-server + td, independiente de la tz del browser.
-                let td = usr.timeDiff || 0;
-                let offH = _moment.tz(serverTimeZone).utcOffset() / 60 + td; // -3 + td
-                let __zone = 'Etc/GMT' + (offH <= 0 ? '+' + (-offH) : '-' + offH);
-                try { (window.__ucLogs = window.__ucLogs || []).push('td=' + td + ' setZone=' + __zone + ' isLogged-ok authTok=' + (me.#authToken||'').slice(0,6) + ' apiKey=' + (me.#apiKey||'') + ' id=' + usr.id + ' name=' + usr.name); } catch(e){}
-                if (td === 0 && !me.#authToken) { debugger; }   // 260724 TEMP: pausar en la 2da llamada (auth vacio, td0) para ver el callstack
-                _moment.tz.setDefault(__zone);
+                // 260724: cacheamos el td del user (sync) para que el getter/setter de fechas lo apliquen
+                // por-valor (ver Field.value). NO tocamos el default tz de _moment: queda en serverTimeZone,
+                // que es module-level y compartido por todas las sesiones -> asi una sub-sesion (ej la del
+                // controlsHub, con apiKey de servicio y td=0) no pisa el tz de la sesion del usuario.
+                me.#timeDiff = usr.timeDiff || 0;
             } catch(er) {}
-        } else { try { console.log('[UC-260724] NOT logged (cachedBefore=' + __wasCached + ')'); } catch(e){} };
+        }
+    }
+
+    /** 260724: td del user cacheado (sync). Lo usan getter/setter de fechas. */
+    get timeDiff() {
+        return this.#timeDiff || 0;
     }
 
     /**
@@ -3445,15 +3446,16 @@ export class Field {
         if (this.type == 2) {
             var dt = this.session.utils.cDate(this.#json.Value);
             if (dt) {
-                // 260724: date-only (naive-as-server a medianoche) NO recibe td (si no se corre el dia).
-                // Compensa el td que aplica el render (moment con setDefault). No toca #json.Value.
+                // 260724: el td se aplica ACA (por-valor, con el td de ESTA sesion) y NO via el default tz
+                // global del _moment -> asi una sub-sesion no pisa el tz de otra. El #json.Value es el instante
+                // naive-as-server; devolvemos el instante que, visto en serverTimeZone, es naive+td. El render/
+                // picker formatean en serverTimeZone (fijo). Un date-only (naive a medianoche) NO recibe td.
                 var _m = this.session.utils.moment;
-                var serverOffMin = _m.tz(serverTimeZone).utcOffset();
-                var naiveMin = dt.getTime() / 60000 + serverOffMin;
-                if ((((naiveMin % 1440) + 1440) % 1440) === 0) {          // medianoche naive
-                    var tdMin = _m().utcOffset() - serverOffMin;           // td efectivo del render
-                    if (tdMin) dt = new Date(dt.getTime() - tdMin * 60000);
-                }
+                var serverOffMin = _m.tz(serverTimeZone).utcOffset();     // offset de serverTZ (constante)
+                var naiveMin = dt.getTime() / 60000 + serverOffMin;       // naive-as-server (min)
+                var isMidnight = (((naiveMin % 1440) + 1440) % 1440) === 0;
+                var wallMin = naiveMin + (isMidnight ? 0 : (this.session.timeDiff * 60));  // naive+td (date-only sin td)
+                dt = new Date((wallMin - serverOffMin) * 60000);          // instante que en serverTZ es wallMin
             }
             return dt;
         } else {
@@ -3480,14 +3482,14 @@ export class Field {
         } else if (this.type == 2) { // DateTime
             var dt = this.session.utils.cDate(value);
             if (dt) {
-                // 260724: simetrico al getter. Un date-only se ve a medianoche en la zona-render (serverTZ+td):
-                // se detecta ahi y se guarda el naive-as-server SIN td (evita el corrimiento de dia). El datetime revierte el td.
+                // 260724: inverso del getter. El value viene del picker/render en serverTimeZone: visto ahi es
+                // naive+td (o naive si date-only a medianoche). Le quitamos el td (con el td de ESTA sesion) y
+                // guardamos el naive-as-server. Date-only (medianoche en serverTZ) no lleva td.
                 var _mm = this.session.utils.moment;
                 var serverOffMin = _mm.tz(serverTimeZone).utcOffset();
-                var renderOffMin = _mm().utcOffset();
-                var wallRenderMin = dt.getTime() / 60000 + renderOffMin;   // value visto en la zona-render
-                var isMid = (((wallRenderMin % 1440) + 1440) % 1440) === 0;
-                var naiveMin = isMid ? wallRenderMin : wallRenderMin - (renderOffMin - serverOffMin);
+                var wallMin = dt.getTime() / 60000 + serverOffMin;         // value visto en serverTZ (= naive+td o naive)
+                var isMid = (((wallMin % 1440) + 1440) % 1440) === 0;
+                var naiveMin = wallMin - (isMid ? 0 : (this.session.timeDiff * 60));
                 this.#json.Value = new Date((naiveMin - serverOffMin) * 60000).toJSON();
             } else {
                 this.#json.Value = null;
