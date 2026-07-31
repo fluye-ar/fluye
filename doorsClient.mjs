@@ -3475,8 +3475,19 @@ export class Field {
 
         } else if (this.type == 2) { // DateTime
             var dt = this.session.utils.cDate(value);
-            try { console.log('[SETTER-260724] ' + this.name + ' | in_typeof=' + (typeof value) + ' in_isDate=' + (value instanceof Date) + ' in=' + (value instanceof Date ? value.toISOString() : String(value)) + ' | cDate_out=' + (dt ? dt.toISOString() : 'null') + ' | old_json=' + this.#json.Value); } catch(e){}
-            this.#json.Value = dt ? dt.toJSON() : null;
+            if (dt) {
+                // 260724: simetrico al getter. Un date-only se ve a medianoche en la zona-render (serverTZ+td):
+                // se detecta ahi y se guarda el naive-as-server SIN td (evita el corrimiento de dia). El datetime revierte el td.
+                var _mm = this.session.utils.moment;
+                var serverOffMin = _mm.tz(serverTimeZone).utcOffset();
+                var renderOffMin = _mm().utcOffset();
+                var wallRenderMin = dt.getTime() / 60000 + renderOffMin;   // value visto en la zona-render
+                var isMid = (((wallRenderMin % 1440) + 1440) % 1440) === 0;
+                var naiveMin = isMid ? wallRenderMin : wallRenderMin - (renderOffMin - serverOffMin);
+                this.#json.Value = new Date((naiveMin - serverOffMin) * 60000).toJSON();
+            } else {
+                this.#json.Value = null;
+            }
 
         } else if (this.type == 3) { // Numeric
             let numValue = this.session.utils.cNum(value);
