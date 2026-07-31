@@ -541,7 +541,7 @@ export class Session {
                 let td = usr.timeDiff || 0;
                 let offH = _moment.tz(serverTimeZone).utcOffset() / 60 + td; // -3 + td
                 let __zone = 'Etc/GMT' + (offH <= 0 ? '+' + (-offH) : '-' + offH);
-                try { (window.__ucLogs = window.__ucLogs || []).push('td=' + td + ' raw=' + JSON.stringify(usr.timeDiff) + ' cached=' + __wasCached + ' setZone=' + __zone + ' authTok=' + (me.#authToken||'').slice(0,6)); } catch(e){}
+                try { (window.__ucLogs = window.__ucLogs || []).push('td=' + td + ' setZone=' + __zone + ' isLogged-ok authTok=' + (me.#authToken||'').slice(0,6) + ' apiKey=' + (me.#apiKey||'') + ' id=' + usr.id + ' name=' + usr.name); } catch(e){}
                 _moment.tz.setDefault(__zone);
             } catch(er) {}
         } else { try { console.log('[UC-260724] NOT logged (cachedBefore=' + __wasCached + ')'); } catch(e){} };
