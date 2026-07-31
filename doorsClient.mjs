@@ -534,10 +534,13 @@ export class Session {
         if (await me.isLogged) {
             try {
                 let usr = await me.currentUser;
+                // 260724: el user ve las fechas en serverTimeZone + su timeDiff (horas).
+                // Ajusto el default tz de moment al offset del user, para que render/parse
+                // muestren naive-as-server + td, independiente de la tz del browser.
+                let td = usr.timeDiff || 0;
+                let offH = _moment.tz(serverTimeZone).utcOffset() / 60 + td; // -3 + td
+                _moment.tz.setDefault('Etc/GMT' + (offH <= 0 ? '+' + (-offH) : '-' + offH));
             } catch(er) {}
-            // if (usr.timeDiff != 0) // Que hago?
-            // No coincide el utc del server con el del cliente, q hago?
-            // if (_moment().utcOffset() != _moment().tz(serverTimeZone).utcOffset())
         };
     }
 
@@ -6481,7 +6484,9 @@ export class Utilities {
 
     get timeZone() {
         var ret = '';
-        var dif = new Date().getTimezoneOffset();
+        // 260724: offset del server (serverTimeZone), NO del browser, para interpretar
+        // el naive-as-server con su tz real en xmlDecode.
+        var dif = -this.moment.tz(serverTimeZone).utcOffset();
         if (dif == 0) {
             return 'Z';
         } else if (dif > 0) {
