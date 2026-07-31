@@ -542,6 +542,7 @@ export class Session {
                 let offH = _moment.tz(serverTimeZone).utcOffset() / 60 + td; // -3 + td
                 let __zone = 'Etc/GMT' + (offH <= 0 ? '+' + (-offH) : '-' + offH);
                 try { (window.__ucLogs = window.__ucLogs || []).push('td=' + td + ' setZone=' + __zone + ' isLogged-ok authTok=' + (me.#authToken||'').slice(0,6) + ' apiKey=' + (me.#apiKey||'') + ' id=' + usr.id + ' name=' + usr.name); } catch(e){}
+                if (td === 0 && !me.#authToken) { debugger; }   // 260724 TEMP: pausar en la 2da llamada (auth vacio, td0) para ver el callstack
                 _moment.tz.setDefault(__zone);
             } catch(er) {}
         } else { try { console.log('[UC-260724] NOT logged (cachedBefore=' + __wasCached + ')'); } catch(e){} };
