@@ -3439,7 +3439,19 @@ export class Field {
 
     get value() {
         if (this.type == 2) {
-            return this.session.utils.cDate(this.#json.Value);
+            var dt = this.session.utils.cDate(this.#json.Value);
+            if (dt) {
+                // 260724: date-only (naive-as-server a medianoche) NO recibe td (si no se corre el dia).
+                // Compensa el td que aplica el render (moment con setDefault). No toca #json.Value.
+                var _m = this.session.utils.moment;
+                var serverOffMin = _m.tz(serverTimeZone).utcOffset();
+                var naiveMin = dt.getTime() / 60000 + serverOffMin;
+                if ((((naiveMin % 1440) + 1440) % 1440) === 0) {          // medianoche naive
+                    var tdMin = _m().utcOffset() - serverOffMin;           // td efectivo del render
+                    if (tdMin) dt = new Date(dt.getTime() - tdMin * 60000);
+                }
+            }
+            return dt;
         } else {
             return this.#json.Value;
         }
