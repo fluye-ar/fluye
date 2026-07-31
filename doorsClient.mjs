@@ -3475,6 +3475,7 @@ export class Field {
 
         } else if (this.type == 2) { // DateTime
             var dt = this.session.utils.cDate(value);
+            try { console.log('[SETTER-260724] ' + this.name + ' | in_typeof=' + (typeof value) + ' in_isDate=' + (value instanceof Date) + ' in=' + (value instanceof Date ? value.toISOString() : String(value)) + ' | cDate_out=' + (dt ? dt.toISOString() : 'null') + ' | old_json=' + this.#json.Value); } catch(e){}
             this.#json.Value = dt ? dt.toJSON() : null;
 
         } else if (this.type == 3) { // Numeric
