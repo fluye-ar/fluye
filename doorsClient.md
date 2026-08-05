@@ -8,7 +8,7 @@ SDK JavaScript para Fluye/Doors. Node.js y browser.
 |-------------|-----|---------|
 | Contar documentos | `folder.searchGroups` | `searchGroups({ groups: 'FLD_ID', totals: 'count(*) as total', formula: "STATE = 'Abierta'" })` |
 | Listar documentos de una carpeta | `folder.search` | `search({ fields: 'DOC_ID,NOMBRE', formula: "ESTADO = 'Activo'", order: 'CREATED DESC' })` |
-| Agrupar y sumar | `folder.searchGroups` | `searchGroups({ groups: 'RESPONSIBLE', totals: 'count(*) as cant, sum(VALUE) as monto' })` |
+| Agrupar y sumar | `folder.searchGroups` | `searchGroups({ groups: 'RESPONSIBLE', totals: 'count(*) as cant, sum(VALUE) as total' })` |
 | Leer/editar un documento | `folder.doc` + `.fields` | `const doc = await folder.doc(id); doc.fields('CAMPO').value = 'nuevo'; await doc.save();` |
 | Crear un documento | `folder.documentsNew` | `const doc = await folder.documentsNew(); doc.fields('NOMBRE', 'Test'); await doc.save();` |
 | Ver quién cambió un campo | `db.openRecordset` + SYS_DOC_LOG | `db.openRecordset("SELECT ... FROM SYS_DOC_LOG WHERE DOC_ID = X AND FIELD = 'Y'")` |
@@ -136,14 +136,16 @@ const count = await folder.searchGroups({
 // Agrupar por vendedor con suma
 const ventas = await folder.searchGroups({
     groups: 'RESPONSIBLE',
-    totals: 'count(*) as cantidad, sum(VALUE) as monto',
+    totals: 'count(*) as cantidad, sum(VALUE) as total',
     formula: "RESULT = 'Ganada' AND ENDDATE >= '2026-04-01' AND ENDDATE < '2026-05-01'",
     order: 'cantidad desc'
 });
-// ventas → [{ RESPONSIBLE: "Juan", CANTIDAD: 15, MONTO: 50000 }, ...]
+// ventas → [{ RESPONSIBLE: "Juan", CANTIDAD: 15, TOTAL: 50000 }, ...]
 ```
 
 Parametros: `{ groups, totals, formula, order, maxDocs, recursive, groupsOrder, totalsOrder }`
+
+⚠️ **Alias de `totals`**: NUNCA usar como alias el mismo nombre del campo agregado. `sum(MONTO) as monto` genera SQL malformado ("Incorrect syntax near '.'... near 'with'"). Convención: usar `total` (o `totalXxx`) como alias, no el nombre del campo. Ej: `sum(MONTO) as total`, `sum(VALUE) as totalValor`.
 
 ### Otros metodos de Folder
 
