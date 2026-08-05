@@ -7,6 +7,27 @@ https://cdn.cloudycrm.net/gh/fluye-ar/fluye/browser.js?_fresh=1
 */
 
 
+// Auto-marcado del propio <script>, para convivir con include.js (CDN legacy)
+//
+// Cuando nos cargan con un <script> clasico —form.htm mete
+// <script src="browser.js" id="script_fluye-client">— el nodo no pasa por
+// fluye.load() y no recibe el shim .loaded(). Si despues alguien hace
+// include([{ id: 'fluye-client', ... }]), include.js lo encuentra por id y le
+// llama scriptNode.loaded(cb): tira TypeError adentro de un new Promise, la
+// promesa NO se settlea (ni resuelve ni rechaza) y el await que la espera queda
+// colgado para siempre. Sintoma: pagina en blanco, sin mas rastro que el
+// TypeError. Le pasaba a crm/desarrollos/plano.js:78 (2026-08-05).
+//
+// Si este codigo esta corriendo, el script ya cargo: nos auto-marcamos.
+(function () {
+    const el = document.currentScript;   // null si nos cargan como modulo o dinamicamente
+    if (!el) return;
+    if (!el.id) el.id = 'script_fluye-client';   // id estandar: sin esto findEl() no nos encuentra y se recarga duplicado
+    el._loaded = true;
+    el.dataset.loaded = 'true';
+    if (typeof el.loaded !== 'function') el.loaded = function (cb) { if (cb) cb(this); };
+})();
+
 // Actualiza meta tags e icons de form.htm al cargar browser.js
 (function() {
     const fluyeIcon = 'https://cdn.fluye.ar/ghf/fluye/brand/iso-logo.png';
