@@ -1024,6 +1024,10 @@ export class Session {
     Kill-switch: fdSession.sconsole.disabled = true corta el envio al server (la
     consola nativa se sigue llamando).
 
+    fdSession.sconsole.noEcho = true: solo envia, no llama a la consola nativa. Es para
+    quien ya imprimio por su cuenta -- el override de console de browser.js --, donde este
+    echo entraria de nuevo a ese override y se llamaria a si mismo.
+
     @example
     fdSession.sconsole.log('caso creado', doc, { consoleTag1: 'ventas' });
     fdSession.sconsole.error('sync fallo', err, { consoleTag1: 'sync' });
@@ -1076,8 +1080,10 @@ export class Session {
                     }
                 }
                 // consola nativa PRIMERO (inmediata, antes de cualquier await): solo los
-                // datos, sin el obj de tags (como dbConsole con retArgs)
-                console[method](...raw);
+                // datos, sin el obj de tags (como dbConsole con retArgs).
+                // noEcho la saltea: la usa quien ya imprimio por su cuenta -- el override de
+                // console de browser.js --, donde este echo entraria de nuevo a ese override.
+                if (!me.#sconsole.noEcho) console[method](...raw);
                 if (me.#sconsole.disabled) return;
                 // esperar utils (serializeError) e instancia/usuario resueltos; sin bloquear
                 // al caller y sin romper si algo falla
@@ -1105,6 +1111,7 @@ export class Session {
                 warn:  (...args) => send('warn',  args),
                 error: (...args) => send('error', args),
                 disabled: false,
+                noEcho: false,
 
                 /**
                 Hookea errores no capturados a sconsole.error. Idempotente (segunda

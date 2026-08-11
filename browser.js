@@ -364,6 +364,77 @@ window.fluye = {
     connect: this.openDoors, // backward compat, sacar el 1/4
 
     /**
+    Consola remota: manda los console.log/warn/error del usuario a la consola del server
+    (tabla node_console en Neon), para diagnosticar lo que no se reproduce del lado nuestro.
+
+    El override de console se instala SIEMPRE al cargar browser.js (bloque al final del
+    archivo) y por default solo llama a la consola nativa: apagado no cuesta nada. start()
+    es lo que prende el envio, y solo para los usuarios de enabledFor.
+    */
+    console: {
+        _send: null,        // sconsole de la sesion cuando esta prendida; null = apagada
+        tag: 'web',         // consoleTag1 con el que se marcan las lineas
+
+        /**
+        A quien se le captura la consola. Editar esto y pushear es todo lo que hace falta
+        para prender o apagar: browser.js se sirve por CDN, no necesita deploy de Doors.
+
+            'INSTANCIA': { logins: ['LOGIN', ...], until: 'YYYY-MM-DD' }
+
+        Se compara sin acentos ni distincion de mayusculas (el login de Jazmin es 'JAZMÍN').
+        until es la fecha en que deja de enviar sola, para que no quede alguien logueando
+        para siempre si nos olvidamos. Para cortar ya: vaciar logins, push + ?_fresh=1.
+        */
+        enabledFor: {
+            'AMATISTA': { logins: ['JAZMÍN'], until: '2026-08-31' },
+        },
+
+        /**
+        Prende el envio si el usuario esta en enabledFor. Corre una vez y termina; es
+        idempotente, asi que se puede llamar desde donde se inicialice la sesion. En Doors
+        lo llama openDoors, no hace falta invocarlo a mano.
+
+        El envio lo hace fdSession.sconsole: postea a /api/console con el AuthToken de la
+        sesion, autocompleta instancia y usuario en los tags, y es fire-and-forget. Se le
+        pone noEcho porque de imprimir ya se encargo el override.
+
+        @returns {Promise<boolean>} Si quedo prendida
+        @example
+        await fluye.console.start();
+        */
+        start: async function () {
+            if (fluye.console._send) return true;
+            try {
+                let ses = fluye.doorsSession;
+                if (!ses || !await ses.isLogged) return false;
+                let inst = await ses.instance;
+                let user = await ses.currentUser;
+                if (!inst || !user) return false;
+
+                // 'JAZMÍN' y 'jazmin' tienen que matchear
+                let plain = (s) => String(s == null ? '' : s).normalize('NFD')
+                    .replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+
+                let entry = null;
+                for (let key in fluye.console.enabledFor) {
+                    if (plain(key) === plain(inst.Name)) { entry = fluye.console.enabledFor[key]; break; }
+                }
+                if (!entry || !entry.logins) return false;
+                if (!entry.logins.some(l => plain(l) === plain(user.login))) return false;
+                if (entry.until && new Date() > new Date(entry.until + 'T23:59:59')) return false;
+
+                let sc = ses.sconsole;
+                sc.noEcho = true;
+                fluye.console._send = sc;
+                return true;
+            } catch (e) {
+                return false;   // nunca romper la carga de la pagina por esto
+            }
+        },
+    },
+
+
+    /**
     Descarga un buffer como archivo
     @example
     downloadFile(buffer, 'logo.jpg');
@@ -651,6 +722,7 @@ window.fluye = {
             return;
         }
         await fluye.doorsSession.runSyncEventsOnClient(false);
+        fluye.console.start();   // no-op salvo que el usuario este en fluye.console.enabledFor
     },
 
     /**
@@ -733,3 +805,23 @@ window.fluye = {
 
     urlParams: new URLSearchParams(window.location.search),
 }
+
+// Override de console. Se instala SIEMPRE, en cualquier web que cargue browser.js: por
+// default lo unico que hace es llamar a la nativa, asi que apagado no cambia nada.
+// fluye.console.start() es lo que prende el envio, y solo para los usuarios habilitados.
+// El echo lo hace SIEMPRE este override, por eso sconsole va con noEcho: si tambien
+// imprimiera, entraria de nuevo aca y se llamaria a si mismo.
+(function () {
+    ['log', 'warn', 'error'].forEach(method => {
+        const native = console[method] ? console[method].bind(console) : function () { };
+        console['_orig_' + method] = native;   // para desarmarlo en vivo sin recargar
+        console[method] = function (...args) {
+            native.apply(console, args);
+            let sc = fluye.console._send;
+            if (!sc) return;                   // apagada: no hay nada mas que hacer
+            try {
+                sc[method](...args, { consoleTag1: fluye.console.tag });
+            } catch (e) { }                    // el dato ya se vio en la consola nativa
+        };
+    });
+})();
