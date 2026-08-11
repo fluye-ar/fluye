@@ -386,7 +386,7 @@ window.fluye = {
         para siempre si nos olvidamos. Para cortar ya: vaciar logins, push + ?_fresh=1.
         */
         enabledFor: {
-            'AMATISTA': { logins: ['JAZMÍN'], until: '2026-08-31' },
+            'AMATISTA': { logins: ['JAZMÍN', 'admin'], until: '2026-08-31' },
         },
 
         /**
