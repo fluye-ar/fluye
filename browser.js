@@ -804,7 +804,7 @@ window.fluye = {
     },
 
     urlParams: new URLSearchParams(window.location.search),
-}
+};
 
 // Override de console. Se instala SIEMPRE, en cualquier web que cargue browser.js: por
 // default lo unico que hace es llamar a la nativa, asi que apagado no cambia nada.
@@ -817,10 +817,11 @@ window.fluye = {
         console['_orig_' + method] = native;   // para desarmarlo en vivo sin recargar
         console[method] = function (...args) {
             native.apply(console, args);
-            let sc = fluye.console._send;
+            // window.fluye y no fluye: un ReferenceError aca rompe cualquier console.log de la app
+            let sc = window.fluye && window.fluye.console && window.fluye.console._send;
             if (!sc) return;                   // apagada: no hay nada mas que hacer
             try {
-                sc[method](...args, { consoleTag1: fluye.console.tag });
+                sc[method](...args, { consoleTag1: window.fluye.console.tag });
             } catch (e) { }                    // el dato ya se vio en la consola nativa
         };
     });
