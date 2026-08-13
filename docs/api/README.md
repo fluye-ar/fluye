@@ -121,6 +121,13 @@ Auth: `doors-authtoken` (sesión desde `openDoors()`) o `doors-apikey` (scripts 
 |---|---|---|
 | GET | `/api/v9/documents/relfields?docId=<int>&...` | Campos relacionados de un doc |
 
+### R2 (adjuntos)
+
+| Método | Path | Descripción |
+|---|---|---|
+| POST | `/api/v9/r2/presign-get` | Presigned GET URL para descargar un adjunto (bucket `fluye-atts`, prefix por instancia). Ver sección R2 abajo. |
+| POST | `/api/v9/r2/presign-put` | Presigned PUT URL para subir un adjunto. |
+
 ### AI Calls (multi-vendor, budget + metering)
 
 | Método | Path | Vendor | Descripción |
@@ -155,13 +162,51 @@ Cobra por segundo transcrito (mínimo 10s por request, límite del vendor). `aud
 
 **`POST /api/v9/ai/tts`** — Body:
 ```json
-{ "text": "…", "voice_id": "4wDRKlxcHNOFO5kBvE81", "model": "eleven_turbo_v2_5", "output_format": "opus_48000_64" }
+{ "text": "…", "voice_id": "4wDRKlxcHNOFO5kBvE81", "model": "eleven_turbo_v2_5", "output_format": "opus_48000_64", "host": false }
 ```
 Todos los campos son opcionales excepto `text`. Defaults: voz Melisa (Argentine warm female), modelo turbo, formato ogg/opus (WhatsApp voice note nativo). Response:
 ```json
 { "audio_b64": "…", "mime_type": "audio/ogg", "byte_size": 8934, "char_count": 172, "model": "eleven_turbo_v2_5", "voice_id": "…", "cost_usd": 0.0086, "usage_id": "…" }
 ```
-Cobra por caracter del texto de entrada. El consumer se encarga del upload/hosting del audio si necesita URL pública (Twilio, etc.).
+Cobra por caracter del texto de entrada.
+
+**Con `host: true`** — el gateway hostea el audio en R2 y devuelve URL pública en vez de inline b64:
+```json
+{ "audio_url": "https://media.fluye.ar/tts/20260813/<uuid>.ogg",
+  "audio_expires_at": "2026-08-14T15:30:00.000Z",
+  "mime_type": "audio/ogg", "byte_size": 8934, "char_count": 172, "cost_usd": 0.0086, "usage_id": "…" }
+```
+Útil cuando el consumer necesita URL pública sin hostear (ej: Twilio `mediaUrl` para voice notes). El objeto vive en `fluye-media/tts/{yyyymmdd}/{uuid}.{ext}` con lifecycle auto-delete >1 día. Sin `host` o `host:false` → response idéntica al path histórico (b64 inline).
+
+### R2 storage (adjuntos)
+
+Presigned URLs contra el bucket `fluye-atts`. Key auto-armada como `{instance}/att-{attId:08d}.dat` — `instance` sale de la session, evita que un caller pida URLs de adjuntos de otra instancia.
+
+| Método | Path | Descripción |
+|---|---|---|
+| POST | `/api/v9/r2/presign-get` | Presigned GET URL para descargar un adjunto. |
+| POST | `/api/v9/r2/presign-put` | Presigned PUT URL para subir un adjunto. |
+
+**`POST /api/v9/r2/presign-get`** — Body:
+```json
+{ "attId": 2061 }
+```
+Response:
+```json
+{ "data": { "url": "https://<bucket>.r2.cloudflarestorage.com/…?X-Amz-Signature=…",
+            "expires_at": "2026-08-13T15:40:00.000Z",
+            "key": "antun/att-00002061.dat", "bucket": "fluye-atts" },
+  "error": null }
+```
+El browser hace `fetch(url)` directo a R2. Expiry por default 10 min.
+
+**`POST /api/v9/r2/presign-put`** — Body:
+```json
+{ "attId": 2062, "content_type": "application/pdf" }
+```
+`content_type` opcional (default `application/octet-stream`) — el cliente **DEBE** enviar el mismo `Content-Type` header en el PUT o la firma no valida. Response mismo shape que presign-get (`url`, `expires_at`, `key`, `bucket`). Expiry por default 15 min.
+
+Los buckets `att-*` originalmente eran per-instance (ver `doors/tickets/260418`). Consolidados en un solo bucket padre `fluye-atts` con prefijo por instancia (2026-08-13, ver `canal-atts-r2.md`).
 
 ---
 
