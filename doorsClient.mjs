@@ -5442,6 +5442,11 @@ export class Push {
     */
     async send(msg) {
         msg.to = Array.isArray(msg.to) ? msg.to : [msg.to];
+        // Devuelve el resultado del server (un item por dispositivo de cada destinatario),
+        // con Status y Response. Antes no devolvia nada: un envio que fallaba se veia
+        // exactamente igual que uno exitoso, y para saberlo habia que ir a mirar
+        // SYS_PUSH_NOTIF a mano. Quien quiera chequear, mire que Status sea 2xx.
+        var resultados = [];
         for (var el of msg.to) {
             var notW = {};
             notW.to = el;
@@ -5453,8 +5458,10 @@ export class Push {
             }
 
             var url = '/notification';
-            await this.session.restClient.fetch(url, 'PUT', notW, 'notificationW');
+            var r = await this.session.restClient.fetch(url, 'PUT', notW, 'notificationW');
+            if (Array.isArray(r)) resultados.push(...r); else if (r) resultados.push(r);
         }
+        return resultados;
     }
 
     get session() {
