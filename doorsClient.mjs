@@ -4211,7 +4211,7 @@ export class Folder {
         if (!evn) throw new Error('Async event not found: ' + opt.evnId);
 
         let elvSession = new Session(me.session.serverUrl);
-        await elvSession.logon(evn.Login, evn.Password, (await me.session.instance).Name);
+        await elvSession.logon(evn.login, evn.password, (await me.session.instance).Name);
 
         try {
             let ret;
