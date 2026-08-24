@@ -4207,7 +4207,7 @@ export class Folder {
         opt.lang = opt.lang.toLowerCase();
 
         let evnList = await me.asyncEvents();
-        let evn = evnList.find(el => el.EvnId == opt.evnId);
+        let evn = evnList.find(el => el.id == opt.evnId);
         if (!evn) throw new Error('Async event not found: ' + opt.evnId);
 
         let elvSession = new Session(me.session.serverUrl);
