@@ -7504,6 +7504,7 @@ class RestClient {
 
         var headers = me.credentials();
         headers['Content-Type'] = 'application/json';
+        if (me.headers) Object.assign(headers, me.headers);
 
         // Cookie jar (solo Node): reenviar las cookies del host para mantener sticky del ALB.
         // El fetch nativo de Node no persiste cookies; en browser el cookie store ya lo hace.
@@ -7578,6 +7579,7 @@ class RestClient {
         var me = this;
         var completeUrl = me.session.serverUrl + '/' + url;
         var headers = me.credentials();
+        if (me.headers) Object.assign(headers, me.headers);
 
         // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
         let response = await fetch(completeUrl, {
