@@ -7343,6 +7343,20 @@ export class View {
         return this.#json.VieId;
     }
 
+    /**
+    Si la vista la heredan las subcarpetas. Una vista nueva arranca en false,
+    asi que al copiar vistas entre instancias hay que setearlo explicitamente o
+    quedan sin heredarse.
+    OJO: el json se carga perezoso — leer .definition antes de leer esto, si no
+    devuelve undefined.
+    */
+    get inherits() {
+        return this.#json.Inherits;
+    }
+    set inherits(value) {
+        this.#json.Inherits = value;
+    }
+
     get modified() {
         return this.session.utils.cDate(this.#json.Modified);
     }
