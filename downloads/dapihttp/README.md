@@ -14,7 +14,7 @@ Instala y registra la DLL automáticamente. Requiere permisos de administrador.
 
 ```vbs
 Set s = CreateObject("dapihttp.Session")
-s.ServerURL = "https://miinstancia.cloudycrm.net/c/inc/dapihttplistener.asp"
+s.ServerURL = "https://miinstancia.fluye.ar/c/inc/dapihttplistener.asp"
 
 ' Logon
 s.Logon "usuario", "password", "instancia"
@@ -52,7 +52,7 @@ s.Logoff
 Sub ConsultarDoors()
     Dim s As Object
     Set s = CreateObject("dapihttp.Session")
-    s.ServerURL = "https://miinstancia.cloudycrm.net/c/inc/dapihttplistener.asp"
+    s.ServerURL = "https://miinstancia.fluye.ar/c/inc/dapihttplistener.asp"
     s.Logon "usuario", "password", "instancia"
 
     Dim carpeta As Object

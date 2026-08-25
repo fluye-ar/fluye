@@ -1,6 +1,6 @@
 # Fluye Labs
 
-**Agentic Organization**
+**Procesos agénticos**
 
 SDKs y herramientas para **Doors** — el motor BPM con 25+ años en producción que evoluciona hacia workflows agénticos.
 

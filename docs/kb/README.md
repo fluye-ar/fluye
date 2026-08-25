@@ -40,6 +40,7 @@ Desarrollo, Doors, Controles, Base de datos, Errores, Herramientas, Soporte, Con
 
 | Artículo | Etiquetas | Fecha | Local |
 |----------|-----------|-------|-------|
+| Node - doc.tags debe ser string (error 458 Automation type) | Desarrollo, Doors, Controles, Errores | 2026-08-22 | ✅ `node_doc_tags_string.md` |
 | Relaciones (JOINS) | — | 2026-03-30 | ✅ `../RELATIONS.md` |
 | Doors en Windows 2019 - XML | Doors, Windows2019, Errores | 2026-02-27 | |
 | Doors.DbUpdater - Utilidad de actualización de bases | Desarrollo, Doors, Base de datos | 2026-01-21 |

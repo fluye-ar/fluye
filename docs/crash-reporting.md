@@ -5,6 +5,7 @@
 ## Apps que lo usan
 
 - **Wiz** — [`fluye-lib/ai/wiz/wiz.js:34`](../../fluye-lib/ai/wiz/wiz.js) llama `fdSession.sconsole.wire('wiz')` en el bootstrap.
+- **Broadcast (Difusión)** — [`fluye-lib/channels/broadcast.js`](../../fluye-lib/channels/broadcast.js) llama `fdSession.sconsole.wire('broadcast')` en el bootstrap; además loguea a mano con `sconsole.error(..., { consoleTag1: 'broadcast' })` los catches que se tragan el error (`bcastLoad`, autosave).
 
 ## Qué resuelve
 
