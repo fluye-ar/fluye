@@ -126,8 +126,4 @@ End Sub
 | **1.4.0** | MSXML 6.0 (fix TLS 1.2). Compatible binariamente con 1.3.x |
 | 1.3.x | MSXML 4.0 (no soporta TLS 1.2) |
 
-## Código fuente
-
-[Doors-dapihttp en GitHub](https://github.com/CloudyVisionArg/Doors-dapihttp)
-
 Jorge Pagano - Fluye Labs
