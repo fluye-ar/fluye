@@ -6,7 +6,7 @@ Comunica con el server via HTTP/HTTPS a través de `dapihttplistener.asp`.
 
 ## Descargar
 
-**[dapihttpsetup-1.4.0.exe](https://cdn.fluye.ar/ghf/fluye/downloads/dapihttp/dapihttpsetup-1.4.0.exe)** (598 KB)
+**[dapihttpsetup-1.4.0.exe](https://cdn.fluye.ar/ghf/fluye/downloads/dapihttp/dapihttpsetup-1.4.0.exe)** (2.2 MB)
 
 Instala y registra la DLL automáticamente. Requiere permisos de administrador.
 
