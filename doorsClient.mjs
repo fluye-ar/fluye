@@ -5577,21 +5577,21 @@ export class User extends Account {
     get language() {
         return this.toJSON().LngId;
     }
-    set language(value) {timeDiff
+    set language(value) {
         this.toJSON().LngId = value;
     }
 
     get ldapLogon() {
         return this.toJSON().LDAPLogon;
     }
-    set ldapLogon(value) {timeDiff
+    set ldapLogon(value) {
         this.toJSON().LDAPLogon = value;
     }
 
     get ldapServer() {
         return this.toJSON().LDAPServer;
     }
-    set ldapServer(value) {timeDiff
+    set ldapServer(value) {
         this.toJSON().LDAPServer = value;
     }
 
