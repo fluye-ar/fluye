@@ -1449,10 +1449,14 @@ export class Account {
     }
 
     /**
-    Convierte a User
+    Convierte a User. Idempotente: si ya es un User se devuelve a si mismo, asi
+    el codigo que lo aplica por las dudas no depende de que le haya llegado un
+    Account "pelado".
     @returns {User}
     */
     cast2User() {
+        if (this instanceof User) return this;
+
         if (this.type == 1) {
             return new User(this.#json, this.#session);
         } else {
