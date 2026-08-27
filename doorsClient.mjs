@@ -2328,8 +2328,10 @@ export class Directory {
     }
 
     /**
-    Devuelve un account por name o id.
-    @returns {Promise<Account>}
+    Devuelve un account por name o id. Si es una cuenta de usuario (type 1)
+    devuelve un User, no un Account: si no, las propiedades de usuario (login,
+    language, theme...) quedan invisibles y save() pega al endpoint equivocado.
+    @returns {(Promise<User>|Promise<Account>)}
     */
     async accounts(account) {
         var me = this;
@@ -2353,11 +2355,12 @@ export class Directory {
             } else if (res.length > 1) {
                 throw new Error('Vague expression (' + account + ')');
             } else {
-                return new Account(res[0], me.session);
+                res = res[0];
             }
-        } else {
-            return new Account(res, me.session);
         }
+
+        let acc = new Account(res, me.session);
+        return acc.type == 1 ? acc.cast2User() : acc;
     }
 
     /**
