@@ -270,7 +270,7 @@ Next
 
 ## Benchmark
 
-**doorsapi64 pulveriza al parser VBS clásico.** Los 15.000 docs que crashean aspJSON, los digiere en 7.7 ms. Como Node — a veces mejor.
+**doorsapi64 pulveriza al parser VBS clásico.** Los 15.000 docs que crashean aspJSON, los digiere en 7.7 ms. Como Node, o mejor.
 
 | Docs | JSON | aspJSON (VBS) | Node v22 | doorsapi64 |
 |------|------|---------------|----------|------------|
