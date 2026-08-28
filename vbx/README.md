@@ -20,6 +20,8 @@ DoorsBPM corre en IIS 32-bit desde 2005: límite de 2 GB de RAM por proceso, dep
 | `ScriptControl64.dll` | `MSScriptControl.ScriptControl` | `msscript.ocx` (deprecated 2014) | Evaluación de VBScript desde COM. Basado en `tsc64` (open source). |
 | `msxml6.dll` | `MSXML2.*` | `MSXML 4.0` (deprecated 2014) | Parser XML nativo de Windows. |
 
+> **Solo `doorsapi64` se descarga desde esta página.** Los demás componentes se distribuyen incluidos con Doors 9 y no se instalan por separado. Este README documenta la instalación, uso y licencia de `doorsapi64`.
+
 ---
 
 ## Arquitectura
@@ -63,18 +65,9 @@ De 4 capas a 2. Mismo `ProgId` para el código que consume, sin cambios en VBScr
 
 ## Instalar
 
-### Pack completo (recomendado en el server)
+Descomprimir el ZIP y abrir una terminal como **Administrador**.
 
-1. Descargar el ZIP del pack e ir a la ubicación local (ej. `C:\vbx\`).
-2. Click derecho sobre `install.cmd` → **Ejecutar como administrador**.
-3. Validar con el smoke test (sección [Verificar](#verificar)).
-4. En IIS, cambiar el Application Pool de Doors a `Enable 32-Bit Applications = False`. Reiniciar el sitio.
-
-### Registro manual — solo `doorsapi64` (workstation, scripts)
-
-Descomprimir el ZIP y abrir una terminal como **Administrador**:
-
-#### Windows 64-bit
+### Windows 64-bit
 
 Registrar **ambas** DLLs — la 64-bit para procesos x64 y la 32-bit para procesos x86 (ej. `cscript` 32-bit, Excel, Access):
 
@@ -83,97 +76,19 @@ regsvr32 C:\ruta\doorsapi64.dll
 C:\Windows\SysWOW64\regsvr32 C:\ruta\doorsapi32.dll
 ```
 
-#### Windows 32-bit
-
-Solo la 32-bit:
+### Windows 32-bit
 
 ```cmd
 regsvr32 C:\ruta\doorsapi32.dll
 ```
 
-### Pack completo — registro manual paso a paso
+### En un server IIS
 
-Si preferís ejecutar los pasos uno por uno (en cmd elevada):
-
-```cmd
-cd C:\vbx\bin
-
-regsvr32 doorsapi64.dll
-%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\RegAsm.exe aspSmartUpload64.dll /codebase
-regsvr32 ScriptControl64.dll
-
-sc create NitroVbx binPath= "C:\vbx\bin\NitroVbx\Doors.NitroVbx.exe" start= auto
-sc start NitroVbx
-```
-
-### Contenido del pack
-
-```
-vbx-toolkit-x64-vX.Y.Z/
-├── bin/                       Componentes principales
-│   ├── doorsapi64.dll
-│   ├── aspSmartUpload64.dll
-│   ├── ScriptControl64.dll
-│   └── NitroVbx/              Servicio Windows
-├── deps/                      Dependencias x64
-│   └── msxml6.dll
-├── install.cmd                Registra los componentes
-├── uninstall.cmd              Desregistra
-├── README.txt                 Resumen y comandos manuales
-└── LICENSE.txt                EULA del binario
-```
-
-### Desinstalación
-
-Ejecutar `uninstall.cmd` como administrador. Para revertir manualmente:
-
-```cmd
-sc stop NitroVbx && sc delete NitroVbx
-regsvr32 /u doorsapi64.dll
-%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\RegAsm.exe aspSmartUpload64.dll /unregister
-regsvr32 /u ScriptControl64.dll
-```
+Además del registro anterior, cambiar el Application Pool de Doors a `Enable 32-Bit Applications = False` y reiniciar el sitio.
 
 ---
 
 ## Verificar
-
-### Smoke test (pack completo)
-
-Guardar como `check.vbs` y ejecutar con `cscript //nologo check.vbs`:
-
-```vbs
-On Error Resume Next
-
-Set fyj = CreateObject("fyjson")
-WScript.Echo "fyjson: " & IIf(Err.Number = 0, "OK", "FALLA — " & Err.Description)
-Err.Clear
-
-Set app = CreateObject("doorsapi.Application")
-WScript.Echo "doorsapi64: " & IIf(Err.Number = 0, "OK", "FALLA — " & Err.Description)
-Err.Clear
-
-Set up = CreateObject("aspSmartUpload.SmartUpload")
-WScript.Echo "aspSmartUpload64: " & IIf(Err.Number = 0, "OK", "FALLA — " & Err.Description)
-Err.Clear
-
-Set sc = CreateObject("MSScriptControl.ScriptControl")
-WScript.Echo "ScriptControl64: " & IIf(Err.Number = 0, "OK", "FALLA — " & Err.Description)
-
-Function IIf(cond, t, f)
-    If cond Then IIf = t Else IIf = f
-End Function
-```
-
-Salida esperada:
-```
-fyjson: OK
-doorsapi64: OK
-aspSmartUpload64: OK
-ScriptControl64: OK
-```
-
-### Verificación rápida — solo doorsapi64
 
 ```cmd
 cscript //nologo -e:vbscript
@@ -181,6 +96,15 @@ cscript //nologo -e:vbscript
 ```vbs
 Set s = CreateObject("doorsapi64.Session")
 WScript.Echo "OK — Version: " & s.Version
+```
+
+---
+
+## Desinstalar
+
+```cmd
+regsvr32 /u C:\ruta\doorsapi64.dll
+C:\Windows\SysWOW64\regsvr32 /u C:\ruta\doorsapi32.dll
 ```
 
 ---
