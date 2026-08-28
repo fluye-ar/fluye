@@ -2,7 +2,7 @@
 
 Somos **Fluye Labs**. Hicimos `doorsapi64.dll` para que tu código VBS/ASP legacy siga andando en 64 bits, sin tocar una línea. Esta es la licencia del binario.
 
-Los otros componentes de VbX (`NitroVbx`, `aspSmartUpload64`, `ScriptControl64`, `fyjson`, `msxml6.dll`) son de uso libre — solo `doorsapi64` tiene esta cláusula comercial.
+`doorsapi64` es el único componente de VbX que se **distribuye standalone y se puede usar por afuera de Doors 9**. Los otros (`NitroVbx`, `aspSmartUpload64`, `ScriptControl64`, `msxml6.dll`) vienen **incluidos con Doors 9** y no se descargan por separado. `fyjson` va dentro de `doorsapi64.dll`.
 
 ---
 
@@ -33,9 +33,11 @@ Redistribución en un contexto multi-usuario requiere acuerdo con Fluye Labs.
 - **No hacer reverse engineering** ni modificar la DLL. Si hay algo que necesitás y no está, hablalo con nosotros.
 - **No usar** para actividades ilegales.
 
-## Sin garantía
+## Garantía
 
-`doorsapi64` se entrega **tal cual**. Nos importa la calidad y arreglamos lo que rompa a la brevedad, pero **no nos hacemos responsables por daños indirectos** (lucro cesante, pérdida de datos, downtime) derivados de su uso. Probalo bien antes de meterlo en producción.
+**Uso admin-only (gratuito):** `doorsapi64` se entrega **tal cual, sin garantía**. Arreglamos lo que rompa a la brevedad si nos lo reportás, pero no nos hacemos responsables por daños indirectos (lucro cesante, pérdida de datos, downtime).
+
+**Uso multi-usuario (comercial):** los errores se atienden y resuelven **a la brevedad, sin costo**, mientras la licencia esté activa. La responsabilidad de Fluye Labs se limita al total pagado por la licencia en los **12 meses anteriores** al hecho. No responde por daños indirectos.
 
 ## Actualizaciones
 

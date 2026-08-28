@@ -404,7 +404,7 @@ Todo lo demás (Session, Document, Folder, Field, Attachment, Account, User, Vie
 
 - **`doorsapi64.dll`** — Binario propietario. **Free para scripts que corren como `admin`** (usuario builtin, ID=0) — instalás, registrás, funciona. **Multi-usuario** (procesos que autentican con distintas cuentas): licencia comercial por instancia, con verificación online. Términos completos: [`licencia.md`](licencia.md). Escribinos a **ventas@fluye.ar**.
 - **`fyjson`** (incluido en `doorsapi64.dll`) — Open source. Repo: [fluye-ar/fyjson](https://github.com/fluye-ar/fyjson).
-- **`NitroVbx`, `aspSmartUpload64`, `ScriptControl64`** — Binarios propietarios, uso libre.
+- **`NitroVbx`, `aspSmartUpload64`, `ScriptControl64`** — Binarios propietarios, se distribuyen incluidos con Doors 9. No se descargan por separado.
 
 Ver [LICENSE](../LICENSE) y la sección Licencia en el [README principal](../README.md#licencia).
 
