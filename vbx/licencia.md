@@ -2,21 +2,21 @@
 
 Somos **Fluye Labs**. Hicimos `doorsapi64.dll` para que tu código VBS/ASP legacy siga andando en 64 bits, sin tocar una línea. Esta es la licencia del binario.
 
-`doorsapi64` es el único componente de VbX que se **distribuye standalone y se puede usar por afuera de Doors 9**. Los otros (`NitroVbx`, `aspSmartUpload64`, `ScriptControl64`, `msxml6.dll`) vienen **incluidos con Doors 9** y no se descargan por separado. `fyjson` va dentro de `doorsapi64.dll`.
+`doorsapi64` es el único componente de VbX que se **distribuye standalone y se puede usar por afuera de Doors 9**. Los otros (`NitroVbx`, `aspSmartUpload64`, `ScriptControl64`, `msxml6.dll`) vienen **incluidos con Doors 9**.
 
 ---
 
 ## Uso gratuito — admin-only
 
-Podés usar `doorsapi64` **sin costo, sin límite de tiempo**, cuando tus scripts corren con el usuario **`admin` builtin** de la instancia (ID=0). Típicamente: administración, importaciones batch, scripts server-side, integraciones.
+Podés usar `doorsapi64` **sin costo, sin límite de tiempo**, cuando tus scripts corren con el usuario **`admin` builtin** de la instancia (ACC_ID=0). Típicamente: administración, importaciones batch, scripts server-side, integraciones.
 
 Instalás, registrás, funciona.
 
 ## Uso comercial — multi-usuario
 
-Si necesitás que `doorsapi64` corra autenticando con **distintos usuarios reales** (cada persona con su cuenta), necesitás una licencia comercial. Se paga **por instancia**, no por usuario.
+Si necesitás que `doorsapi64` corra autenticando con **distintos usuarios reales** (cada persona con su cuenta), necesitás una licencia comercial. Se paga **por instancia**.
 
-La habilitación es **por instancia** y se verifica **online contra los servidores de Fluye Labs** — el servidor donde corre `doorsapi64` necesita **conexión a internet** para operar en modo multi-usuario.
+La habilitación se verifica **online contra los servidores de Fluye Labs** — el servidor donde corre `doorsapi64` necesita **conexión a internet** para operar en modo multi-usuario.
 
 Escribinos a **ventas@fluye.ar** — te pasamos precio y activación.
 
