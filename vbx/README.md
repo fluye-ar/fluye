@@ -92,7 +92,7 @@ Todo lo demás (Session, Document, Folder, Field, Attachment, Account, User, Vie
 
 ### Pasos
 
-1. Descargar el pack desde [GitHub Releases](https://github.com/fluye-ar/fluye/releases) (último tag con prefijo `vbx-`).
+1. Descargar desde la [pagina de descarga](../downloads/vbx/) — incluye ZIP 64-bit y 32-bit, ejemplos de codigo e instrucciones de registro.
 2. Extraer el ZIP en una ubicación local (ej. `C:\vbx\`).
 3. Click derecho sobre `install.cmd` → **Ejecutar como administrador**.
 4. Validar con el smoke test (sección "Verificación" más abajo).
@@ -194,7 +194,7 @@ Cada release incluye changelog, hash SHA-256 del ZIP y firma digital opcional.
 
 ## Licencia
 
-- **`doorsapi64.dll`** — Binario propietario. Gratis permanente para instancias **admin-only** (solo el usuario admin builtin, ID=0). Libre sin restricción hasta **2027-11-01**. Después: instancias multi-usuario requieren licencia comercial.
+- **`doorsapi64.dll`** — Binario propietario. Gratis permanente para uso **admin-only** (usuario builtin `admin`, ID=0). Uso multi-usuario requiere licencia comercial — **ventas@fluye.ar**. [Descarga e instrucciones](../downloads/vbx/).
 - **`fyjson`** (incluido en `doorsapi64.dll`) — Open source. Repo: [fluye-ar/fyjson](https://github.com/fluye-ar/fyjson).
 - **`NitroVbx`, `aspSmartUpload64`, `ScriptControl64`** — Binarios propietarios, uso libre.
 
