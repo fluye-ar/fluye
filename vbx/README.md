@@ -1,10 +1,12 @@
 # VbX — Toolkit COM x64 para Doors
 
-**Tu código legacy ASP/VBS corriendo en 64 bits, sin tocar una línea.**
+**Tu código ASP/VBS corriendo en 64 bits sin tocar una línea.**
+
+Sin cadenas de VB6. Sin capa .NET. Sin WCF.
 
 DoorsBPM corre en IIS 32-bit desde 2005: límite de 2 GB de RAM por proceso, dependencia a componentes discontinuados (MSXML 4.0, `msscript.ocx`, `aspSmartUpload`), y un stack de 4 capas (VBScript → VB6 COM → .NET COM → WCF → Server) para cada operación.
 
-**VbX** reemplaza esos componentes con equivalentes x64 nativos manteniendo los mismos `ProgIds`. Se registran en el servidor, se cambia el Application Pool de IIS a x64 nativo, y el código existente sigue funcionando sin cambios.
+**VbX** reemplaza esos componentes con equivalentes x64 nativos manteniendo los mismos `ProgIds`. Se registran en el servidor, se cambia el Application Pool de IIS a x64 nativo, y el código existente sigue funcionando sin cambios. **Tu inversión protegida.**
 
 ---
 
@@ -48,55 +50,63 @@ De 4 capas a 2. Mismo `ProgId` para el código que consume, sin cambios en VBScr
 
 ---
 
-## Compatibilidad por versión del server
+## Descargar
 
-doorsapi64 se conecta al backend vía REST (`/restful/*`). Compatible con **Doors 7.4.38.1** en adelante — todos los métodos funcionan en v7 excepto los listados abajo.
+| Archivo | Para | Tamaño |
+|---------|------|--------|
+| **[doorsapi64.zip](https://cdn.fluye.ar/ghf/fluye/vbx/doorsapi64.zip)** | Windows 64-bit (recomendado) | 370 KB |
+| **[doorsapi32.zip](https://cdn.fluye.ar/ghf/fluye/vbx/doorsapi32.zip)** | Windows 32-bit | 362 KB |
 
-#### Requiere Doors 8+
+**Sin dependencias externas.** No necesita VC++ Redistributable, MSXML, ni VB6 Runtime.
 
-| Método | Endpoint REST |
-|--------|---------------|
-| `folder.App.NextVal(name)` | `GET sequences/{name}/nextval` |
-| `dSession.Db.NextVal(name)` | `GET sequences/{name}/nextval` |
-| `folder.AsyncEvents` (write) | `POST folders/{fldId}/asyncevents` |
-
-#### Requiere Doors 9+
-
-| Método | Endpoint REST |
-|--------|---------------|
-| `dSession.Db.OpenRecordset(sql)` | `POST db/query` |
-| `dSession.Db.Execute(sql)` | `POST db/query` |
-| `dSession.MasterDb.OpenRecordset(sql)` | `POST masterdb/query` |
-| `dSession.MasterDb.Execute(sql)` | `POST masterdb/query` |
-| `dSession.ClearAllCustomCache` | `POST session/clearAllCustomCache` |
-| `dSession.ClearObjectModelCache(name)` | `POST session/clearObjectModelCache/{name}` |
-| `dSession.TokensAdd(name, value)` | `POST session/tokens?name=&value=` |
-| `dSession.TokensGet(name)` | `GET session/tokens?name=` |
-| `dSession.LangString(id)` | `GET langstring/{id}` |
-| `folder.App.CodeLib(name)` | `GET folders/{fldId}/codelib?name=` |
-| `folder.App.ParseCodeIncludes(code)` | `POST folders/{fldId}/processcode` |
-| `evn.ActiveCode` | `POST folders/{fldId}/processcode` |
-
-Todo lo demás (Session, Document, Folder, Field, Attachment, Account, User, View, Properties, etc.) funciona en v7+.
+Releases con changelog y hash SHA-256 en [GitHub Releases](https://github.com/fluye-ar/fluye/releases) (prefijo `vbx-`).
 
 ---
 
-## Instalación
+## Instalar
 
-### Requisitos
+### Pack completo (recomendado en el server)
 
-- Windows Server 2016+
-- IIS x64 con `Application Pool · Enable 32-Bit Applications = False`
-- Permisos de administrador para registrar COM
-- Doors 7.4.38.1+ / Doors 8 / Doors 9 (ver [Compatibilidad por versión](#compatibilidad-por-versión-del-server))
+1. Descargar el ZIP del pack e ir a la ubicación local (ej. `C:\vbx\`).
+2. Click derecho sobre `install.cmd` → **Ejecutar como administrador**.
+3. Validar con el smoke test (sección [Verificar](#verificar)).
+4. En IIS, cambiar el Application Pool de Doors a `Enable 32-Bit Applications = False`. Reiniciar el sitio.
 
-### Pasos
+### Registro manual — solo `doorsapi64` (workstation, scripts)
 
-1. Descargar desde la [pagina de descarga](../downloads/vbx/) — incluye ZIP 64-bit y 32-bit, ejemplos de codigo e instrucciones de registro.
-2. Extraer el ZIP en una ubicación local (ej. `C:\vbx\`).
-3. Click derecho sobre `install.cmd` → **Ejecutar como administrador**.
-4. Validar con el smoke test (sección "Verificación" más abajo).
-5. En IIS, cambiar el Application Pool de Doors a `Enable 32-Bit Applications = False`. Reiniciar el sitio.
+Descomprimir el ZIP y abrir una terminal como **Administrador**:
+
+#### Windows 64-bit
+
+Registrar **ambas** DLLs — la 64-bit para procesos x64 y la 32-bit para procesos x86 (ej. `cscript` 32-bit, Excel, Access):
+
+```cmd
+regsvr32 C:\ruta\doorsapi64.dll
+C:\Windows\SysWOW64\regsvr32 C:\ruta\doorsapi32.dll
+```
+
+#### Windows 32-bit
+
+Solo la 32-bit:
+
+```cmd
+regsvr32 C:\ruta\doorsapi32.dll
+```
+
+### Pack completo — registro manual paso a paso
+
+Si preferís ejecutar los pasos uno por uno (en cmd elevada):
+
+```cmd
+cd C:\vbx\bin
+
+regsvr32 doorsapi64.dll
+%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\RegAsm.exe aspSmartUpload64.dll /codebase
+regsvr32 ScriptControl64.dll
+
+sc create NitroVbx binPath= "C:\vbx\bin\NitroVbx\Doors.NitroVbx.exe" start= auto
+sc start NitroVbx
+```
 
 ### Contenido del pack
 
@@ -115,21 +125,6 @@ vbx-toolkit-x64-vX.Y.Z/
 └── LICENSE.txt                EULA del binario
 ```
 
-### Registro manual
-
-Si preferís ejecutar los pasos uno por uno (en cmd elevada):
-
-```cmd
-cd C:\vbx\bin
-
-regsvr32 doorsapi64.dll
-%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\RegAsm.exe aspSmartUpload64.dll /codebase
-regsvr32 ScriptControl64.dll
-
-sc create NitroVbx binPath= "C:\vbx\bin\NitroVbx\Doors.NitroVbx.exe" start= auto
-sc start NitroVbx
-```
-
 ### Desinstalación
 
 Ejecutar `uninstall.cmd` como administrador. Para revertir manualmente:
@@ -143,7 +138,9 @@ regsvr32 /u ScriptControl64.dll
 
 ---
 
-## Verificación
+## Verificar
+
+### Smoke test (pack completo)
 
 Guardar como `check.vbs` y ejecutar con `cscript //nologo check.vbs`:
 
@@ -178,6 +175,231 @@ aspSmartUpload64: OK
 ScriptControl64: OK
 ```
 
+### Verificación rápida — solo doorsapi64
+
+```cmd
+cscript //nologo -e:vbscript
+```
+```vbs
+Set s = CreateObject("doorsapi64.Session")
+WScript.Echo "OK — Version: " & s.Version
+```
+
+---
+
+## Ejemplos
+
+### VBScript / cscript
+
+```vbs
+Set dSession = CreateObject("doorsapi64.Session")
+dSession.ServerUrl = "https://miinstancia.fluye.ar/restful"
+dSession.Logon "usuario", "password", "instancia"
+
+' Abrir carpeta y buscar
+Set fld = dSession.FoldersGetFromId(123)
+Set docs = fld.Search("DOC_ID, NOMBRE, ESTADO", "ESTADO='Activo'", "DOC_ID DESC", 50)
+
+For Each doc In docs
+    WScript.Echo doc("DOC_ID") & " | " & doc("NOMBRE") & " | " & doc("ESTADO")
+Next
+
+' Crear un documento
+Set nuevo = fld.DocumentsNew()
+nuevo.Subject = "Alta desde script"
+nuevo("NOMBRE") = "Juan Perez"
+nuevo("EMAIL") = "juan@ejemplo.com"
+nuevo.Save
+WScript.Echo "Creado: " & nuevo.Id
+
+' Modificar un documento existente
+Set doc = dSession.DocumentsGetFromId(456)
+doc("ESTADO") = "Cerrado"
+doc.Save
+
+dSession.Logoff
+```
+
+### Excel VBA
+
+```vb
+Sub ImportarDatos()
+    Dim dSession As Object
+    Set dSession = CreateObject("doorsapi64.Session")
+    dSession.ServerUrl = "https://miinstancia.fluye.ar/restful"
+    dSession.Logon "usuario", "password", "instancia"
+
+    Set fld = dSession.FoldersGetFromId(123)
+    Set docs = fld.Search("DOC_ID, NOMBRE, MONTO", "", "DOC_ID DESC", 500)
+
+    Dim fila As Long: fila = 2
+    For Each doc In docs
+        Cells(fila, 1).Value = doc("DOC_ID")
+        Cells(fila, 2).Value = doc("NOMBRE")
+        Cells(fila, 3).Value = doc("MONTO")
+        fila = fila + 1
+    Next
+
+    dSession.Logoff
+    MsgBox "Importados " & (fila - 2) & " registros"
+End Sub
+```
+
+### PowerShell
+
+```powershell
+$s = New-Object -ComObject "doorsapi64.Session"
+$s.ServerUrl = "https://miinstancia.fluye.ar/restful"
+$s.Logon("usuario", "password", "instancia")
+
+$fld = $s.FoldersGetFromId(123)
+$docs = $fld.Search("DOC_ID, NOMBRE", "ESTADO='Activo'", "DOC_ID DESC", 100)
+
+foreach ($doc in $docs) {
+    Write-Host "$($doc.Item('DOC_ID')) - $($doc.Item('NOMBRE'))"
+}
+
+$s.Logoff()
+```
+
+### ApiKey (conexión server-side sin usuario)
+
+```vbs
+Set dSession = CreateObject("doorsapi64.Session")
+dSession.ServerUrl = "https://miinstancia.fluye.ar/restful"
+dSession.ApiKey = "tu-api-key-de-SYS_SETTINGS"
+
+' Ya conectado — usar normalmente
+Set fld = dSession.FoldersGetFromId(123)
+WScript.Echo "Carpeta: " & fld.Name & " — " & fld.DocumentsCount & " docs"
+
+dSession.Logoff
+```
+
+La ApiKey se obtiene de `SYS_SETTINGS.API_KEY` de la instancia. No requiere usuario/password.
+
+---
+
+## REST Toolkit — JSON + HTTP sin aspJSON
+
+`doorsapi64` incluye un parser JSON nativo y un cliente HTTP listos para usar desde VBScript. Reemplazan `aspJSON.asp` y `MSXML2.ServerXMLHTTP`.
+
+### JSON (5× más rápido que V8)
+
+```vbs
+' Parsear
+Set json = dSession.JsonParse("{""nombre"":""Juan"",""items"":[1,2,3]}")
+WScript.Echo json("nombre")          ' "Juan"
+WScript.Echo json("items")(0)        ' 1
+
+' Modificar
+json("nombre") = "Pedro"
+json("items").Add 4
+
+' Crear desde cero
+Set obj = dSession.Rest.NewJson()
+obj("cliente") = "Acme"
+obj("total") = 15000
+WScript.Echo obj.ToString()           ' {"cliente":"Acme","total":15000}
+
+' Iterar
+For Each key In json
+    WScript.Echo key & " = " & json(key)
+Next
+```
+
+### HTTP (requests a APIs externas)
+
+```vbs
+' GET
+Set req = dSession.Rest.NewRequest()
+req.Url = "https://api.ejemplo.com/clientes"
+req.Method = "GET"
+req.Headers("Authorization") = "Bearer mi-token"
+req.Timeout = 30
+Set resp = req.Send()
+WScript.Echo resp.Status              ' 200
+Set data = resp.Json                  ' JsonObject
+
+' POST
+Set req = dSession.Rest.NewRequest()
+req.Url = "https://api.ejemplo.com/clientes"
+req.Method = "POST"
+req.Body = "{""nombre"":""Juan"",""email"":""j@x.com""}"
+Set resp = req.Send()
+```
+
+### DoorsRequest (REST al server Doors con auth automática)
+
+```vbs
+Set req = dSession.Rest.NewDoorsRequest()
+req.Path = "folders/123/documents/search"
+req.Method = "POST"
+req.Body = "{""fields"":""DOC_ID,NOMBRE"",""maxDocs"":100}"
+Set resp = req.Send()
+
+Set docs = resp.Json
+For Each doc In docs
+    WScript.Echo doc("DOC_ID") & ": " & doc("NOMBRE")
+Next
+```
+
+---
+
+## Benchmark
+
+**doorsapi64 pulveriza al parser VBS clásico.** Los 15.000 docs que crashean aspJSON, los digiere en 7.7 ms. Como Node — a veces mejor.
+
+| Docs | JSON | aspJSON (VBS) | Node v22 | doorsapi64 |
+|------|------|---------------|----------|------------|
+| 100 | 14 KB | 125 ms | 0.1 ms | **0.1 ms** |
+| 1,000 | 142 KB | 7,941 ms | 1.5 ms | **0.3 ms** |
+| 15,000 | 5.4 MB | crash | 52 ms | **7.7 ms** |
+
+---
+
+## Compatibilidad
+
+### Windows
+
+- **Server 2016+ / Windows 8.1+** — TLS 1.2 nativo, soporte completo.
+- **Server 2008 R2 / Windows 7** — funcional con validación de licencia omitida (TLS incompatible con el endpoint de licencias).
+
+### IIS
+
+Application Pool x64 (`Enable 32-Bit Applications = False`) para la DLL 64-bit.
+
+### DoorsBPM
+
+`doorsapi64` se conecta al backend vía REST (`/restful/*`). Compatible con **Doors 7.4.38.1** en adelante — todos los métodos funcionan en v7 excepto los listados abajo.
+
+#### Requiere Doors 8+
+
+| Método | Endpoint REST |
+|--------|---------------|
+| `folder.App.NextVal(name)` | `GET sequences/{name}/nextval` |
+| `dSession.Db.NextVal(name)` | `GET sequences/{name}/nextval` |
+| `folder.AsyncEvents` (write) | `POST folders/{fldId}/asyncevents` |
+
+#### Requiere Doors 9+
+
+| Método | Endpoint REST |
+|--------|---------------|
+| `dSession.Db.OpenRecordset(sql)` | `POST db/query` |
+| `dSession.Db.Execute(sql)` | `POST db/query` |
+| `dSession.MasterDb.OpenRecordset(sql)` | `POST masterdb/query` |
+| `dSession.MasterDb.Execute(sql)` | `POST masterdb/query` |
+| `dSession.ClearAllCustomCache` | `POST session/clearAllCustomCache` |
+| `dSession.ClearObjectModelCache(name)` | `POST session/clearObjectModelCache/{name}` |
+| `dSession.TokensAdd(name, value)` | `POST session/tokens?name=&value=` |
+| `dSession.TokensGet(name)` | `GET session/tokens?name=` |
+| `dSession.LangString(id)` | `GET langstring/{id}` |
+| `folder.App.CodeLib(name)` | `GET folders/{fldId}/codelib?name=` |
+| `folder.App.ParseCodeIncludes(code)` | `POST folders/{fldId}/processcode` |
+| `evn.ActiveCode` | `POST folders/{fldId}/processcode` |
+
+Todo lo demás (Session, Document, Folder, Field, Attachment, Account, User, View, Properties, etc.) funciona en v7+.
+
 ---
 
 ## Versionado
@@ -194,11 +416,15 @@ Cada release incluye changelog, hash SHA-256 del ZIP y firma digital opcional.
 
 ## Licencia
 
-- **`doorsapi64.dll`** — Binario propietario. Gratis permanente para uso **admin-only** (usuario builtin `admin`, ID=0). Uso multi-usuario requiere licencia comercial — **ventas@fluye.ar**. [Descarga e instrucciones](../downloads/vbx/).
+- **`doorsapi64.dll`** — Binario propietario. **Free para scripts que corren como `admin`** (usuario builtin, ID=0) — instalás, registrás, funciona. **Multi-usuario** (procesos que autentican con distintas cuentas): licencia comercial. Escribinos a **ventas@fluye.ar**.
 - **`fyjson`** (incluido en `doorsapi64.dll`) — Open source. Repo: [fluye-ar/fyjson](https://github.com/fluye-ar/fyjson).
 - **`NitroVbx`, `aspSmartUpload64`, `ScriptControl64`** — Binarios propietarios, uso libre.
 
 Ver [LICENSE](../LICENSE) y la sección Licencia en el [README principal](../README.md#licencia).
+
+## Soporte
+
+**ventas@fluye.ar** — activación de licencias, soporte técnico, consultas.
 
 ---
 
