@@ -59,8 +59,6 @@ De 4 capas a 2. Mismo `ProgId` para el código que consume, sin cambios en VBScr
 
 **Sin dependencias externas.** No necesita VC++ Redistributable, MSXML, ni VB6 Runtime.
 
-Releases con changelog y hash SHA-256 en [GitHub Releases](https://github.com/fluye-ar/fluye/releases) (prefijo `vbx-`).
-
 ---
 
 ## Instalar
@@ -402,21 +400,9 @@ Todo lo demás (Session, Document, Folder, Field, Attachment, Account, User, Vie
 
 ---
 
-## Versionado
-
-[Semver](https://semver.org). Los releases se publican en [GitHub Releases](https://github.com/fluye-ar/fluye/releases) del repo `fluye-ar/fluye` con prefijo `vbx-`:
-
-- `vbx-1.0.0` — Primer release público
-- `vbx-1.0.1` — Patch
-- `vbx-1.1.0` — Componente nuevo o feature
-
-Cada release incluye changelog, hash SHA-256 del ZIP y firma digital opcional.
-
----
-
 ## Licencia
 
-- **`doorsapi64.dll`** — Binario propietario. **Free para scripts que corren como `admin`** (usuario builtin, ID=0) — instalás, registrás, funciona. **Multi-usuario** (procesos que autentican con distintas cuentas): licencia comercial. Escribinos a **ventas@fluye.ar**.
+- **`doorsapi64.dll`** — Binario propietario. **Free para scripts que corren como `admin`** (usuario builtin, ID=0) — instalás, registrás, funciona. **Multi-usuario** (procesos que autentican con distintas cuentas): licencia comercial por instancia, con verificación online. Términos completos: [`licencia.md`](licencia.md). Escribinos a **ventas@fluye.ar**.
 - **`fyjson`** (incluido en `doorsapi64.dll`) — Open source. Repo: [fluye-ar/fyjson](https://github.com/fluye-ar/fyjson).
 - **`NitroVbx`, `aspSmartUpload64`, `ScriptControl64`** — Binarios propietarios, uso libre.
 
@@ -424,46 +410,8 @@ Ver [LICENSE](../LICENSE) y la sección Licencia en el [README principal](../REA
 
 ## Soporte
 
-**ventas@fluye.ar** — activación de licencias, soporte técnico, consultas.
-
----
-
-## Para el equipo Doors — armado del pack
-
-> Este README es el spec del pack comercial. Lo que falta para tirar el primer release `vbx-1.0.0`:
-
-### Build
-
-- [ ] Workflow GitHub Action `vbx_release.yml` que compila todos los componentes en x64 y arma el ZIP.
-- [ ] Build matriz: `doorsapi64` (C++) + `aspSmartUpload64` (C# .NET) + `ScriptControl64` (basado en `tsc64`) + `NitroVbx` (servicio Windows).
-- [ ] Bundlear `msxml6.dll` desde `doors/com/vbx/deps/bin64/`.
-- [ ] Verificar redistributables C++ que necesite `doorsapi64` (VC++ Runtime x64).
-
-### Scripts del pack
-
-- [ ] `install.cmd` — check elevation, copia `bin/` y `deps/` a `C:\vbx\` (o ruta configurable por env var), registra DLLs, instala servicio NitroVbx, corre smoke test.
-- [ ] `uninstall.cmd` — para servicio, desregistra DLLs, opcionalmente borra carpeta.
-- [ ] `README.txt` plano dentro del ZIP con los pasos copy-paste.
-- [ ] `LICENSE.txt` con el EULA legal (redactar).
-
-### Release
-
-- [ ] Tag `vbx-1.0.0` en repo `fluye-ar/fluye`.
-- [ ] Subir ZIP firmado al Release.
-- [ ] Publicar SHA-256 en el cuerpo del Release.
-- [ ] Notas con: componentes incluidos, versiones, requisitos, link al README de instalación.
-
-### Smoke test post-instalación
-
-- [ ] Reusar `check.vbs` documentado más arriba.
-- [ ] Test extendido: logon, search, save de un documento via doorsapi64.
-
-### Definir
-
-- [ ] **EULA `doorsapi64`** — texto legal de "admin-only" gratis perm + libre hasta 2027-11-01 + multi-usuario comercial.
-- [ ] Detección programática de "admin-only" (¿el binario lee `sys_acc_users` y verifica? ¿corre runtime check?).
-- [ ] Firma digital de los DLLs (certificado code-signing).
-- [ ] Política de soporte: a quién contactar ante una falla post-install.
+- **Comercial:** `ventas@fluye.ar` — activación de licencias, cotizaciones, consultas comerciales.
+- **Técnico:** `soporte@fluye.ar` — instalación, integración, incidentes post-install.
 
 ---
 
