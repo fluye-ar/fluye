@@ -54,10 +54,12 @@ De 4 capas a 2. Mismo `ProgId` para el código que consume, sin cambios en VBScr
 
 ## Descargar
 
+**Version actual:** 9.0.0.88
+
 | Archivo | Para | Tamaño |
 |---------|------|--------|
-| **[doorsapi64.zip](https://cdn.fluye.ar/ghf/fluye/vbx/doorsapi64.zip)** | Windows 64-bit (recomendado) | 370 KB |
-| **[doorsapi32.zip](https://cdn.fluye.ar/ghf/fluye/vbx/doorsapi32.zip)** | Windows 32-bit | 362 KB |
+| **[doorsapi64.zip](https://cdn.fluye.ar/ghf/fluye/vbx/doorsapi64.zip)** | Windows 64-bit (recomendado) | 401 KB |
+| **[doorsapi32.zip](https://cdn.fluye.ar/ghf/fluye/vbx/doorsapi32.zip)** | Windows 32-bit | 363 KB |
 
 **Sin dependencias externas.** No necesita VC++ Redistributable, MSXML, ni VB6 Runtime.
 
