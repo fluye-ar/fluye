@@ -457,6 +457,7 @@ export class Session {
     #doorsVersion;
     #billing;
     #s3;
+    #attProvider; // SYS_SETTING ATT_STORAGE_PROVIDER ('s3' | 'r2'), cache por sesion
     #v8Disabled; // SYS_SETTING V8_DISABLED
     #timeDiff = 0; // 260724: cache sync del currentUser.timeDiff (lo usan getter/setter de fechas)
     _needsAuth;
@@ -518,6 +519,7 @@ export class Session {
         this.#doorsVersion = undefined;
         this.#billing = undefined;
         this.#v8Disabled = undefined;
+        this.#attProvider = undefined;
         this._needsAuth = false;
         this.#restClient?.clearCookies();   // cambio de host/sesion -> jar limpio
     }
@@ -1003,6 +1005,29 @@ export class Session {
             let ret = 'att-' + (await me.instance).Name.toLowerCase();
             resolve(ret.replaceAll(/[^a-z0-9.-]/g, '-'));
         });
+    }
+
+    /**
+    Provider de storage de adjuntos externos: 's3' (Cloudy) | 'r2' (Fluye).
+    Lo define el setting de instancia ATT_STORAGE_PROVIDER (default 's3'); se cachea por sesion.
+    En 'r2' los adjuntos externos se bajan/suben con presigned URLs que firma Vercel (/api/v9/r2/*),
+    no via el SDK de S3 (s3.mjs).
+    @returns {Promise<string>}
+    */
+    get attProvider() {
+        let me = this;
+        return (async () => {
+            if (me.#attProvider === undefined) {
+                let val;
+                try {
+                    val = await me.settings('ATT_STORAGE_PROVIDER');
+                } catch (er) {
+                    return 's3'; // sin setting o error transitorio: S3 (no cachea, reintenta la proxima)
+                }
+                me.#attProvider = (val || '').toString().toLowerCase() == 'r2' ? 'r2' : 's3';
+            }
+            return me.#attProvider;
+        })();
     }
 
     /**
@@ -1850,6 +1875,9 @@ export class Attachment {
     async _checkBuffer(buffer, onProgress) {
         let me = this;
         if (buffer.byteLength == fileAtS3.length && new SimpleBuffer(buffer).toString() == fileAtS3) {
+            if (await me.session.attProvider == 'r2') {
+                return await me._r2Download(onProgress);
+            }
             let s3 = await me.session.s3;
             return await s3.download({
                 bucket: await me.session.s3Bucket,
@@ -1859,6 +1887,79 @@ export class Attachment {
         } else {
             return buffer;
         }
+    }
+
+    /**
+    Descarga un adjunto externo desde R2 pidiendo una presigned GET a Vercel (/api/v9/r2/presign-get).
+    El fetch va directo a R2 (no pasa por Vercel). Devuelve un ArrayBuffer, igual que el path
+    no-externo de _checkBuffer. Reporta progress en pasos de 10% (mismo esquema que s3.mjs).
+    @returns {Promise<ArrayBuffer>}
+    */
+    async _r2Download(onProgress) {
+        let me = this;
+        let r = await me.session.fluyeClient.fetch('r2/presign-get', {
+            method: 'POST',
+            params: { attId: me.id },
+        });
+        let res = await fetch(r.url, { method: 'GET', cache: 'no-store' });
+        if (!res.ok) throw new Error('R2 download ' + res.status + ' ' + (await res.text()));
+
+        let total = Number(res.headers.get('Content-Length')) || 0;
+        if (!onProgress || !total || !res.body || !res.body.getReader) {
+            return await res.arrayBuffer();
+        }
+        let reader = res.body.getReader();
+        let chunks = [], received = 0, lastStep = 0;
+        while (true) {
+            let { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            received += value.length;
+            let step = Math.floor((received / total) * 10) * 10;
+            if (step > lastStep) { lastStep = step; onProgress(step); }
+        }
+        let out = new Uint8Array(received), off = 0;
+        for (let c of chunks) { out.set(c, off); off += c.length; }
+        return out.buffer;
+    }
+
+    /**
+    Sube un adjunto a R2 con una presigned PUT que firma Vercel (/api/v9/r2/presign-put).
+    El Content-Type del PUT matchea exacto el que se manda al firmar (evita SignatureDoesNotMatch).
+    Browser: XHR para reportar upload progress. Node: fetch.
+    @returns {Promise}
+    */
+    async _r2Upload(value, onProgress) {
+        let me = this;
+        let contentType = (value && value.type) ? value.type : 'application/octet-stream';
+        let r = await me.session.fluyeClient.fetch('r2/presign-put', {
+            method: 'POST',
+            params: { attId: me.id, content_type: contentType },
+        });
+
+        if (me.session.node.inNode) {
+            let body = await me.session.utils.arrBuffer(value);
+            let res = await fetch(r.url, { method: 'PUT', headers: { 'Content-Type': contentType }, body });
+            if (!res.ok) throw new Error('R2 upload ' + res.status + ' ' + (await res.text()));
+            return;
+        }
+
+        return await new Promise((resolve, reject) => {
+            let xhr = new XMLHttpRequest();
+            xhr.open('PUT', r.url, true);
+            xhr.setRequestHeader('Content-Type', contentType);
+            if (onProgress && xhr.upload) {
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) onProgress(parseInt(100 * e.loaded / e.total));
+                };
+            }
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) resolve();
+                else reject(new Error('R2 upload ' + xhr.status + ' ' + xhr.responseText));
+            };
+            xhr.onerror = () => reject(new Error('R2 upload network error'));
+            xhr.send(value);
+        });
     }
 
     /**
@@ -1954,13 +2055,17 @@ export class Attachment {
             if (!me.isNew) throw new Error('Readonly property');
 
             await Promise.all(me.promises);
-            let s3 = await me.session.s3;
-            await s3.upload({
-                bucket: await me.session.s3Bucket,
-                key: me.s3Key,
-                file: value,
-                onProgress,
-            });
+            if (await me.session.attProvider == 'r2') {
+                await me._r2Upload(value, onProgress);
+            } else {
+                let s3 = await me.session.s3;
+                await s3.upload({
+                    bucket: await me.session.s3Bucket,
+                    key: me.s3Key,
+                    file: value,
+                    onProgress,
+                });
+            }
 
             me.#json.File = new SimpleBuffer(fileAtS3.split('').map(el => el.charCodeAt(0))).toString('base64');
             me.#json.Size = (await me.session.utils.arrBuffer(value)).byteLength;
