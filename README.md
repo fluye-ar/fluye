@@ -37,10 +37,10 @@ Distribuido vía `cdn.fluye.ar`.
 
 Para llevar el stack ASP/VBS de 32 a 64 bits sin tocar el código existente. Todos los componentes mantienen los `ProgIds` originales — se cambia el Application Pool a x64 nativo y listo.
 
-> 📦 **Pack de instalación + instructivo:** [`vbx/`](vbx/) — Binarios en [GitHub Releases](https://github.com/fluye-ar/fluye/releases) (prefijo `vbx-`).
+> 📦 **Pack de instalación + instructivo:** [`vbx/`](vbx/).
 
-- **doorsapi64** — API COM en C++. Reemplaza el stack VB6 / .NET COM / WCF de 4 capas con una sola llamada directa al backend REST.
-  > **Licencia:** gratis permanente para instancias **admin-only** (solo el usuario admin builtin, ID=0) · libre sin restricción hasta **2027-11-01** · después de esa fecha, instancias multi-usuario requieren licencia comercial.
+- **doorsapi64** — API COM en C++. Reemplaza el stack VB6 / .NET COM / WCF de 4 y 6 capas con una sola llamada directa al backend REST.
+  > **Licencia:** gratis permanente para instancias **admin-only** (solo el usuario admin builtin, ID=0), instancias multi-usuario requieren licencia comercial.
 
 - **fyjson** — Parser JSON COM en C (basado en `yyjson`, MIT). 5x más rápido que V8, 26.000x más rápido que `aspJSON`. Disponible desde VBScript.
   → Repo: [fluye-ar/fyjson](https://github.com/fluye-ar/fyjson) (open source)
@@ -50,26 +50,6 @@ Para llevar el stack ASP/VBS de 32 a 64 bits sin tocar el código existente. Tod
 - **aspSmartUpload64** — Reemplazo x64 de `aspSmartUpload` (upload de archivos en ASP).
 
 - **ScriptControl64** — Reemplazo x64 de `msscript.ocx` (eval de VBScript desde COM).
-
-### SDK VBScript
-
-Para programar dentro de eventos y codelibs de Doors.
-
-```vbs
-NodeInclude "fnode2"
-
-Dim fyj : Set fyj = CreateObject("fyjson")
-Dim resp : Set resp = fyj.Parse(httpClient.responseText)
-
-Set folder = node.Folder(123)
-Set docs = folder.Search("ESTADO = 'Abierto'")
-```
-
-| Archivo | Para qué |
-|---|---|
-| [`vbs/fnode2.vbs`](vbs/fnode2.vbs) | Acceso a recursos Fluye via REST (fyjson) |
-| [`vbs/node2.vbs`](vbs/node2.vbs) | Versión Cloudy / Doors 8 |
-| [`vbs/aspJson.vbs`](vbs/aspJson.vbs) | Parser JSON legacy (fallback sin fyjson) |
 
 ---
 
@@ -131,7 +111,7 @@ await fdSession.logon('usuario', process.env.PASSWORD, 'instancia');
 |---|---|
 | [`doorsClient.mjs`](doorsClient.mjs) / [`doorsClient.md`](doorsClient.md) | SDK JS core |
 | [`browser.js`](browser.js) / [`browser.md`](browser.md) | Utilidades web |
-| [`vbs/`](vbs/) | SDK VBScript |
+| [`client/`](client/README.md) | Extensiones lazy (AI, instance) |
 | [`vbx/`](vbx/) | Toolkit COM x64 — binarios, instalación, ProgIds |
 | [`brand/`](brand/) | Logos e isotipo Fluye |
 
