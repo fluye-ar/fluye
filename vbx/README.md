@@ -26,11 +26,13 @@ DoorsBPM corre en IIS 32-bit desde 2005: límite de 2 GB de RAM por proceso, dep
 
 ## Arquitectura
 
-### Antes — 4 capas COM + WCF
+### dapihttp — 6 capas (remoto, pre-VbX)
 
 ```
-ASP Classic / VBScript
-    ↓ Late binding (IDispatch)
+VBScript / VBA / Excel
+    ↓ MSXML2.ServerXMLHTTP
+dapihttplistener.asp (ASP Classic)
+    ↓ CreateObject("doorsapi.Session")
 doorsapi.dll (VB6, 22.873 LOC)
     ↓ CreateObject("doorsapiNet.Session")
 doorsapiNet (C# .NET 4.8, 13.454 LOC)
@@ -38,17 +40,29 @@ doorsapiNet (C# .NET 4.8, 13.454 LOC)
 Doors Server
 ```
 
-### Después — 2 capas, REST directo
+### doorsapi local — 4 capas COM + WCF
 
 ```
 ASP Classic / VBScript
+    ↓ Late binding (IDispatch)
+doorsapi.dll (VB6)
+    ↓ CreateObject("doorsapiNet.Session")
+doorsapiNet (C# .NET 4.8)
+    ↓ WCF
+Doors Server
+```
+
+### doorsapi64 — 2 capas, REST directo
+
+```
+ASP Classic / VBScript / VBA / Excel / PowerShell
     ↓ Late binding (IDispatch nativo)
 doorsapi64.dll (C++ COM x64)
     ↓ HTTP REST (WinHTTP)
 Doors Server (/restful/*)
 ```
 
-De 4 capas a 2. Mismo `ProgId` para el código que consume, sin cambios en VBScript ni ASP.
+De 6 capas a 2. Mismo `ProgId` para el código que consume, sin cambios en VBScript ni ASP. Funciona local y remoto.
 
 ---
 
