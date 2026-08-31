@@ -121,7 +121,7 @@ await fdSession.logon('usuario', process.env.PASSWORD, 'instancia');
 
 - **SDKs JavaScript y VBScript:** [LGPL v3](LICENSE)
 - **fyjson:** open source — ver [repo propio](https://github.com/fluye-ar/fyjson)
-- **doorsapi64** (binario propietario): gratis permanente para instancias **admin-only** (solo el usuario admin builtin, ID=0) · libre sin restricción hasta **2027-11-01** · después: instancias multi-usuario requieren licencia comercial.
+- **doorsapi64** (binario propietario): gratis permanente para instancias **admin-only** (solo el usuario admin builtin), instancias multi-usuario requieren licencia comercial.
 - **NitroVbx, aspSmartUpload64, ScriptControl64:** binarios propietarios, se distribuyen incluidos con Doors 9.
 
 ---
