@@ -18,7 +18,8 @@ SDK JavaScript para Fluye/Doors. Node.js y browser.
 | Leer/escribir config de carpeta | `folder.properties` | `folder.properties('MI_PROP')` o `folder.properties('MI_PROP', 'valor')` |
 | Leer/modificar sync events | `folder.events` / `form.events` | `const evn = await folder.events('Document_BeforeSave'); evn.code = '...'; await folder.save();` |
 | Leer/modificar async events | `folder.asyncEvents` | `const evns = await folder.asyncEvents(); evns[0].disabled = true; await folder.save();` |
-| Crear subcarpeta | `folder.foldersNew` | `const sub = await folder.foldersNew(1, frmId); sub.name = 'X'; await sub.save();` (ver nota abajo) |
+| Crear subcarpeta con form | `folder.foldersNew` | `const sub = await folder.foldersNew(1, frmId); sub.name = 'X'; await sub.save();` |
+| Crear carpeta container | `folder.foldersNew` | `const sub = await folder.foldersNew(2); sub.name = 'X'; await sub.save();` (type 2=Link, sin form) |
 | Buscar form por GUID | `fdSession.forms` | `const form = await fdSession.forms('F89ECD42...')` |
 
 ## Inicializacion
@@ -159,7 +160,7 @@ Parametros: `{ groups, totals, formula, order, maxDocs, recursive, groupsOrder, 
 | `asyncEvents()` | Async events (AsyncEvent[], cacheado) |
 | `asyncEventsNew(type?)` | Crear async event (0=Timer, 1=Trigger). Se agrega a la coleccion |
 | `folders(name?)` | Subcarpetas (CIMap) |
-| `foldersNew(type?, frmId?)` | Crear subcarpeta (1=Document, 2=Link) |
+| `foldersNew(type?, frmId?)` | Crear subcarpeta. type: 1=Document (tiene form/campos propios), 2=Link (container sin form — para agrupar subcarpetas). Carpetas container siempre van como Link (type 2). |
 | `save()` | Guardar folder + sync events dirty + async events dirty |
 | `fields(name?)` | Campos del formulario (async, CIMap\<Field\>) |
 | `acl()` | ACL completo (propios + heredados) |
@@ -310,6 +311,31 @@ await newForm.save();
 ```
 
 Propiedades: `id` (FRM_ID), `guid`, `name`, `description`, `descriptionRaw`, `urlRaw`, `application`, `isNew`, `created`, `modified`
+
+### Agregar columnas por script
+
+`form.save()` manda el estado completo de `Fields` al server. Para agregar una columna, pushear a `raw.Fields` y guardar (mismo mecanismo que `formseditor.js`):
+
+```javascript
+const form = await fdSession.forms(119);
+let raw = form.toJSON();
+raw.Fields.push({
+    Name: 'MI_CAMPO',
+    DescriptionRaw: 'Descripcion del campo',
+    Description: 'Descripcion del campo',
+    Type: 1,        // 1=Char, 2=DateTime, 3=Numeric
+    Length: 500,     // solo Type 1
+    Precision: 0,    // solo Type 3
+    Scale: 0,        // solo Type 3
+    Nullable: true,
+    Updatable: true,
+    Custom: true,
+    IsNew: true,
+});
+await form.save();
+```
+
+El server hace el `ALTER TABLE SYS_FIELDS_{FRM_ID}` y actualiza los metadatos.
 
 ## Document
 

@@ -5267,9 +5267,14 @@ export class Node {
         if (options.instance == undefined) options.instance = ins;
         if (await me.isFluye) {
             let body = Object.assign({}, options, {
-                token: me.session.utils.encrypt(me.session.authToken),
                 serverUrl: me.session.serverUrl,
             });
+            // Sesiones por apiKey (ej: webhooks server-side) no tienen authToken
+            if (me.session.authToken) {
+                body.token = me.session.utils.encrypt(me.session.authToken);
+            } else if (me.session.apiKey) {
+                body.apiKey = me.session.utils.encrypt(me.session.apiKey);
+            }
             return await fetch(`https://sse.fluye.ar/push/${encodeURIComponent(options.instance)}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
