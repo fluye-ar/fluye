@@ -160,6 +160,58 @@ window.fluye = {
         },
 
         /**
+        Muestra un alert modal Bootstrap 5 (reemplazo de window.alert).
+        @param {string} text - Contenido (texto plano o HTML)
+        @param {object} [options] - Opciones
+        @param {string} [options.title='Fluye'] - Título del modal
+        @param {string} [options.icon] - URL del icono del título
+        @param {string} [options.btnText='Aceptar'] - Texto del botón
+        @param {string} [options.btnClass='btn-primary'] - Clase del botón
+        @returns {Promise} Resuelve cuando se cierra el modal
+        @example
+        await fluye.bs.alert('Operación completada');
+        await fluye.bs.alert('Error al guardar', { title: 'Error', btnClass: 'btn-danger' });
+        */
+        alert: function (text, options) {
+            let opt = Object.assign({
+                title: 'Fluye',
+                icon: 'https://cdn.fluye.ar/ghf/fluye/brand/iso-logo.png',
+                btnText: 'Aceptar',
+                btnClass: 'btn-primary',
+            }, options);
+
+            let iconHtml = opt.icon ? `<img src="${opt.icon}" class="rounded me-2" style="width:20px;">` : '';
+
+            let $modal = $(`
+                <div class="modal fade" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        ${iconHtml}<h5 class="modal-title">${opt.title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">${text}</div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn ${opt.btnClass}" data-bs-dismiss="modal">${opt.btnText}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            `);
+
+            $('body').append($modal);
+            let modal = new bootstrap.Modal($modal[0]);
+            modal.show();
+
+            return new Promise(resolve => {
+                $modal.on('hidden.bs.modal', () => {
+                    $modal.remove();
+                    resolve();
+                });
+            });
+        },
+
+        /**
         Carga los archivos de un input file como adjuntos al documento
         options = {
             input, // Elemento input file con los archivos a cargar
