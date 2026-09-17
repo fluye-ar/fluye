@@ -161,6 +161,7 @@ Parametros: `{ groups, totals, formula, order, maxDocs, recursive, groupsOrder, 
 | `asyncEventsNew(type?)` | Crear async event (0=Timer, 1=Trigger). Se agrega a la coleccion |
 | `folders(name?)` | Subcarpetas (CIMap) |
 | `foldersNew(type?, frmId?)` | Crear subcarpeta. type: 1=Document (tiene form/campos propios), 2=Link (container sin form — para agrupar subcarpetas). Carpetas container siempre van como Link (type 2). |
+| `move(destId\|Folder)` | Mover la carpeta debajo de otra padre (`POST folders/{id}/move/{dest}`). Requiere admin/fld_admin. Actualiza `parentId`. |
 | `save()` | Guardar folder + sync events dirty + async events dirty |
 | `fields(name?)` | Campos del formulario (async, CIMap\<Field\>) |
 | `acl()` | ACL completo (propios + heredados) |

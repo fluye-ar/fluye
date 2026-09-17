@@ -534,16 +534,21 @@ export class Session {
         _moment.locale('es');
         _moment.tz.setDefault(serverTimeZone);
 
-        if (await me.isLogged) {
-            try {
+        // 260915: el isLogged va DENTRO del try. Los dos call sites (setters de authToken y apiKey)
+        // llaman a _userChange() sin await ni catch, asi que una promesa rechazada aca no la agarra
+        // nadie y tumba el proceso en Node. Pasaba al final de cualquier script: logon() dispara este
+        // islogged, el script hace lo suyo y llama a logoff(), y el islogged se resuelve despues ->
+        // "Could not find SessionId in message header" con todo el trabajo ya terminado OK.
+        try {
+            if (await me.isLogged) {
                 let usr = await me.currentUser;
                 // 260724: cacheamos el td del user (sync) para que el getter/setter de fechas lo apliquen
                 // por-valor (ver Field.value). NO tocamos el default tz de _moment: queda en serverTimeZone,
                 // que es module-level y compartido por todas las sesiones -> asi una sub-sesion (ej la del
                 // controlsHub, con apiKey de servicio y td=0) no pisa el tz de la sesion del usuario.
                 me.#timeDiff = usr.timeDiff || 0;
-            } catch(er) {}
-        }
+            }
+        } catch(er) {}
     }
 
     /** 260724: td del user cacheado (sync). Lo usan getter/setter de fechas. */
@@ -4187,11 +4192,20 @@ export class Folder {
         return this.session.utils.cDate(this.#json.Modified);
     }
 
-    /*
-    move() {
-        //todo
-    }
+    /**
+    Mueve el folder debajo de otra carpeta padre.
+    Requiere permisos de administracion (admin o fld_admin) sobre la carpeta.
+    @param {number|Folder} dest FLD_ID (o Folder) de la carpeta padre destino
+    @returns {Promise<Folder>} el propio folder, actualizado
     */
+    async move(dest) {
+        var me = this;
+        var destId = dest?.id ?? dest;
+        var url = 'folders/' + me.id + '/move/' + destId;
+        var result = await me.session.restClient.fetch(url, 'POST', '', '');
+        if (result) me.#json = result;
+        return me;
+    }
 
     /**
     @returns {string}
@@ -5594,6 +5608,55 @@ export class Push {
                 if (typeof(value) == 'number' || typeof(value) == 'boolean') return value.toString();
             });
         }
+    }
+
+    /**
+    Devuelve el mensaje preseteado del proveedor de notificaciones, para modificarlo
+    y despues mandarlo con sendRaw. Equivalente al pushGetMessage de VBS.
+    @example
+    var tpl = await dSession.push.getMessageTemplate('FCM', {
+        title: 'Te asignaron una oportunidad!',
+        body: 'Tenes 15 minutos para contactar a Juan Perez',
+        data: { doc_id: 555, fld_id: 4196 },
+    });
+    @param {string} provider Nombre del proveedor configurado. Ej: 'FCM'.
+    @param {object} [msg] { title, body, data }
+    @returns {Promise<string>} El mensaje en el formato del proveedor.
+    */
+    getMessageTemplate(provider, msg) {
+        msg = msg || {};
+        var params = [];
+        if (msg.title != null) params.push('title=' + this.session.utils.encUriC(msg.title));
+        if (msg.body != null) params.push('body=' + this.session.utils.encUriC(msg.body));
+        if (msg.data != null) params.push('extraParams=' + this.session.utils.encUriC(this.stringifyData(msg.data)));
+
+        var url = 'notifications/' + this.session.utils.encUriC(provider) + '/messagetemplate';
+        return this.session.restClient.fetch(url, 'GET', params.join('&'), '');
+    }
+
+    /**
+    Envia una notificacion con el mensaje ya armado en el formato del proveedor.
+    Equivalente al pushSendRaw de VBS. Usar cuando hace falta tocar el mensaje
+    (ej: el notId de android, que decide si la push nueva pisa a la anterior);
+    para un envio comun alcanza con send().
+    @example
+    var tpl = JSON.parse(await dSession.push.getMessageTemplate('FCM', { title, body, data }));
+    tpl.message.android.data.notId = String(docId);
+    var res = await dSession.push.sendRaw(accId, tpl);   // res[i].Status por dispositivo
+    @param {number|string} to accId del destinatario (puede ser un grupo), o varios separados por coma.
+    @param {string|object} message El mensaje raw. Si es objeto se serializa.
+    @returns {Promise} Un item por dispositivo, con Status y Response. Chequear que Status sea 2xx.
+    */
+    sendRaw(to, message) {
+        // NotificationRawBaseW tiene un RegistrationId, pero el server lo ignora en este endpoint:
+        // sendNotificationRaw() hace GetByLogin(user.Login) y le manda a TODOS los dispositivos del
+        // destinatario (NotificationManager.cs). No se expone para no aparentar que filtra.
+        var notW = {};
+        notW.to = String(to);
+        notW.message = typeof(message) == 'string' ? message : JSON.stringify(message);
+
+        var url = 'notification/raw';
+        return this.session.restClient.fetch(url, 'PUT', notW, 'notificationRawW');
     }
 
     /** Alias de unregister. */
