@@ -5866,8 +5866,17 @@ export class Utilities {
         } else if (value instanceof Uint8Array) {
             ret = value.buffer;
         } else if (typeof(value) == 'string') {
-            let txtEnc = typeof(TextEncoder) == 'undefined' ? (await import('util')).TextEncoder : TextEncoder;
-            ret = new txtEnc().encode(value).buffer;
+            let prefix = '__base64__=>';
+            if (value.substring(0, prefix.length) == prefix) {
+                // decodeBuffer devuelve Buffer (Node) o SimpleBuffer (browser).
+                // En Node, Buffer.from usa un pool interno de 8KB → .buffer suele ser mayor
+                // que los bytes decodificados. Slice con byteOffset para acotar al contenido real.
+                let b = this.decodeBuffer(value);
+                ret = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+            } else {
+                let txtEnc = typeof(TextEncoder) == 'undefined' ? (await import('util')).TextEncoder : TextEncoder;
+                ret = new txtEnc().encode(value).buffer;
+            }
         }
         return ret;
     }
