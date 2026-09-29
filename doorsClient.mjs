@@ -459,6 +459,7 @@ export class Session {
     #s3;
     #attProvider; // SYS_SETTING ATT_STORAGE_PROVIDER ('s3' | 'r2'), cache por sesion
     #v8Disabled; // SYS_SETTING V8_DISABLED
+    #aspWebFolder; // SYS_SETTING ASP_WEB_FOLDER (web folder ASP legacy, ej 'c' | 'edi'), cache por sesion
     #timeDiff = 0; // 260724: cache sync del currentUser.timeDiff (lo usan getter/setter de fechas)
     _needsAuth;
 
@@ -1032,6 +1033,27 @@ export class Session {
                 me.#attProvider = (val || '').toString().toLowerCase() == 'r2' ? 'r2' : 's3';
             }
             return me.#attProvider;
+        })();
+    }
+
+    /**
+    Web folder de la app ASP legacy de la instancia (setting ASP_WEB_FOLDER: 'c' Cloudy, 'edi' Edisur, etc).
+    Es lo que reemplaza al placeholder [APPVIRTUALROOT] en las URLs de form. Default 'c'. Cache por sesion.
+    @returns {Promise<string>}
+    */
+    get aspWebFolder() {
+        let me = this;
+        return (async () => {
+            if (me.#aspWebFolder === undefined) {
+                let val;
+                try {
+                    val = await me.settings('ASP_WEB_FOLDER');
+                } catch (er) {
+                    return 'c'; // sin setting o error transitorio: default 'c' (no cachea, reintenta)
+                }
+                me.#aspWebFolder = (val || '').toString().trim() || 'c';
+            }
+            return me.#aspWebFolder;
         })();
     }
 
