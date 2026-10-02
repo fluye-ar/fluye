@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(aws ssm get-command-invocation *)",
+      "Bash(aws ec2 describe-instances *)",
+      "Bash(aws ec2 describe-images *)",
+      "Bash(aws ec2 describe-instance-status *)",
+      "Bash(aws ec2 describe-snapshots *)",
+      "Bash(aws rds describe-db-instances *)",
+      "Bash(aws cloudwatch get-metric-statistics *)",
+      "Bash(aws cloudwatch describe-alarms *)",
+      "Bash(aws autoscaling describe-auto-scaling-groups *)",
+      "Bash(aws autoscaling describe-instance-refreshes *)",
+      "Bash(aws elbv2 describe-target-health *)",
+      "Bash(aws elbv2 describe-target-groups *)",
+      "Bash(aws s3 ls *)",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__tabs_create_mcp",
+      "mcp__claude-in-chrome__read_console_messages",
+      "mcp__claude-in-chrome__read_network_requests",
+      "mcp__claude-in-chrome__read_page",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__select_page",
+      "mcp__chrome-devtools__list_pages"
+    ]
+  }
+}
