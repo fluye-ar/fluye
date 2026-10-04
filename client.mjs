@@ -150,11 +150,11 @@ class Instances {
         return me.#cache;
     }
 
-    async add({ name, description, url, login, pwd, instance, protectPwd }) {
+    async add({ name, description, url, login, pwd, instance, protectPwd, method }) {
         let me = this;
         let res = await me.#fSession.fetch('/instances', {
             method: 'POST',
-            body: JSON.stringify({ name, description, url, login, pwd, instance, protectPwd }),
+            body: JSON.stringify({ name, description, url, login, pwd, instance, protectPwd, method }),
         });
         let data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Add instance failed');
