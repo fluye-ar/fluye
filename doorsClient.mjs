@@ -1015,9 +1015,9 @@ export class Session {
 
     /**
     Provider de storage de adjuntos externos: 's3' (Cloudy) | 'r2' (Fluye).
-    Lo define el setting de instancia ATT_STORAGE_PROVIDER (default 's3'); se cachea por sesion.
-    En 'r2' los adjuntos externos se bajan/suben con presigned URLs que firma Vercel (/api/v9/r2/*),
-    no via el SDK de S3 (s3.mjs).
+    Lo define el campo `provider` del setting consolidado ATT_CONFIG (JSON); fallback al viejo
+    ATT_STORAGE_PROVIDER. Default 's3'; se cachea por sesion. En 'r2' los adjuntos externos se
+    bajan/suben con presigned URLs que firma Vercel (/api/v9/r2/*), no via el SDK de S3 (s3.mjs).
     @returns {Promise<string>}
     */
     get attProvider() {
@@ -1026,7 +1026,13 @@ export class Session {
             if (me.#attProvider === undefined) {
                 let val;
                 try {
-                    val = await me.settings('ATT_STORAGE_PROVIDER');
+                    // ATT_CONFIG (JSON) mergeado instancia sobre master (igual que el server); fallback al viejo ATT_STORAGE_PROVIDER.
+                    let prov = (cfg) => { try { return (JSON.parse(cfg) || {}).provider; } catch (e) { return null; } };
+                    let instCfg, masterCfg;
+                    try { instCfg = await me.settings('ATT_CONFIG'); } catch (e) { instCfg = null; }
+                    try { masterCfg = await me.masterSettings('ATT_CONFIG'); } catch (e) { masterCfg = null; }
+                    val = (instCfg ? prov(instCfg) : null) || (masterCfg ? prov(masterCfg) : null);
+                    if (!val) val = await me.settings('ATT_STORAGE_PROVIDER');
                 } catch (er) {
                     return 's3'; // sin setting o error transitorio: S3 (no cachea, reintenta la proxima)
                 }
