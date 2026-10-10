@@ -7522,6 +7522,41 @@ export class View {
         this.#json.Comments = value;
     }
 
+    /**
+    Copia la vista a otra carpeta.
+    @param {Folder|number} targetFolder - Carpeta destino (objeto o id).
+    @param {object} [options]
+    @param {boolean} [options.private] - La copia queda privada del usuario actual.
+    @param {string} [options.newName] - Nombre de la copia. Sin esto conserva el original.
+    @returns {Promise<object>} La vista creada, como la devuelve el server.
+    @example
+    await view.copy(otraCarpeta, { private: true, newName: 'Copia de Ventas' });
+    */
+    copy(targetFolder, options) {
+        var opt = options || {};
+        var targetId = (targetFolder && targetFolder.id !== undefined) ? targetFolder.id : targetFolder;
+        var url = 'folders/' + this.folderId + '/views/' + this.id + '/copy/' + targetId +
+                  '?private=' + (opt.private ? 'true' : 'false') +
+                  '&newName=' + this.session.utils.encUriC(opt.newName || '');
+        return this.session.restClient.fetch(url, 'POST', {}, '');
+    }
+
+    /**
+    Borra la vista.
+    @param {object} [options]
+    @param {boolean} [options.toBin=true] - Mandarla a la papelera en vez de borrarla del todo.
+    @returns {Promise}
+    @example
+    await view.delete();                  // a la papelera
+    await view.delete({ toBin: false });  // definitivo
+    */
+    delete(options) {
+        var opt = options || {};
+        var toBin = opt.toBin === undefined ? true : !!opt.toBin;
+        var url = 'folders/' + this.folderId + '/views/' + this.id + '?tobin=' + toBin;
+        return this.session.restClient.fetch(url, 'DELETE', '', '');
+    }
+
     get definition() {
         return this._asyncGet('Definition');
     }
