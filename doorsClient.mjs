@@ -3230,9 +3230,12 @@ export class Document {
 
     /**
     Guarda el documento.
+    @param {object} [options] - Opciones del save.
+    @param {boolean} [options.syncEventsDisabled] - No correr sync events (per-request, no toca la sesion).
+    @param {boolean} [options.asyncEventsDisabled] - No correr async events (per-request, no toca la sesion).
     @returns {Promise<Document>}
     */
-    async save() {
+    async save(options) {
         var me = this;
         await me._dispatchEvent('Document_BeforeSave');
         var tags = me.#json.Tags;
@@ -3246,6 +3249,10 @@ export class Document {
         await me.awaitPromises();
 
         var url = 'documents';
+        var qs = [];
+        if (options?.syncEventsDisabled) qs.push('syncEventsDisabled=true');
+        if (options?.asyncEventsDisabled) qs.push('asyncEventsDisabled=true');
+        if (qs.length) url += '?' + qs.join('&');
         let res = await me.session.restClient.fetch(url, 'PUT', me.#json, 'document');
         let ver = await me.session.doorsVersion;
         if (ver < '008.000.000.002') {
