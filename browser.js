@@ -777,6 +777,25 @@ window.fluye = {
         fluye.console.start();   // no-op salvo que el usuario este en fluye.console.enabledFor
     },
 
+    // Aplica el tema (data-bs-theme en <html>) con criterio unico para todas las paginas/runtimes.
+    // Web: param(?darkmode=0/1) > localStorage['dark-mode'] > user_setting server > dia.
+    // App: flag darkTheme de Framework7. Devuelve el booleano (las paginas lo usan p/ body classes).
+    // Ticket 260925.
+    applyTheme: async function() {
+        let dark;
+        if (typeof window.app7 == 'object') {
+            dark = localStorage.getItem('darkTheme') == 'on';
+        } else {
+            let qs = new URLSearchParams(location.search).get('darkmode');
+            let ls = localStorage.getItem('dark-mode');
+            if (qs != null) dark = qs == '1';
+            else if (ls != null) dark = ls == '1';
+            else { try { dark = (await fluye.doorsSession.userSettings('dark-mode')) == '1'; } catch (e) { dark = false; } }
+        }
+        document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+        return dark;
+    },
+
     /**
     Crea un formulario, hace submit de los datos y lo borra
     Se puede usar para abrir una nueva ventana haciendo POST
