@@ -3942,7 +3942,19 @@ export class Folder {
                 // client-side via doc.parentId. Si es una formula, search + fetch (como antes).
                 if (!isNaN(parseInt(document))) {
                     let doc;
-                    try { doc = await me.session.doc(document); } catch (e) { doc = null; }
+                    try {
+                        doc = await me.session.doc(document);
+                    } catch (e) {
+                        // Solo es "no encontrado" si el server respondio algo parseable:
+                        // RestClient le cuelga doorsException al error cuando pudo leer el
+                        // JSON de Doors. Un 504/520 o un fallo de red NO lo traen, y antes
+                        // caian en doc=null y se reportaban como "Document not found" --
+                        // mensaje falso que manda a buscar permisos o docs borrados cuando
+                        // el problema es de infraestructura. Ver fluye-core/tickets/
+                        // "261029 - Caida por datacenter Cloudflare US".
+                        if (!e || !e.doorsException) { reject(e); return; }
+                        doc = null;
+                    }
 
                     if (!doc || (doc.parentId != null && doc.parentId != me.id)) {
                         reject(new Error('Document not found (doc_id = ' + document + ')'));
