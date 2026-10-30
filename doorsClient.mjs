@@ -5048,8 +5048,8 @@ export class Node {
         } else {
             return new Promise(async (resolve, reject) => {
                 let cfg = {
-                    server: 'https://node.cloudycrm.net',
-                    debugServer: 'https://nodedev.cloudycrm.net',
+                    server: 'https://fluye.ar',
+                    debugServer: 'https://nodedev.fluye.ar',
                 };
 
                 if (me.session.serverUrl && await me.session.isLogged) {
