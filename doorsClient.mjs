@@ -7688,6 +7688,11 @@ export class View {
         this.#json.Private = value;
     }
 
+    /** Tipo de vista. 4 = vista grafica (chart). */
+    get type() {
+        return this.#json.Type;
+    }
+
     /**
     @example
     properties() // Devuelve la coleccion.
