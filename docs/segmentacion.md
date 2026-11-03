@@ -21,6 +21,78 @@ Lo que **no** es una segmentación: pedidos de dato único (`¿cuántos leads ha
 
 Una vista de carpeta con `formula = "{{raw}}<SQL concatenado al WHERE>{{/raw}}"`. El SQL va crudo entre los delimitadores — el parser no toca nada ahí adentro.
 
+## Cómo funciona por dentro (entenderlo, no memorizar)
+
+Si vas a armar vistas con raw, necesitás entender qué hace el parser normal y qué cambia con el marcador. Si sólo copiás el patrón sin entenderlo, vas a tropezar con el primer caso que no encaje con el ejemplo.
+
+### 1. El parser normal (sin raw)
+
+Cuando guardás una vista con `formula = "ESTADO='Activa' AND EDAD > 30"`, el motor:
+
+1. Parte la fórmula en tokens usando `\W+` como separador (todo lo que no es alfanumérico corta).
+2. Por cada token, compara contra los campos del form de **esa** carpeta.
+3. Si el token coincide con un nombre de campo, lo reemplaza por `TABLA.CAMPO` (ej. `ESTADO` → `SYS_FIELDS_432.ESTADO`).
+4. El resultado se concatena al WHERE del SELECT que arma internamente.
+
+Cómodo para filtros simples: escribís los campos sueltos y el motor resuelve la tabla.
+
+### 2. Por qué eso rompe subqueries
+
+Si metés `DOC_ID IN (SELECT DOC_ID_ALUMNO FROM SYS_FIELDS_542 WHERE DOC_ID_CURSO IN (421056))` sin raw:
+
+- El parser tokeniza **todo**, incluido lo que está adentro del paréntesis: `SELECT`, `DOC_ID_ALUMNO`, `SYS_FIELDS_542`, `DOC_ID_CURSO`, etc.
+- Si **cualquiera** de esos tokens coincide con un campo del form principal, lo reescribe adentro de la subquery → la rompe.
+- Caso típico: si el form principal tiene `DOC_ID` (lo tiene siempre), lo califica como `SYS_DOCUMENTS.DOC_ID` **dentro** del SELECT interno. La subquery se vuelve correlacionada (deja de filtrar el set que querías, pasa a filtrar fila por fila referenciando la fila externa).
+- Por eso en el patrón viejo se usaba `SELECT ... as vdoc_id`: un alias defensivo para que **ningún token adentro del SELECT se llame igual que un campo del form principal**.
+
+### 3. Qué hace el marcador raw
+
+`{{raw}}...{{/raw}}` le dice al parser: *"este fragmento va al WHERE tal cual, no toques nada adentro"*.
+
+- Contenido entre marcadores → intacto (no tokeniza, no reescribe).
+- Se concatena directo al WHERE.
+- Lo de afuera (otros fragmentos de la fórmula) sigue parseándose normal.
+
+### 4. Qué cambia para vos adentro del raw
+
+Sos vos el que escribe SQL puro, como DBA:
+
+- **Campos calificados a mano**: `SYS_DOCUMENTS.DOC_ID`, `SYS_FIELDS_432.EDAD`. No `DOC_ID` ni `EDAD`.
+- **Nombres de tabla reales**: `SYS_FIELDS_542`, no `AlumnosPorCursos`.
+- **Aliases** cuando hay ambigüedad (`a.DOC_ID`, `b.DOC_ID`).
+- Subqueries, EXISTS, JOINs, UNIONs — todo lo que SQL permite.
+
+El parser ya no está del medio para ayudarte **ni para corregirte**. Por eso la regla de "verificar los campos antes de escribir".
+
+### 5. Combinable con parseado
+
+El raw es sólo un segmento del WHERE. El resto se sigue escribiendo parseado:
+
+```
+formula: "ESTADO='Activa' AND {{raw}}SYS_DOCUMENTS.DOC_ID IN (SELECT ...){{/raw}}"
+```
+
+El `ESTADO='Activa'` lo parsea y reescribe como `SYS_FIELDS_432.ESTADO = 'Activa'`. El raw lo pega crudo. El `AND` es SQL plano. Útil cuando el filtro es mixto: parte trivial + parte compleja. Usás parseado para lo trivial (menos para calificar) y raw para lo que el parser rompería.
+
+Verificado 2026-11-03 contra Amatista folder 5103: parseado + raw combinados devolvieron el mismo count que el raw solo (119) — no hay interacción rara.
+
+### 6. Lo que raw NO resuelve
+
+- Si escribís un nombre de tabla o campo inexistente adentro del raw, el error salta recién al `search()` sobre la vista, **no** al guardarla. El `nv.save()` acepta cualquier string entre marcadores.
+- No elimina pensar el SQL. Si la subquery está correlacionada por error (porque usaste el mismo alias afuera y adentro), raw no te salva.
+- No es magia contra SQL injection de valores dinámicos. Los literales que metés vienen de donde vos los traigas; si son user input, sanitizalos antes.
+
+### 7. Por qué este patrón reemplaza al viejo
+
+| Aspecto | Patrón viejo (vista SQL + vista doors) | Patrón raw (una vista doors) |
+|---|---|---|
+| Artefactos | 2 acoplados | 1 |
+| Borrar uno deja zombie | Sí | No |
+| Clonar | Entender dos cosas | Copiar la fórmula |
+| Modificar | Tocar los dos | Editar la fórmula |
+| User final puede editarla | No (SQL) | Sí (con ayuda) |
+| Permisos de CREATE VIEW | Requiere DBA | No requiere |
+
 ## Cómo armar la fórmula
 
 ### Regla #1: dentro del raw nada se califica solo
@@ -95,16 +167,6 @@ Antes de ejecutar `nv.save()`:
 - **No** usar `vdoc_id`. Era un alias defensivo del patrón viejo — fuera del raw no tenía sentido, dentro del raw tampoco.
 - **No** calificar tokens dentro del raw esperando que el parser los resuelva. No lo hace.
 - **No** mezclar raw con fórmula parseada si no sabés qué va en cada lado (ver "Preguntas abiertas" al pie).
-
-## Combinar raw con filtro parseado
-
-Se puede. El raw es sólo un segmento del WHERE; el resto se escribe parseado como siempre:
-
-```
-formula: "ESTADO='Activa' AND {{raw}}SYS_DOCUMENTS.DOC_ID IN (SELECT DOC_ID_ALUMNO FROM SYS_FIELDS_542 WHERE DOC_ID_CURSO IN (...)){{/raw}}"
-```
-
-Verificado 2026-11-03 contra Amatista folder 5103: el filtro parseado (`DOC_ID > 300000`) + raw con subquery (`IN (...)`) devolvieron el mismo count que el raw solo (119). Usá parseado cuando el filtro es sobre campos simples del folder — ahorra calificar.
 
 ## Preguntas abiertas
 
