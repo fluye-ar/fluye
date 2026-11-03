@@ -79,6 +79,20 @@ Agentes IA que atienden WhatsApp como **pre-filtro**: responden FAQs con context
 
 ---
 
+## Novedades
+
+- **Corre sobre PostgreSQL** — además de SQL Server, base administrada en la nube (Neon), sin licencias de servidor.
+- **Toolkit COM x64 (doorsapi64 + NitroVbx)** — el stack ASP/VBS legacy pasa a 64 bits nativo sin tocar código; una llamada directa reemplaza las 4-6 capas VB6/.NET/WCF.
+- **Inicio de sesión empresarial (SSO)** — el acceso con Google evolucionó a identidad federada: más seguro, abierto a varios proveedores y con los usuarios actuales migrados automáticamente.
+- **Nuevo portal web** — explorá tus datos desde el navegador, también en el celular: favoritos de carpetas, vistas, documentos como tarjetas y actualización en vivo (los cambios aparecen sin recargar). Entrás con tu cuenta Google.
+- **Wiz, el asistente IA del CRM** — preguntás en castellano por tus datos y procesos; busca y ejecuta por chat.
+- **Agentes de WhatsApp** — un agente IA atiende como pre-filtro con contexto del CRM y deriva a un humano lo que no le toca.
+- **Listados y vistas mejorados** — la grilla scrollea nativo (rueda, touch, teclado) y Doors aprende qué vistas usás más para dejarlas a mano; las demás se agrupan en "Otras".
+- **Búsquedas de solo-lectura** — corren con un usuario sin permiso de escritura: un filtro avanzado o un intento de inyección no puede tocar los datos; en la nube, contra una réplica.
+- **Procesos más confiables** — nuevo scheduler de tareas y disparadores: se terminan los eventos duplicados y los que se pisaban.
+
+---
+
 ## Quick Start — JavaScript
 
 **Browser:**
