@@ -69,7 +69,9 @@ Agentes IA que atienden WhatsApp como **pre-filtro**: responden FAQs con context
 
 ---
 
-## Novedades
+## Doors: novedades
+
+Lo nuevo en **Doors**, el motor BPM con 25+ años en producción.
 
 - **Corre sobre PostgreSQL** — además de SQL Server, base administrada en la nube (Neon), sin licencias de servidor.
 - **Toolkit COM x64 (doorsapi64 + NitroVbx)** — el stack ASP/VBS legacy pasa a 64 bits nativo sin tocar código; una llamada directa reemplaza las 4-6 capas VB6/.NET/WCF.
