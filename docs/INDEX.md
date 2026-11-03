@@ -88,6 +88,7 @@ Mapa completo de documentación técnica del ecosistema Fluye/Cloudy.
 | `doors/docs/ASYNCEVENTS.md` | Eventos background - Timer, OnSave, OnDelete |
 | `fluye/docs/SSE.md` | **Server-Sent Events** - Tiempo real .NET → Events.v8 → Browser |
 | `fluye/docs/RELATIONS.md` | **Relations (JOINs)** - LEFT JOIN en search via Events.v8, 10x mas rapido que campos calculados |
+| `fluye/docs/segmentacion.md` | **Segmentacion** - Vistas con filtro raw (`{{raw}}...{{/raw}}`), reemplaza patron viejo vista SQL + vista doors. Linkeado desde `wiz.md`. |
 
 ### Logs y Troubleshooting
 
