@@ -69,16 +69,6 @@ Agentes IA que atienden WhatsApp como **pre-filtro**: responden FAQs con context
 
 ---
 
-## Doors: roadmap
-
-| Versión | Qué trae | Estado |
-|---|---|---|
-| Doors 8 (Cloudy CRM) | Base | Producción |
-| **Doors 8.5** | Rebrand a Fluye + **Wiz** (asistente IA) | En transición |
-| Doors 9 | **Postgres** + **Toolkit COM x64** | Desarrollo |
-
----
-
 ## Novedades
 
 - **Corre sobre PostgreSQL** — además de SQL Server, base administrada en la nube (Neon), sin licencias de servidor.
