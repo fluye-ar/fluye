@@ -80,7 +80,7 @@ Lo nuevo en **Doors**, el motor BPM con 25+ años en producción.
 - **Wiz, el asistente IA del CRM** — preguntás en castellano por tus datos y procesos; busca y ejecuta por chat.
 - **Agentes de WhatsApp** — un agente IA atiende como pre-filtro con contexto del CRM y deriva a un humano lo que no le toca.
 - **Listados y vistas mejorados** — la grilla scrollea nativo (rueda, touch, teclado) y Doors aprende qué vistas usás más para dejarlas a mano; las demás se agrupan en "Otras".
-- **Búsquedas de solo-lectura** — corren con un usuario sin permiso de escritura: un filtro avanzado o un intento de inyección no puede tocar los datos; en la nube, contra una réplica.
+- **Búsquedas de solo-lectura** — corren con un usuario sin permiso de escritura: un filtro avanzado o un intento de inyección no puede tocar los datos.
 - **Procesos más confiables** — nuevo scheduler de tareas y disparadores: se terminan los eventos duplicados y los que se pisaban.
 
 ---
