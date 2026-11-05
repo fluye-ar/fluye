@@ -4469,6 +4469,16 @@ export class Folder {
         maxTextLen, // Largo max de los campos de texto. Def 100. 0 = sin limite.
         v8, // Utiliza el motor v8 para hacer el search.
     }
+    @description
+    Filtro RAW (sin parsear). Lo que va entre {{raw}} y {{/raw}} dentro de 'formula' se concatena
+    al WHERE tal cual, sin que el parser reemplace los tokens por los campos del form. Sirve para
+    subconsultas, que el filtro normal rompe: si escribis `doc_id in (select doc_id from ...)`, el
+    parser reescribe el doc_id de adentro a SYS_DOCUMENTS.[DOC_ID] y la subconsulta se vuelve
+    correlacionada (filtra mal, sin error). Con el marcador pasa intacto.
+      formula: "estado=1 and {{raw}}SYS_DOCUMENTS.DOC_ID in (select x.doc_id from SYS_FIELDS_542 x where x.id_curso in (1,2,3)){{/raw}}"
+    Adentro del raw NO se califica nada: los campos van escritos a mano (SYS_FIELDS.CAMPO) y las
+    subconsultas con su propio alias. Fuera del marcador, 'formula' se parsea como siempre.
+    Soportado por el motor .NET; con v8:true todavia no (ver ticket 261103).
     @returns {Promise<Object[]>}
     */
     search(options) {
@@ -4507,6 +4517,10 @@ export class Folder {
         totalsOrder, //
         v8, // Utiliza el motor v8 para hacer el search.
     }
+    @description
+    'formula' admite filtro RAW entre {{raw}} y {{/raw}}: ese tramo va al WHERE sin parsear, para
+    subconsultas que el filtro normal rompe. Ver el detalle en search(). Soportado por el motor
+    .NET; con v8:true todavia no (ticket 261103).
     @returns {Promise<Object[]>}
     */
     searchGroups(options) {
@@ -8047,6 +8061,11 @@ class V8Client {
                 let err;
                 if (resJson) {
                     err = me.session.utils.deserializeError(resJson);
+                    // serialize-error-cjs (browser) descarta ExceptionMessage -> el err queda sin
+                    // message ("Error"). Preservar el texto real de Doors para que el caller lo muestre.
+                    if (resJson.ExceptionMessage && (!err.message || err.message === 'Error')) {
+                        err.message = resJson.ExceptionMessage;
+                    }
                 } else {
                     err = new Error(resTxt);
                 }
