@@ -909,7 +909,22 @@ export class Session {
             instanceName: instance,
             liteMode: liteMode ? true : false,
         };
-        let token = await me.restClient.fetch(url, 'POST', data, '');
+        /* session/logon contesta HTTP 200 aunque el logon falle: el motivo
+           viaja solo en el cuerpo, con InternalObject en null. Si no se
+           chequea aca, ese null se guarda como token y la llamada siguiente
+           muere descifrandolo, con un ArgumentException que no tiene nada que
+           ver y aparece un paso despues. Ver ticket doors 261116. */
+        let res = await me.restClient.fetch(url, 'POST', data, '', true);
+        let token = res ? res.InternalObject : null;
+
+        if (!token) {
+            let err = new Error((res && res.ExceptionMessage)
+                ? res.ExceptionMessage
+                : 'No se pudo iniciar sesion.');
+            if (res) err.doorsException = res;
+            throw err;
+        }
+
         me.authToken = token;
         return token;
     };
@@ -7782,7 +7797,10 @@ class RestClient {
         this.#cookies.clear();
     }
 
-    async fetch(url, method, parameters, parameterName) {
+    /* pFullResponse devuelve el cuerpo parseado entero en vez de solo
+       InternalObject. Lo usa logon(), que necesita ver ResponseResult y
+       ExceptionMessage porque session/logon contesta HTTP 200 aunque falle. */
+    async fetch(url, method, parameters, parameterName, pFullResponse) {
         var me = this;
         if (me.session._needsAuth) {
             me.session._needsAuth = false;
@@ -7850,7 +7868,7 @@ class RestClient {
             console.warn('Cannot parse server response', completeUrl, textBody);
         }
         if (response.ok) {
-            return parsedJson.InternalObject;
+            return pFullResponse ? parsedJson : parsedJson.InternalObject;
         } else {
             let err;
             if (parsedJson) {
