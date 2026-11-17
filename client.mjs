@@ -157,7 +157,12 @@ class Instances {
             body: JSON.stringify({ name, description, url, login, pwd, instance, protectPwd, method }),
         });
         let data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Add instance failed');
+        if (!res.ok) {
+            // Preservar el status para que el caller distinga (ej. 404 instancia inexistente vs 403). 261116.
+            let e = new Error(data.error || 'Add instance failed');
+            e.status = res.status;
+            throw e;
+        }
         me.#cache = null;
         return data;
     }
